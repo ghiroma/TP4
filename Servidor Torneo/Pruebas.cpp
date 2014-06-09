@@ -13,6 +13,7 @@
 #include <string>
 #include <list>
 #include <cstdio>
+#include "Clases/Semaforo.h"
 
 using namespace std;
 
