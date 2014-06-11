@@ -17,6 +17,7 @@ public:
   //TODO crear otro constructor po hostname.
   CommunicationSocket (unsigned short int, char *);
   CommunicationSocket(int ,struct sockaddr_in *);
+  CommunicationSocket(int);
   int SendBloq(const char *,int dataSize);
   int ReceiveBloq(char *,int bufferSize);
   int SendNoBloq(const char *, int dataSize);

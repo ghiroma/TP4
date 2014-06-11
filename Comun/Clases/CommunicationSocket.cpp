@@ -41,6 +41,11 @@ CommunicationSocket::CommunicationSocket(int ID,struct sockaddr_in * ClientData)
   this->ClientData = ClientData;
 }
 
+CommunicationSocket::CommunicationSocket(int fd)
+{
+  this->ID = fd;
+}
+
 int CommunicationSocket::SendBloq(const char * data,int dataSize)
 {
   return send(this->ID,data,dataSize,0);

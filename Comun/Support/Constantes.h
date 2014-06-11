@@ -15,6 +15,11 @@
 #define REPARAR "Tecla de Reparar"
 #define SALIR "Tecla para Salir"
 
+const int INTERVALOS_RALPH = 1;
+const int INTERVALOS_PALOMA = 4;
+const int INTERVALOS_LADRILLO1 = 2;
+const int INTERVALOS_LADRILLO2 = 1;
+
 enum Codigo_Mensaje {
     Movimiento_Ralph = 00,
     Movimiento_Felix = 01,
