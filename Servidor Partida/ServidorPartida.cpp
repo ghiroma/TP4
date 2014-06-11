@@ -16,6 +16,11 @@
 
 using namespace std;
 
+void timer_thread();
+void receiver1_thread(int);
+void receiver2_thread(int);
+void sender_thread(int, int);
+
 bool stop = false;
 list<string> timer_sendList;
 list<string> receive_sendList;
@@ -28,6 +33,10 @@ int main(int argc, char * argv[])
   //Recibo todos los datos del servidortorneo.
 
   //Creo los 4 thread.
+  thread timer(timer_thread);
+  thread receiver1(receiver1_thread,fdJugador1);
+  thread receiver2(receiver2_thread,fdJugador2);
+  thread sender(sender_thread,fdJugador1,fdJugador2);
 }
 
 void timer_thread()

@@ -28,6 +28,21 @@ int Jugador::SumarPuntaje(int Puntaje)
   return this->Puntaje+=Puntaje;
 }
 
+void Jugador::ActualizarPartida(int idOponente, int ganado)
+{
+  this->Partidas[idOponente] = ganado;
+}
+
+void Jugador::AgregarJugador(int idOponente)
+{
+  this->Partidas[idOponente] = 0;
+}
+
+void Jugador::QuitarJugador(int idOponente)
+{
+  this->Partidas.erase(idOponente);
+}
+
 Jugador::~Jugador ()
 {
   // TODO Auto-generated destructor stub

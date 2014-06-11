@@ -20,6 +20,7 @@
 
 void GetConfiguration(int * port, char * ip,int * cantVidas);
 void SIGINT_Handler(int inum);
+void NuevoJugador(list<Jugador> listJugadores, int idJugador);
 
 using namespace std;
 
@@ -45,6 +46,9 @@ int main(int argc, char * argv[])
     {
       CommunicationSocket * cSocket = sSocket.Accept();
 
+      //Verifico si es un jugador nuevo, si es asi lo agrego a mi lista de jugadores y actualizo a todos los jugadores.
+      //El cliente tambien podria tener la clase jugador, y tener siempre sus datos ahi, asi de paso puede consultarlos.
+
       pid=fork();
       if((pid)==0) //Proceso hijo. Hacer exec
 	{
@@ -69,5 +73,16 @@ int main(int argc, char * argv[])
 void SIGINT_Handler(int inum)
 {
 
+}
+
+/*
+ * Cuando ingresa un nuevo jugador al sistema.
+ */
+void NuevoJugador(list<Jugador> listJugadores, int idJugador)
+{
+  for(list<Jugador>::iterator it= listJugadores.begin();it != listJugadores.end();it++)
+    {
+      it->AgregarJugador(idJugador);
+    }
 }
 
