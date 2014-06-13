@@ -8,7 +8,8 @@
 #include "Clases/Semaforo.h"
 #include "Clases/CommunicationSocket.h"
 #include "Support/Constantes.h"
-#include <list>
+//#include <list>
+#inclue <queue>
 #include <string>
 #include "Funciones.h"
 #include <thread>
@@ -22,8 +23,10 @@ void receiver2_thread(int);
 void sender_thread(int, int);
 
 bool stop = false;
-list<string> timer_sendList;
-list<string> receive_sendList;
+queue<string> timer_queue;
+queue<string> receive_queue;
+//list<string> timer_sendList;
+//list<string> receive_sendList;
 
 int main(int argc, char * argv[])
 {
@@ -49,28 +52,32 @@ void timer_thread()
 	{
 	  //intervalo ralph.
 	  string message("1");//Poner constantes de mensaje.
-	  timer_sendList.push_back(message);
+	  timer_queue.push_back(message);
+	  //timer_sendList.push_back(message);
 	}
 
       if(TimeDifference(3,startingTime)==true)
 	{
 	  //intervalo pajaro.
 	  string message("2");
-	  timer_sendList.push_back(message);
+	  timer_queue.push_back(message);
+	  //timer_sendList.push_back(message);
 	}
 
       if(TimeDifference(4,startingTime)==true)
 	{
 	  //intervalo torta.
 	  string message("3");
-	  timer_sendList.push_back(message);
+	  timer_queue.push_back(message);
+	  //timer_sendList.push_back(message);
 	}
 
       if(TimeDifference(5,startingTime)==true)
 	{
 	  //intervalo persiana.
 	  string message("4");
-	  timer_sendList.push_back(message);
+	  timer_queue.push_back(message);
+	  //timer_sendList.push_back(message);
 	}
     }
 }
@@ -104,20 +111,21 @@ void sender_thread(int fd1, int fd2)
 
   while(stop==false)
     {
-      if(receive_sendList.size()>0)
+      //if(receive_sendList.size()>0)
+      if(receive_queue.size()>0)
 	{
-	  string message = receive_sendList.back();
-	  receive_sendList.pop_back();
+	  string message = receive_queue.front();
+	  receive_queue.pop_front();
 	  //switch(message.c_str())
 	  //{
 
 	  //}
 	}
 
-      if(timer_sendList.size()>0)
+      if(timer_queue.size()>0)
 	{
-	  string message = receive_sendList.back();
-	  receive_sendList.pop_back();
+	  string message = receive_queue.front();
+	  receive_queue.pop_front();
 	  //switch(message.c_str())
 	  //{
 
