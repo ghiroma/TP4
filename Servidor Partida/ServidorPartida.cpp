@@ -24,7 +24,8 @@ void sender_thread(int, int);
 
 bool stop = false;
 queue<string> timer_queue;
-queue<string> receive_queue;
+queue<string> receive1_queue;
+queue<string> receive2_queue;
 //list<string> timer_sendList;
 //list<string> receive_sendList;
 
@@ -40,6 +41,8 @@ int main(int argc, char * argv[])
   thread receiver1(receiver1_thread,fdJugador1);
   thread receiver2(receiver2_thread,fdJugador2);
   thread sender(sender_thread,fdJugador1,fdJugador2);
+  
+  //TODO envio puntaje al padre.
 }
 
 void timer_thread()
@@ -90,6 +93,8 @@ void receiver1_thread(int fd)
   while(stop==false)
     {
       cSocket.ReceiveBloq(buffer,sizeof(buffer));
+      //TODO Realizar accion.
+     	receive1_queue.push_back();
     }
 }
 
@@ -101,6 +106,8 @@ void receiver2_thread(int fd)
   while(stop==false)
     {
       cSocket.ReceiveBloq(buffer,sizeof(buffer));
+      //TODO realizar accion.
+      receive2_queue.push_back();
     }
 }
 
@@ -112,14 +119,21 @@ void sender_thread(int fd1, int fd2)
   while(stop==false)
     {
       //if(receive_sendList.size()>0)
-      if(receive_queue.size()>0)
+      if(receive1_queue.size()>0)
 	{
-	  string message = receive_queue.front();
-	  receive_queue.pop_front();
+	  string message = receive1_queue.front();
+	  receive1_queue.pop_front();
 	  //switch(message.c_str())
 	  //{
 
 	  //}
+	}
+	
+	if(receive2_queue.size()>0)
+	{
+		string message= receive2_queue.front();
+		receive2_queue.pop_front();
+		
 	}
 
       if(timer_queue.size()>0)
