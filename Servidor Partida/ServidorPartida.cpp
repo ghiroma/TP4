@@ -11,6 +11,7 @@
 #include "Support/Constantes.h"
 #include <queue>
 #include <string>
+#include <string.h>
 #include "Funciones.h"
 #include <pthread.h>
 #include <time.h>
@@ -58,30 +59,31 @@ int main(int argc, char * argv[]) {
 	ServerSocket sSocket(5555, "127.0.0.1");
 	cout << "ya se creo el socket" << endl;
 	cout << "voy a aceptar conexiones socket" << endl;
-	cSocket1 = sSocket.Accept();
-	cout << "Conexion Recibida" << endl;
-	//CommunicationSocket *cSocket2 = sSocket.Accept();
 
-	//Fin TODO Temporalmente.
+	while (true) {
+		cSocket1 = sSocket.Accept();
+		cout << "Conexion Recibida" << endl;
+		//CommunicationSocket *cSocket2 = sSocket.Accept();
 
-	//Recibo todos los datos del servidortorneo.
+		//Fin TODO Temporalmente.
+		//Recibo todos los datos del servidortorneo.
 
-	//Creo los 4 thread.
-	pthread_create(&thread_timer, NULL, timer_thread, NULL);
-	pthread_create(&thread_receiver1, NULL, receiver1_thread,
-			(void *) &cSocket1->ID);
-	//pthread_create(&thread_receiver2,NULL,receiver2_thread,NULL);
-	args.fd1 = cSocket1->ID;
-	//args.fd2=cSocket2->ID;
-	pthread_create(&thread_sender, NULL, sender_thread, (void *) &args);
-	cout << "threads ceados" << endl;
-	cSocket1->SendBloq("a", sizeof("a"));
+		//Creo los 4 thread.
+		pthread_create(&thread_timer, NULL, timer_thread, NULL);
+		pthread_create(&thread_receiver1, NULL, receiver1_thread,
+				(void *) &cSocket1->ID);
+		//pthread_create(&thread_receiver2,NULL,receiver2_thread,NULL);
+		args.fd1 = cSocket1->ID;
+		//args.fd2=cSocket2->ID;
+		pthread_create(&thread_sender, NULL, sender_thread, (void *) &args);
+		cout << "threads ceados" << endl;
+		cSocket1->SendBloq("a", sizeof("a"));
 
-	pthread_join(thread_timer, NULL);
-	pthread_join(thread_receiver1, NULL);
-	//pthread_join(thread_receiver2,NULL);
-	pthread_join(thread_sender, NULL);
-
+		pthread_join(thread_timer, NULL);
+		pthread_join(thread_receiver1, NULL);
+		//pthread_join(thread_receiver2,NULL);
+		pthread_join(thread_sender, NULL);
+	}
 	delete (cSocket1);
 	return 0;
 	//TODO envio puntaje al padre.
@@ -91,10 +93,13 @@ void* timer_thread(void* arg) {
 	time_t startingTime = time(0);
 	//TODO sacar hardcodeo.
 	while (stop == false) {
-		if (TimeDifference(2, startingTime) == true) {
+		if (TimeDifference(5, startingTime) == true) {
 			//intervalo ralph.
-			string message("Ralph"); //Poner constantes de mensaje.
+			string message = "Ralph"; //Poner constantes de mensaje.
+					cout<<"El mensaje a enviar sera: "<<message<<endl;
 			timer_queue.push(message);
+			cout<<"sumo mensase a la cola"<<endl;
+			//startingTime=time(0);
 			//timer_sendList.push_back(message);
 		}
 
@@ -159,7 +164,7 @@ void* receiver2_thread(void * fd) {
 
 void* sender_thread(void * arguments) {
 	struct args_struct *args = (struct args_struct *) arguments;
-
+	char buffer[512] = {'\0'};
 	//CommunicationSocket cSocket1(args->fd1);
 	//CommunicationSocket cSocket2(fd2);
 
@@ -167,12 +172,13 @@ void* sender_thread(void * arguments) {
 		//if(receive_sendList.size()>0)
 		if (receive1_queue.size() > 0) {
 			string message = receive1_queue.front();
-			receive1_queue.pop();
 			//switch(message.c_str())
 			//{
 
 			//}
+			cout<<"Servidor - envia -> "<<message<<endl;
 			cSocket1->SendBloq(message.c_str(), sizeof(512));
+			receive1_queue.pop();
 		}
 
 		if (receive2_queue.size() > 0) {
@@ -181,13 +187,16 @@ void* sender_thread(void * arguments) {
 
 		}
 
-		if (timer_queue.size() > 0) {
+		if (!timer_queue.empty()) {
 			string message = timer_queue.front();
 			timer_queue.pop();
 			//switch(message.c_str())
 			//{
 
 			//}
+			strcpy(buffer,message.c_str());
+			cout<<"Servidor - envia -> "<<buffer<<endl;
+			cSocket1->SendBloq(buffer, sizeof(buffer));
 		}
 
 		usleep(1000);

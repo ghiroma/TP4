@@ -41,8 +41,8 @@ struct ventana ventanas_tramo1[3][5];
 unsigned short int felix_ventana = 99;
 pthread_t tpid_teclas, tpid_escuchar;
 char salir = 'N';
-
 char buffer[256];
+
 int main(int argc, char *argv[]) {
 	CommunicationSocket * socket;
 
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 	socket->ReceiveBloq(buffer, sizeof(buffer));
 	cout << "Conectado" << endl;
 	cout << "mesaje del servidor: " << buffer << endl;
-	pthread_create(&tpid_teclas, NULL, EscuchaServidor, (void*) &socket->ID);
+	pthread_create(&tpid_teclas, NULL, EscuchaServidor, &socket->ID);
 
 	SDL_Init(SDL_INIT_VIDEO);
 	signal(SIGINT, handler);
@@ -201,14 +201,17 @@ void Dibujar(int x, int y, SDL_Surface *imagen, SDL_Surface *superficie) {
 }
 
 void* EscuchaServidor(void *arg) {
-	cout << *(int *) arg << endl;
 	int fd = *(int *) arg;
-
+	//int fd = (int) arg;
 	CommunicationSocket cSocket(fd);
 
 	while (salir == 'N') {
-
-		cSocket.ReceiveNoBloq(buffer, sizeof(buffer));
+		cout<<"espero msj del servidor"<<endl;
+		cSocket.ReceiveBloq(buffer, sizeof(buffer));
+		if(strlen(buffer)>0){
+			cout<<"buffer: "<<buffer<<endl;
+		}
+		cout<<"buffer fuera del if: "<<buffer<<endl;
 
 		if (felix_ventana == 99) {
 			felix_ventana = 10;
@@ -218,7 +221,8 @@ void* EscuchaServidor(void *arg) {
 				felix_ventana++;
 			}
 		}
-		usleep(1000);
+		sleep(1);
+		//usleep(10000);
 	}
 }
 
@@ -235,25 +239,27 @@ void* EscuchaTeclas(void *arg) {
 		case SDL_KEYDOWN:
 //				keysym = evento.key.keysym;
 			if (evento.key.keysym.sym == SDLK_DOWN) {
-				if ((felix_ventana + 5) <= 15)
+				if ((felix_ventana + 5) <= 15){
 					felix_ventana += 5;
+				}
 			} else if (evento.key.keysym.sym == SDLK_UP) {
-				if (felix_ventana == 99)
+				if (felix_ventana == 99){
 					felix_ventana = 0;
-				else if ((felix_ventana - 5) >= 0)
+				} else if ((felix_ventana - 5) >= 0){
 					felix_ventana -= 5;
+				}
 			} else if (evento.key.keysym.sym == SDLK_RIGHT) {
-				if (felix_ventana == 99)
+				if (felix_ventana == 99){
 					felix_ventana = 10;
-				else if ((felix_ventana + 1) != 5 && (felix_ventana + 1) != 10
-						&& (felix_ventana + 1) != 15)
+				} else if((felix_ventana + 1) != 5 && (felix_ventana + 1) != 10 && (felix_ventana + 1) != 15){
 					felix_ventana++;
+				}
 			} else if (evento.key.keysym.sym == SDLK_LEFT) {
-				if ((felix_ventana - 1) != -1 && (felix_ventana - 1) != 4
-						&& (felix_ventana - 1) != 9
-						&& (felix_ventana - 1) != 98)
+				if ((felix_ventana - 1) != -1 && (felix_ventana - 1) != 4 && (felix_ventana - 1) != 9 && (felix_ventana - 1) != 98){
 					felix_ventana--;
+				}
 			}
+			break;
 		case SDL_QUIT:
 			salir = 'S';
 			break;
