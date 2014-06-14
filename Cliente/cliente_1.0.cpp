@@ -46,7 +46,7 @@ struct ventana ventanas_tramo1[3][5];
 unsigned short int felix_ventana = 99;
 pthread_t tpid_teclas, tpid_escuchar;
 char salir = 'N';
-CommunicationSocket socket(5555, "127.0.0.1");
+CommunicationSocket * socket;
 char *buffer = NULL;
 char buffer2[256];
 int main(int argc, char *argv[]){
@@ -68,7 +68,10 @@ const char
 		felix_i = SDL_LoadBMP(felixi_bmp);
 
 		cout<<"Conectandome"<<endl;
-	socket.ReceiveBloq(buffer, sizeof(char));
+
+		socket = new CommunicationSocket(5555, "127.0.0.1");
+
+	socket->ReceiveBloq(buffer, sizeof(char));
 	cout<<"Conectado"<<endl;
 	pthread_create(&tpid_teclas, NULL, EscuchaServidor, NULL);
 
@@ -159,6 +162,7 @@ entrar en este lup
 	usleep(250000);
 }	
 
+delete(socket);
 SDL_Quit();
 return 0;
 }
@@ -195,7 +199,7 @@ void* EscuchaServidor(void *arg){
 
 	while(salir == 'N'){
 
-		socket.ReceiveBloq(buffer2, sizeof(buffer2));
+		socket->ReceiveBloq(buffer2, sizeof(buffer2));
 
 		if(felix_ventana == 99)
 			felix_ventana = 10;
