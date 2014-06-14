@@ -17,6 +17,7 @@ CommunicationSocket::CommunicationSocket (unsigned short int port, char * ip)
 {
   // TODO Auto-generated constructor stub
   this->ID = socket(AF_INET,SOCK_STREAM,0);
+	std::cout<<this->ID<<std::endl;
   if(this->ID>=0) //No hubo error.
     {
 	struct sockaddr_in caddress;
