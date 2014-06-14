@@ -55,7 +55,10 @@ int main(int argc, char * argv[])
   signal(SIGINT,SIGINT_Handler);
 
   //TODO Temporalmente hago que el servidor de partida sea un servidor de torneo.
+  cout<<"voy a crear el socket"<<endl;
   ServerSocket sSocket(5555,"127.0.0.1");
+  cout<<"ya se creo el socket"<<endl;
+  cout<<"voy a aceptar conexiones socket"<<endl;
   cSocket1 = sSocket.Accept();
   cout<<"Conexion Recibida"<<endl;
   //CommunicationSocket *cSocket2 = sSocket.Accept();
@@ -72,7 +75,7 @@ int main(int argc, char * argv[])
   args.fd1=cSocket1->ID;
   //args.fd2=cSocket2->ID;
   pthread_create(&thread_sender,NULL,sender_thread,(void *)&args);
-
+  cout<<"threads ceados"<<endl;
   cSocket1->SendBloq("a",sizeof("a"));
 
   pthread_join(thread_timer,NULL);

@@ -46,10 +46,10 @@ struct ventana ventanas_tramo1[3][5];
 unsigned short int felix_ventana = 99;
 pthread_t tpid_teclas, tpid_escuchar;
 char salir = 'N';
-CommunicationSocket * socket;
-char *buffer = NULL;
-char buffer2[256];
+
+char buffer[256];
 int main(int argc, char *argv[]){
+	CommunicationSocket * socket;
 
 	SDL_Rect
 		pantalla_juego;
@@ -71,9 +71,10 @@ const char
 
 		socket = new CommunicationSocket(5555, "127.0.0.1");
 
-	socket->ReceiveBloq(buffer, sizeof(char));
+	socket->ReceiveBloq(buffer, sizeof(buffer));
 	cout<<"Conectado"<<endl;
-	pthread_create(&tpid_teclas, NULL, EscuchaServidor, NULL);
+	cout<<"mesaje del servidor: "<<buffer<<endl;
+	pthread_create(&tpid_teclas, NULL, EscuchaServidor, (void*)socket->ID);
 
 	SDL_Init(SDL_INIT_VIDEO);
 	signal(SIGINT, handler);
@@ -196,16 +197,23 @@ Uint32 colorkey;
 }
 
 void* EscuchaServidor(void *arg){
+	cout<<*(int *)arg<<endl;
+	int fd = *(int *)arg;
+
+	CommunicationSocket cSocket(fd);
 
 	while(salir == 'N'){
 
-		socket->ReceiveBloq(buffer2, sizeof(buffer2));
+		//socket->ReceiveBloq(buffer2, sizeof(buffer2));
+		cSocket.ReceiveNoBloq(buffer,sizeof(buffer));
 
 		if(felix_ventana == 99)
 			felix_ventana = 10;
 		else
 			if((felix_ventana+1) != 5 && (felix_ventana+1) != 10 && (felix_ventana+1) != 15)
 		felix_ventana++;
+
+		usleep(1000);
 	}
 }
 
