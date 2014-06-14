@@ -51,10 +51,21 @@ int CommunicationSocket::SendBloq(const char * data,int dataSize)
   return send(this->ID,data,dataSize,0);
 }
 
+int CommunicationSocket::SendNoBloq(const char * data, int dataSize)
+{
+  return send(this->ID,data,dataSize,MSG_DONTWAIT);
+}
+
 int CommunicationSocket::ReceiveBloq(char * buffer,int bufferSize)
 {
   bzero(buffer,sizeof(buffer));
   return recv(this->ID,buffer,bufferSize,0);
+}
+
+int CommunicationSocket::ReceiveNoBloq(char * buffer,int bufferSize)
+{
+  bzero(buffer,sizeof(buffer));
+  return recv(this->ID,buffer,bufferSize,MSG_DONTWAIT);
 }
 
 const char * CommunicationSocket::GetClientIP()
