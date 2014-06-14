@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <signal.h>
 #include <unistd.h>
+#include <iostream>
 
 using namespace std;
 
@@ -56,6 +57,7 @@ int main(int argc, char * argv[])
   //TODO Temporalmente hago que el servidor de partida sea un servidor de torneo.
   ServerSocket sSocket(5555,"127.0.0.1");
   cSocket1 = sSocket.Accept();
+  cout<<"Conexion Recibida"<<endl;
   //CommunicationSocket *cSocket2 = sSocket.Accept();
 
   //Fin TODO Temporalmente.

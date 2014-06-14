@@ -5,7 +5,8 @@
 #include <pthread.h>
 #include <signal.h>
 #include <sys/types.h>
-#include <Clases/CommunicationSocket.h>
+#include "Clases/CommunicationSocket.h"
+#include <iostream>
 
 #define ANCHO_PANTALLA	640
 #define ALTO_PANTALLA 480
@@ -13,6 +14,8 @@
 
 #define PARED_X 90
 #define PARED_Y 110
+
+using namespace std;
 
 struct ventana{
 
@@ -45,7 +48,7 @@ pthread_t tpid_teclas, tpid_escuchar;
 char salir = 'N';
 CommunicationSocket socket(5555, "127.0.0.1");
 char *buffer = NULL;
-
+char buffer2[256];
 int main(int argc, char *argv[]){
 
 	SDL_Rect
@@ -64,7 +67,9 @@ const char
 		felix_d = SDL_LoadBMP(felixd_bmp);
 		felix_i = SDL_LoadBMP(felixi_bmp);
 
-	socket->ReciveBloq(buffer, sizeof(char));
+		cout<<"Conectandome"<<endl;
+	socket.ReceiveBloq(buffer, sizeof(char));
+	cout<<"Conectado"<<endl;
 	pthread_create(&tpid_teclas, NULL, EscuchaServidor, NULL);
 
 	SDL_Init(SDL_INIT_VIDEO);
@@ -190,7 +195,7 @@ void* EscuchaServidor(void *arg){
 
 	while(salir == 'N'){
 
-		socket->ReciveBloq();
+		socket.ReceiveBloq(buffer2, sizeof(buffer2));
 
 		if(felix_ventana == 99)
 			felix_ventana = 10;
