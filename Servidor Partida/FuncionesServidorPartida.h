@@ -15,13 +15,12 @@
 
 using namespace std;
 
-/*extern CommunicationSocket * cSocket1;
-extern CommunicationSocket * cSocket2;
 extern bool stop;
 extern queue<string> timer_queue;
 extern queue<string> receive1_queue;
-extern queue<string> receive2_queue;*/
-
+extern queue<string> receive2_queue;
+extern CommunicationSocket * cSocket1;
+extern CommunicationSocket * cSocket2;
 
 bool
 TimeDifference (int timeDifference, time_t startingTime);
@@ -33,5 +32,7 @@ void*
 receiver2_thread (void * argument);
 void*
 sender_thread (void * arguments);
+void
+SIGINT_Handler (int inum);
 
 #endif /* FUNCIONES_H_ */
