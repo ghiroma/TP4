@@ -7,82 +7,61 @@
 
 #include "Clases/ServerSocket.h"
 #include "Clases/CommunicationSocket.h"
+#include <string.h>
 #include "Funciones.h"
 #include "Jugador.h"
 #include <iostream>
 #include <fstream>
-#include <string.h>
 #include <unistd.h>
 #include <list>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <signal.h>
 
-void GetConfiguration(int * port, char * ip,int * cantVidas);
-void SIGINT_Handler(int inum);
-void NuevoJugador(list<Jugador> listJugadores, int idJugador);
-
 using namespace std;
 
-int main(int argc, char * argv[])
-{
-  int *port = 0;
-  char * ip = '\0';
-  int *cantVidas = 0;
-  int clientId=1;
-  pid_t pid;
-  list<Jugador> listJugadores;
+int main(int argc, char * argv[]) {
+	unsigned int puerto = 0;
+	string ip = "";
+	int duracionTorneo = 0;
+	int tiempoInmunidad = 0;
+	int cantVidas = 0;
+	int clientId = 1;
+	pid_t pid;
+	list<Jugador> listJugadores;
 
-  signal(SIGINT,SIGINT_Handler);
+	signal(SIGINT, SIGINT_Handler);
 
-  //GetConfiguration(port,ip,cantVidas);
-  if(*port == 0 || *ip=='\0' || *cantVidas==0)
-    cout<<"Error al obtener configuracion."<<endl;
-
-  //TODO sacar hardcodeo.
-  ServerSocket sSocket(5555,"127.0.0.1");
-
-  while(true)
-    {
-      CommunicationSocket * cSocket = sSocket.Accept();
-
-      //Verifico si es un jugador nuevo, si es asi lo agrego a mi lista de jugadores y actualizo a todos los jugadores.
-      //El cliente tambien podria tener la clase jugador, y tener siempre sus datos ahi, asi de paso puede consultarlos.
-
-      pid=fork();
-      if((pid)==0) //Proceso hijo. Hacer exec
-	{
-
+	getConfiguration(&puerto, &ip, &duracionTorneo, &tiempoInmunidad, &cantVidas);
+	if (puerto == 0 || ip.compare("") == 0 || duracionTorneo == 0 || tiempoInmunidad == 0 || cantVidas == 0) {
+		cout << "Error al obtener configuracion." << endl;
 	}
-      else if(pid<0) //Hubo error
-	{
-	  cout<<"Error al forkear"<<endl;
+
+	ServerSocket sSocket(puerto, (char *) ip.c_str());
+
+	while (true) {
+		CommunicationSocket * cSocket = sSocket.Accept();
+
+		//Verifico si es un jugador nuevo, si es asi lo agrego a mi lista de jugadores y actualizo a todos los jugadores.
+		//El cliente tambien podria tener la clase jugador, y tener siempre sus datos ahi, asi de paso puede consultarlos.
+
+		pid = fork();
+		if ((pid) == 0) {
+			//Proceso hijo. Hacer exec
+
+		} else if (pid < 0) {
+			//Hubo error
+			cout << "Error al forkear" << endl;
+		} else {
+			//Soy el padre.
+			delete (cSocket);
+			string nombreTemp = "juancito"; //TODO Sacar el hardcodeo y obtener nombre.
+			Jugador jugador(clientId, nombreTemp);
+			listJugadores.push_back(jugador);
+			clientId++;
+		}
 	}
-      else //Soy el padre.
-	{
-	  delete(cSocket);
-	  string nombreTemp = "juancito";//TODO Sacar el hardcodeo y obtener nombre.
-	  Jugador jugador(clientId,nombreTemp);
-	  listJugadores.push_back(jugador);
-	  clientId++;
-	}
-    }
 
 }
 
-void SIGINT_Handler(int inum)
-{
-
-}
-
-/*
- * Cuando ingresa un nuevo jugador al sistema.
- */
-void NuevoJugador(list<Jugador> listJugadores, int idJugador)
-{
-  for(list<Jugador>::iterator it= listJugadores.begin();it != listJugadores.end();it++)
-    {
-      it->AgregarJugador(idJugador);
-    }
-}
 

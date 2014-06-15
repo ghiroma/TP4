@@ -10,8 +10,7 @@
 
 #include "CommunicationSocket.h"
 
-class ServerSocket
-{
+class ServerSocket {
 public:
   int ID;
   ServerSocket (unsigned int port, char * ip);
