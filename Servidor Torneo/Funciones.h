@@ -14,4 +14,5 @@ void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* 
 void SIGINT_Handler(int inum);
 void nuevoJugador(list<Jugador> listJugadores, int idJugador);
 
+
 #endif /* FUNCIONES_H_ */

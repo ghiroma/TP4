@@ -9,6 +9,7 @@
 
 using namespace std;
 
+//Obtiene la configuracion inicial del torneo
 void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* tiempoInmunidad, int* cantVidas) {
 	string content;
 	string line;
@@ -47,6 +48,7 @@ void SIGINT_Handler(int inum) {
  */
 void nuevoJugador(list<Jugador> listJugadores, int idJugador) {
 	for (list<Jugador>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
-		it->AgregarJugador(idJugador);
+		it->agregarJugador(idJugador);
 	}
 }
+

@@ -21,26 +21,25 @@ using namespace std;
  *  Id representa un identificador unico del jugador.
  *  Partidas indica, el id del jugador y verdadero o falso segun si ya jugo.
  */
-class Jugador
-{
+class Jugador {
 public:
-  int Puntaje;
-  int SocketAsociado;
-  string Nombre;
-  int Id;
-  map<int,int> Partidas; //Agregar a constants. 0 No jugado, -1 Perdido, 1 Ganado.
+	int Puntaje;
+	int SocketAsociado;
+	string Nombre;
+	int Id;
+	map<int, int> Partidas; //Agregar a constants. 0 No jugado, -1 Perdido, 1 Ganado.
 
-  Jugador ();
-  Jugador(int Id,string Nombre);
-  int SumarPuntaje(int puntaje);
-  void ActualizarPartida(int idOponente,int ganado);
-  void AgregarJugador(int idOponente);
-  void QuitarJugador(int idOponente);
-  //int EnviarMensaje();
-  //int RecibirMensaje();
+	Jugador();
+	Jugador(int Id, string Nombre);
+	int sumarPuntaje(int puntaje);
+	void actualizarPartida(int idOponente, int ganado);
+	void agregarJugador(int idOponente);
+	void quitarJugador(int idOponente);
+	//int enviarMensaje();
+	//int recibirMensaje();
 
-  virtual
-  ~Jugador ();
+	virtual
+	~Jugador();
 };
 
 #endif /* JUGADOR_H_ */
