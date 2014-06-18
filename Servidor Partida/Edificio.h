@@ -12,13 +12,12 @@
 
 class Edificio {
 
+public:
 	int filas;
 	int columnas;
 	int nivel;
+	Ventana **ventanas;
 
-	//Ventana ventanas[][];
-
-public:
 	Edificio(int filas, int columnas, int nivel);
 	Edificio(int filas,int columnas);
 	virtual ~Edificio();

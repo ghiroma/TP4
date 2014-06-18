@@ -28,9 +28,5 @@ const char * CD_MOVIMIENTO_FELIX = "04";
 //const char *
 //const char *
 
-const int EDIFICIO_FILAS_NIVEL1 = 4;
-const int EDIFICIO_COLUMNAS_NIVEL1=3;
-const int EDIFICIO_FILAS_NIVEL2 = 6;
-const int EDIFICIO_COLUMNAS_NIVEL2 = 4;
 
 #endif /* CONSTANTES_H_ */
