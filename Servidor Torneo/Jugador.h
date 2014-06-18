@@ -10,6 +10,8 @@
 
 #include <string>
 #include <map>
+#include <iostream>
+#include <list>
 
 using namespace std;
 
@@ -28,6 +30,7 @@ public:
 	string Nombre;
 	int Id;
 	map<int, int> Partidas; //Agregar a constants. 0 No jugado, -1 Perdido, 1 Ganado.
+	bool jugando; //true si el jugador esta jugando en una partida
 
 	Jugador();
 	Jugador(int Id, string Nombre);
@@ -35,11 +38,14 @@ public:
 	void actualizarPartida(int idOponente, int ganado);
 	void agregarJugador(int idOponente);
 	void quitarJugador(int idOponente);
+	int obtenerOponente(list<Jugador>* listJugadores);
 	//int enviarMensaje();
 	//int recibirMensaje();
 
 	virtual
 	~Jugador();
 };
+
+
 
 #endif /* JUGADOR_H_ */

@@ -68,6 +68,41 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
+
+	/////////////////////////////////////////////////
+	//CODIGO PARA PROBAR EL ASIGNADOR DE PARTIDAS
+	Jugador jugador1(clientId, "pedro 1");
+	jugador1.agregarJugador(2);
+	jugador1.agregarJugador(3);
+	listJugadores.push_back(jugador1);
+	clientId++;
+
+	Jugador jugador2(clientId, "carlos 2");
+	jugador2.agregarJugador(1);
+	jugador2.agregarJugador(3);
+	listJugadores.push_back(jugador2);
+	clientId++;
+
+	Jugador jugador3(clientId, "mati 3");
+	jugador3.agregarJugador(1);
+	jugador3.agregarJugador(2);
+	listJugadores.push_back(jugador3);
+	clientId++;
+
+	listJugadores.front().obtenerOponente(&listJugadores);
+
+	for (list<Jugador>::iterator it = (listJugadores).begin(); it != (listJugadores).end(); it++) {
+
+		cout << (*it).Nombre << " - partidas:" << endl;
+
+		for (map<int, int>::iterator itmap = (*it).Partidas.begin(); itmap != (*it).Partidas.end(); ++itmap) {
+			std::cout << itmap->first << " => " << itmap->second << '\n';
+		}
+	}
+
+	exit(1);
+	//////////////////////////////////////////////////////
+
 	//Crear Socket del Servidor
 	ServerSocket sSocket(puerto, (char *) ip.c_str());
 
