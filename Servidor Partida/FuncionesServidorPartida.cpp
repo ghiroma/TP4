@@ -63,7 +63,8 @@ timer_thread(void* arg) {
 			cout<<"Entro ACK"<<endl;
 
 			string message(CD_ACK);
-			cout<<"Mensaje creado: "<<message<<endl;
+			string content;
+			message.append(fillMessage(content));
 			sender1_queue.push(message);
 			//sender2_queue.push(message);
 			startingTimeKeepAlive = time(0);
@@ -73,7 +74,7 @@ timer_thread(void* arg) {
 			char aux[5];
 			string message(CD_MOVIMIENTO_RALPH);
 			sprintf(aux, "%d", randomRalphMovement());
-			message.append(aux);
+			message.append(fillMessage(aux));
 			sender1_queue.push(message);
 			//sender2_queue.push(message);
 			startingTimeRalph = time(0);
@@ -83,7 +84,7 @@ timer_thread(void* arg) {
 			string message(CD_PALOMA);
 			char aux[5];
 			sprintf(aux, "%d", randomPaloma(0));
-			message.append(aux);
+			message.append(fillMessage(aux));
 			sender1_queue.push(message);
 			//sender2_queue.push(message);
 			startingTimePaloma = time(0);
@@ -161,6 +162,7 @@ receiver1_thread(void * fd) {
 
 	while (stop == false && cliente1_conectado) {
 		readDataCode = cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
+		//readDataCode = cSocket1->ReceiveNoBloq(buffer, sizeof(256));
 		if (strlen(buffer) > 0) {
 			string aux(buffer);
 			cout<<"Recibi mensaje: "<<buffer<<endl;
@@ -209,18 +211,13 @@ void * validator_thread(void * argument) {
 			//Escribe en el sender_queue.
 			case 4:
 				cout<<"Entro a movimiento felix"<<endl;
-				int fila = atoi(message.substr(2,1).c_str());
-				cout<<"Fila: "<<fila<<endl;
-				int columna = atoi(message.substr(3,1).c_str());
-				cout<<"Columna: "<<columna<<endl;
-
-				cout<<felix1->puntaje_parcial<<endl;
-				cout<<edificio->columnas<<endl;
+				int fila = atoi(message.substr(5,1).c_str());
+				int columna = atoi(message.substr(6,1).c_str());
 
 				if(validateMovement(felix1,fila,columna,edificio))
 				{
-					string mensaje_movimiento1 = scodigo+"1"+message.substr(2,2);
-					string mensaje_movimiento2 = scodigo+"2"+message.substr(2,2);
+					string mensaje_movimiento1 = scodigo+fillMessage("1"+message.substr(2,2));
+					string mensaje_movimiento2 = scodigo+fillMessage("2"+message.substr(2,2));
 					sender1_queue.push(mensaje_movimiento1);
 					sender2_queue.push(mensaje_movimiento2);
 				}
@@ -285,6 +282,14 @@ bool validateMovement(Felix * felix, int fila, int columna,
 		return true;
 	}
 	return false;
+}
+
+string fillMessage(string message)
+{
+	string content;
+	int cantCeros = LONGITUD_CONTENIDO - message.length();
+	content.assign(cantCeros,'0');
+	return content.append(message);
 }
 
 bool validateWindowFix(Felix * felix, int fila, int columna,

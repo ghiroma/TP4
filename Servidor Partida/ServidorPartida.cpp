@@ -61,9 +61,7 @@ int main(int argc, char * argv[]) {
 		pthread_create(&thread_sender1, NULL, sender1_thread, NULL);
 		//pthread_create(&thread_sender2,NULL,sender2_thread,NULL);
 		pthread_create(&thread_validator, NULL, validator_thread, NULL);
-		cout<<"Threads creados"<<endl;
 
-		cSocket1->SendBloq("Ack", sizeof("Ack"));
 
 		pthread_join(thread_timer, NULL);
 		pthread_join(thread_receiver1, NULL);
