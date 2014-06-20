@@ -17,6 +17,7 @@ public:
 	string nombre;
 	short int posicion_x;
 	short int posicion_y;
+	unsigned short int cantidad_vidas;
 	unsigned int puntaje_parcial;
 
 	Felix();

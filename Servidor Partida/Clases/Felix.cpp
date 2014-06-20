@@ -12,6 +12,7 @@ Felix::Felix() {
 	this->posicion_x = -1;
 	this->posicion_y = -1;
 	this->puntaje_parcial = 0;
+	this->cantidad_vidas = 3;
 }
 
 Felix::Felix(string nombre) {
@@ -20,6 +21,7 @@ Felix::Felix(string nombre) {
 	this->posicion_x = -1;
 	this->posicion_y = -1;
 	this->puntaje_parcial = 0;
+	this->cantidad_vidas = 3;
 }
 
 Felix::Felix(string nombre, int x, int y) {
@@ -27,6 +29,7 @@ Felix::Felix(string nombre, int x, int y) {
 	this->posicion_x = x;
 	this->posicion_y = y;
 	this->puntaje_parcial = 0;
+	this->cantidad_vidas = 3;
 }
 
 Felix::~Felix() {

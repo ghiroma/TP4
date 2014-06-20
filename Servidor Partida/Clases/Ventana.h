@@ -8,17 +8,18 @@
 #ifndef VENTANA_H_
 #define VENTANA_H_
 
+#include "Felix.h"
+
 class Ventana {
 
 public:
-	bool jugador1;
-	bool jugador2;
+	Felix * felix;
 	bool torta;
 	bool marquesina;
 	int ventanaRota;
 
 	Ventana();
-	Ventana(bool jugador1, bool jugador2, bool torta, bool marquesina,
+	Ventana(Felix * felix, bool torta, bool marquesina,
 			int rota);
 	Ventana(bool torta, bool marquesina, int rota);
 	Ventana(int rota);

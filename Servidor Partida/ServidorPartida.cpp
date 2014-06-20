@@ -17,61 +17,59 @@
 
 using namespace std;
 
-struct args_struct
-{
-  int fd1;
-  int fd2;
+struct args_struct {
+	int fd1;
+	int fd2;
 };
 
-int
-main (int argc, char * argv[])
-{
-  int fdJugador1;
-  int fdJugador2;
+int main(int argc, char * argv[]) {
+	int fdJugador1;
+	int fdJugador2;
 
-  struct args_struct args;
+	struct args_struct args;
 
-  pthread_t thread_timer;
-  pthread_t thread_receiver1;
-  pthread_t thread_receiver2;
-  pthread_t thread_sender;
+	pthread_t thread_timer;
+	pthread_t thread_receiver1;
+	pthread_t thread_receiver2;
+	pthread_t thread_sender;
+	pthread_t thread_validator;
 
-  signal (SIGINT, SIGINT_Handler);
+	signal(SIGINT, SIGINT_Handler);
 
-  //TODO Temporalmente hago que el servidor de partida sea un servidor de torneo.
-  ServerSocket sSocket (5555);
+	srand(time(NULL));
 
-  while (true)
-    {
-      cSocket1 = sSocket.Accept ();
-      //cSocket2 = sSocket.Accept();
-      cout << "Conexion Recibida" << endl;
+	//TODO Temporalmente hago que el servidor de partida sea un servidor de torneo.
+	ServerSocket sSocket(5555);
 
-      //Fin TODO Temporalmente.
-      //Recibo todos los datos del servidortorneo.
+	while (true) {
+		cSocket1 = sSocket.Accept();
+		//cSocket2 = sSocket.Accept();
+		cout << "Conexion Recibida" << endl;
 
-      //Creo los 4 thread.
-      pthread_create (&thread_timer, NULL, timer_thread, NULL);
-      pthread_create (&thread_receiver1, NULL, receiver1_thread,
-		      (void *) &cSocket1->ID);
-      //pthread_create(&thread_receiver2,NULL,receiver2_thread,NULL);
-      args.fd1 = cSocket1->ID;
-      //args.fd2=cSocket2->ID;
-      pthread_create (&thread_sender, NULL, sender_thread, (void *) &args);
-      cout << "Creando Threads" << endl;
-      cSocket1->SendBloq ("Ack", sizeof("Ack"));
+		//Fin TODO Temporalmente.
+		//Recibo todos los datos del servidortorneo.
 
-      pthread_join (thread_timer, NULL);
-      pthread_join (thread_receiver1, NULL);
-      //pthread_join(thread_receiver2,NULL);
-      pthread_join (thread_sender, NULL);
-    }
+		//Creo los 4 thread.
+		pthread_create(&thread_timer, NULL, timer_thread, NULL);
+		pthread_create(&thread_receiver1, NULL, receiver1_thread,
+				(void *) &cSocket1->ID);
+		//pthread_create(&thread_receiver2,NULL,receiver2_thread,NULL);
+		pthread_create(&thread_sender, NULL, sender_thread, NULL);
+		pthread_create(&thread_validator, NULL, validator_thread, NULL);
+		cout<<"Threads creados"<<endl;
 
-  delete (cSocket1);
-  //delete(cSocket2);
-  return 0;
-  //TODO envio puntaje al padre.
+		cSocket1->SendBloq("Ack", sizeof("Ack"));
+
+		pthread_join(thread_timer, NULL);
+		pthread_join(thread_receiver1, NULL);
+		//pthread_join(thread_receiver2,NULL);
+		pthread_join(thread_sender, NULL);
+		pthread_join(thread_validator,NULL);
+	}
+
+	delete (cSocket1);
+	//delete(cSocket2);
+	return 0;
+	//TODO envio puntaje al padre.
 }
-
-
 
