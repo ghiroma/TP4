@@ -17,6 +17,8 @@
 using namespace std;
 
 extern bool stop;
+extern bool cliente1_conectado;
+extern bool cliente2_conectado;
 
 extern queue<string> receiver1_queue;
 extern queue<string> receiver2_queue;

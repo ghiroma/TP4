@@ -15,6 +15,8 @@
 using namespace std;
 
 bool stop = false;
+bool cliente1_conectado = true;
+bool cliente2_conectado = true;
 
 queue<string> receiver1_queue;
 queue<string> receiver2_queue;
@@ -155,8 +157,28 @@ void * validator_thread(void * argument) {
 }
 
 void * keepAliveThread(void * argument) {
-	//Enviar mensajes cada cierto intervalo para saber si esta vivo
-	//Ver quien es necesario que haga esto.
+	char buffer[10];
+
+	while (stop == false && (cliente1_conectado || cliente2_conectado)) {
+
+		if (cliente1_conectado) {
+			cSocket1->SendBloq(CD_ACK, sizeof(char) * strlen(CD_ACK));
+			cSocket1->ReceiveBloq(buffer, sizeof(buffer));
+			if (strlen(buffer) == 0) {
+				cliente1_conectado = false;
+			}
+		}
+
+		if (cliente2_conectado) {
+			cSocket2->SendBloq(CD_ACK, sizeof(char) * strlen(CD_ACK));
+			cSocket2->ReceiveBloq(buffer, sizeof(buffer));
+			if (strlen(buffer)) {
+				cliente2_conectado = false;
+			}
+		}
+	}
+
+	pthread_exit(0);
 }
 
 bool validateMovement(int fila, int columna, Edificio * edificio) {
