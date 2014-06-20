@@ -46,7 +46,7 @@ int main(int argc, char * argv[]) {
 	int clientId = 1;
 	pid_t pid;
 	//list<Jugador> listJugadores;
-	map<int, Jugador* > listJugadores;
+	map<int, Jugador*> listJugadores;
 	pthread_t thTemporizadorTorneo;
 	int resultThread;
 	threadTemporizador_data temporizacion;
@@ -69,7 +69,6 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
-
 	/////////////////////////////////////////////////
 	//CODIGO PARA PROBAR EL ASIGNADOR DE PARTIDAS
 	Jugador jugador1(clientId, "pedro 1");
@@ -89,6 +88,17 @@ int main(int argc, char * argv[]) {
 	jugador3.agregarJugador(2);
 	listJugadores[clientId] = &jugador3;
 	clientId++;
+
+	Jugador jugador4(clientId, "pablo 4");
+	jugador4.agregarJugador(1);
+	jugador4.agregarJugador(2);
+	jugador4.agregarJugador(3);
+	listJugadores[clientId] = &jugador4;
+	clientId++;
+
+	jugador1.agregarJugador(4);
+	jugador2.agregarJugador(4);
+	jugador3.agregarJugador(4);
 
 	(*listJugadores[1]).obtenerOponente(&listJugadores);
 
