@@ -5,9 +5,10 @@
  *      Author: ghiroma
  */
 
-#ifndef CONSTANTES_H_
-#define CONSTANTES_H_
+#ifndef CONSTANTES_H_2
+#define CONSTANTES_H_2
 
+/*
 #define ARRIBA "Movimiento Arriba"
 #define ABAJO "Movimiento Abajo"
 #define DERECHA "Movimiento Derecha"
@@ -41,6 +42,7 @@ enum Intervalos{
     Ladrillo_2 = 1,
     Paloma = 2,
 };
+*/
 
 
 #endif /* CONSTANTES_H_ */

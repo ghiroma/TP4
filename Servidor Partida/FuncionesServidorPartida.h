@@ -11,7 +11,6 @@
 #include "Clases/CommunicationSocket.h"
 #include "Clases/Edificio.h"
 #include "Clases/Felix.h"
-#include "Support/Constantes.h"
 #include <time.h>
 #include <queue>
 #include <string>
@@ -26,21 +25,23 @@ extern bool cliente2_jugando;
 
 extern queue<string> receiver1_queue;
 extern queue<string> receiver2_queue;
-extern queue<string> sender_queue;
+extern queue<string> sender1_queue;
+extern queue<string> sender2_queue;
 
 extern CommunicationSocket * cSocket1;
 extern CommunicationSocket * cSocket2;
 
-extern Felix felix1;
-extern Felix felix2;
+extern Felix *felix1;
+extern Felix *felix2;
 
-extern Edificio * edificio;
+extern Edificio *edificio;
 
 bool TimeDifference(int timeDifference, time_t startingTime);
 void* timer_thread(void* argument);
 void* receiver1_thread(void * argument);
 void* receiver2_thread(void * argument);
-void* sender_thread(void * arguments);
+void* sender1_thread(void * arguments);
+void* sender2_thread(void * arguments);
 void* validator_thread(void * argument);
 void* keepAlive_thread(void * argument);
 int randomRalphMovement();

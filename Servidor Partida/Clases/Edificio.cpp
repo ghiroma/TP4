@@ -20,9 +20,9 @@ Edificio::Edificio(int filas, int columnas, int nivel)
 
 }
 
-/*Edificio::Edificio(int filas, int columnas) {
-	this(filas,columnas,0);
-}*/
+Edificio::Edificio(int filas, int columnas) {
+
+}
 
 Edificio::~Edificio() {
 	for(int i=0;i<this->filas;i++)

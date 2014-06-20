@@ -27,15 +27,16 @@ bool cliente2_jugando = true;
 
 queue<string> receiver1_queue;
 queue<string> receiver2_queue;
-queue<string> sender_queue;
+queue<string> sender1_queue;
+queue<string> sender2_queue;
 
 CommunicationSocket * cSocket1;
 CommunicationSocket * cSocket2;
 
-Felix felix1;
-Felix felix2;
+Felix *felix1;
+//Felix felix2;
 
-Edificio * edificio;
+Edificio *edificio;
 
 bool TimeDifference(int timeDifference, time_t startingTime) {
 	if ((time(0) - startingTime) > timeDifference) {
@@ -55,35 +56,44 @@ timer_thread(void* arg) {
 	//TODO sacar hardcodeo.
 	while (stop == false) {
 
+		cout<<"Corriendo timer_thread"<<endl;
+
 		if (TimeDifference(INTERVALOS_KEEPALIVE, startingTimeKeepAlive)
 				== true) {
+			cout<<"Entro ACK"<<endl;
+
 			string message(CD_ACK);
-			sender_queue.push(message);
+			cout<<"Mensaje creado: "<<message<<endl;
+			sender1_queue.push(message);
+			//sender2_queue.push(message);
 			startingTimeKeepAlive = time(0);
 		}
 
 		if (TimeDifference(INTERVALOS_RALPH, startingTimeRalph) == true) {
 			char aux[5];
 			string message(CD_MOVIMIENTO_RALPH);
-			sprintf(aux,"%d",randomRalphMovement());
+			sprintf(aux, "%d", randomRalphMovement());
 			message.append(aux);
-			sender_queue.push(message);
+			sender1_queue.push(message);
+			//sender2_queue.push(message);
 			startingTimeRalph = time(0);
 		}
 
 		if (TimeDifference(INTERVALOS_PALOMA, startingTimePaloma) == true) {
 			string message(CD_PALOMA);
 			char aux[5];
-			sprintf(aux,"%d",randomPaloma(0));
+			sprintf(aux, "%d", randomPaloma(0));
 			message.append(aux);
-			sender_queue.push(message);
+			sender1_queue.push(message);
+			//sender2_queue.push(message);
 			startingTimePaloma = time(0);
 		}
 
 		if (TimeDifference(INTERVALOS_TORTA, startingTimeTorta) == true) {
 			string message(CD_TORTA);
 			message.append(randomTorta());
-			sender_queue.push(message);
+			sender1_queue.push(message);
+			//sender2_queue.push(message);
 			startingTimeTorta = time(0);
 		}
 
@@ -96,31 +106,48 @@ timer_thread(void* arg) {
 			startingTimePersiana = time(0);
 		}
 
-		usleep(8000);
+		//usleep(8000);
+		sleep(1);
 	}
 
 	pthread_exit(0);
 }
 
 void*
-sender_thread(void * arguments) {
-	while (stop == false && (cliente1_conectado || cliente2_conectado)) {
-		if (!sender_queue.empty()) {
+sender1_thread(void * arguments) {
+	while (stop == false && cliente1_conectado) {
+		cout<<"Ejecuto sender 1"<<endl;
+		if (!sender1_queue.empty()) {
 			//Lo que venga del timer y validator, se replica a ambos jugadores.
-			string message = sender_queue.front();
-			sender_queue.pop();
+			string message = sender1_queue.front();
+			sender1_queue.pop();
 			cout << "Mensaje a enviar: " << message.c_str() << endl;
-			if(cliente1_conectado)
-			{
+			if (cliente1_conectado) {
 				cSocket1->SendBloq(message.c_str(), message.length());
-			}
-			if(cliente2_conectado)
-			{
-			//cSocket2->SendBloq(message.c_str(),message.length());
 			}
 		}
 
-		usleep(8000);
+		sleep(1);
+	}
+
+	cout<<"Termino el sender1"<<endl;
+	pthread_exit(0);
+}
+
+void*
+sender2_thread(void * arguments) {
+	while (stop == false && cliente2_conectado) {
+		if (!sender2_queue.empty()) {
+			//Lo que venga del timer y validator, se replica a ambos jugadores.
+			string message = sender2_queue.front();
+			sender2_queue.pop();
+			cout << "Mensaje a enviar: " << message.c_str() << endl;
+			if (cliente2_conectado) {
+				cSocket2->SendBloq(message.c_str(), message.length());
+			}
+		}
+
+		sleep(1);
 	}
 
 	pthread_exit(0);
@@ -128,19 +155,21 @@ sender_thread(void * arguments) {
 
 void*
 receiver1_thread(void * fd) {
-	char buffer[512];
+	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	int readDataCode;
 	bzero(buffer, sizeof(buffer));
 
 	while (stop == false && cliente1_conectado) {
 		readDataCode = cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
-		if (readDataCode > 0) {
+		if (strlen(buffer) > 0) {
 			string aux(buffer);
+			cout<<"Recibi mensaje: "<<buffer<<endl;
 			receiver1_queue.push(aux);
-		} else if (readDataCode == 0) {
-			cliente1_conectado = false;
+		} else if (strlen(buffer)==0) {
+			//cliente1_conectado = false;
 		}
-		usleep(8000);
+		//usleep(8000);
+		sleep(1);
 	}
 
 	pthread_exit(0);
@@ -148,7 +177,7 @@ receiver1_thread(void * fd) {
 
 void*
 receiver2_thread(void * fd) {
-	char buffer[512];
+	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	int readDataCode;
 	bzero(buffer, sizeof(buffer));
 
@@ -173,11 +202,30 @@ void * validator_thread(void * argument) {
 		if (!receiver1_queue.empty()) {
 			string message = receiver1_queue.front();
 			receiver1_queue.pop();
-
+			string scodigo = message.substr(0,2);
+			int codigo = atoi(scodigo.c_str());
 			//Dependiendo del codigo, voy a ver que valido.
-			//switch () {
+			switch (codigo) {
 			//Escribe en el sender_queue.
-			//}
+			case 4:
+				cout<<"Entro a movimiento felix"<<endl;
+				int fila = atoi(message.substr(2,1).c_str());
+				cout<<"Fila: "<<fila<<endl;
+				int columna = atoi(message.substr(3,1).c_str());
+				cout<<"Columna: "<<columna<<endl;
+
+				cout<<felix1->puntaje_parcial<<endl;
+				cout<<edificio->columnas<<endl;
+
+				if(validateMovement(felix1,fila,columna,edificio))
+				{
+					string mensaje_movimiento1 = scodigo+"1"+message.substr(2,2);
+					string mensaje_movimiento2 = scodigo+"2"+message.substr(2,2);
+					sender1_queue.push(mensaje_movimiento1);
+					sender2_queue.push(mensaje_movimiento2);
+				}
+				break;
+			}
 		}
 		if (!receiver2_queue.empty()) {
 			string message = receiver2_queue.front();
@@ -190,8 +238,7 @@ void * validator_thread(void * argument) {
 		}
 
 		//Murieron los dos jugadores.
-		if(cliente1_jugando == false && cliente2_jugando==false)
-		{
+		if (cliente1_jugando == false && cliente2_jugando == false) {
 			stop = true;
 		}
 	}
@@ -199,64 +246,36 @@ void * validator_thread(void * argument) {
 	pthread_exit(0);
 }
 
-void * keepAliveThread(void * argument) {
-	char buffer[10];
-
-	while (stop == false && (cliente1_conectado || cliente2_conectado)) {
-
-		if (cliente1_conectado) {
-			cSocket1->SendBloq(CD_ACK, sizeof(char) * strlen(CD_ACK));
-			if (strlen(buffer) == 0) {
-				cliente1_conectado = false;
-			}
-		}
-
-		if (cliente2_conectado) {
-			cSocket2->SendBloq(CD_ACK, sizeof(char) * strlen(CD_ACK));
-			cSocket2->ReceiveBloq(buffer, sizeof(buffer));
-			if (strlen(buffer)) {
-				cliente2_conectado = false;
-			}
-		}
-
-		usleep(10000);
-	}
-
-	pthread_exit(0);
+int randomRalphMovement() {
+	return rand() % (EDIFICIO_COLUMNAS + 1);
 }
 
-int randomRalphMovement()
-{
-	return rand()%(EDIFICIO_COLUMNAS+1);
-}
-
-int randomPaloma(int nivel)
-{
-	if(nivel==0)
-		return rand()%(EDIFICIO_FILAS_1+1);
-	else if(nivel==1)
-		return rand()%(EDIFICIO_FILAS_2+1);
+int randomPaloma(int nivel) {
+	if (nivel == 0)
+		return rand() % (EDIFICIO_FILAS_1 + 1);
+	else if (nivel == 1)
+		return rand() % (EDIFICIO_FILAS_2 + 1);
 	return 0;
 }
 
-char* randomTorta()
-{
+char* randomTorta() {
 	char location[3];
-	char aux [2];
+	char aux[2];
 
-	sprintf(aux,"%d",rand()%(EDIFICIO_FILAS_1+1));
-	strcpy(location,aux);
-	sprintf(aux,"%d",rand()%(EDIFICIO_COLUMNAS+1));
-	strcat(location,aux);
+	sprintf(aux, "%d", rand() % (EDIFICIO_FILAS_1 + 1));
+	strcpy(location, aux);
+	sprintf(aux, "%d", rand() % (EDIFICIO_COLUMNAS + 1));
+	strcat(location, aux);
 
 	return location;
 }
 
-bool validateMovement(Felix * felix, int fila, int columna, Edificio * edificio) {
+bool validateMovement(Felix * felix, int fila, int columna,
+		Edificio * edificio) {
 	if (((fila < edificio->filas || fila >= 0)
 			&& (columna < edificio->columnas || columna >= 0))
 			&& !edificio->ventanas[fila][columna].marquesina
-			&& edificio->ventanas[fila][columna].felix==NULL) {
+			&& edificio->ventanas[fila][columna].felix == NULL) {
 
 		edificio->ventanas[felix->posicion_x][felix->posicion_y].felix = NULL;
 		edificio->ventanas[fila][columna].felix = felix;
@@ -268,7 +287,8 @@ bool validateMovement(Felix * felix, int fila, int columna, Edificio * edificio)
 	return false;
 }
 
-bool validateWindowFix(Felix * felix, int fila, int columna, Edificio * edificio) {
+bool validateWindowFix(Felix * felix, int fila, int columna,
+		Edificio * edificio) {
 	if (edificio->ventanas[fila][columna].ventanaRota > 0) {
 		felix->puntaje_parcial++;
 		edificio->ventanas[fila][columna].ventanaRota--;
@@ -277,8 +297,7 @@ bool validateWindowFix(Felix * felix, int fila, int columna, Edificio * edificio
 	return false;
 }
 
-bool validateLives(Felix * felix)
-{
+bool validateLives(Felix * felix) {
 	return --felix->cantidad_vidas == 0;
 }
 

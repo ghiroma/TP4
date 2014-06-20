@@ -3,12 +3,14 @@
 //#include <SDL/SDL_image.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sstream>
 #include <pthread.h>
 #include <time.h>
 #include <signal.h>
 #include <sys/types.h>
 #include "Clases/CommunicationSocket.h"
 #include <iostream>
+#include <string>
 
 #define ANCHO_PANTALLA	640
 #define ALTO_PANTALLA 480
@@ -48,6 +50,7 @@ void DibujarVentanas(struct ventana[][5], unsigned short int, SDL_Surface *, SDL
 void CargarVentanasDelTramo(struct ventana*, unsigned short int,
 		unsigned short int, unsigned short int, char, unsigned short int, unsigned short int);
 void *EscuchaTeclas(void *);
+void *EnvioServidor(void *);
 void *EscuchaServidor(void *);
 void *ControlaMovimientos(void *);
 void *DibujarPantalla(void *); //Se usará mas adelante.
@@ -97,7 +100,7 @@ short int roca_siguiente = 0;
 short int cant_rocas = 0;
 unsigned short int tramo = 1;
 unsigned short int nivel = 1;
-pthread_t tpid_teclas, tpid_escuchar, tpid_ctrlmov;
+pthread_t tpid_teclas, tpid_escuchar, tpid_ctrlmov,tpid_envia;
 char salir = 'N';
 char buffer[256];
 SDL_Event evento;
@@ -167,17 +170,18 @@ int main(int argc, char *argv[]) {
 
 	cout << "Intentando conectarme" << endl;
 
-	socket = new CommunicationSocket(5555, "127.0.0.1");
+	socket = new CommunicationSocket(5556, "127.0.0.1");
 
 	socket->ReceiveBloq(buffer, sizeof(buffer));
 	cout << "Conectado" << endl;
 	cout << "mesaje del servidor: " << buffer << endl;
 	pthread_create(&tpid_teclas, NULL, EscuchaServidor, &socket->ID);
+	pthread_create(&tpid_envia,NULL,EnvioServidor,&socket->ID);
 
 //Inicio modo video
 	SDL_Init(SDL_INIT_VIDEO);
 //Inicio modo texto grafico
-	TTF_Init();
+	//TTF_Init();
 	signal(SIGINT, handler);
 //Defino las propiedades de la pantalla del juego
 	superficie = SDL_SetVideoMode(ANCHO_PANTALLA, ALTO_PANTALLA, BPP,
@@ -185,9 +189,9 @@ int main(int argc, char *argv[]) {
 //Seteo el titulo de la pantalla
 	SDL_WM_SetCaption("Rahlp Tournament", NULL);
 //Cargo la fuente
-	fuente = TTF_OpenFont("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf",24);
+	//fuente = TTF_OpenFont("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf",24);
 //Color del texto
-	color_texto.r = color_texto.g = color_texto.b = 245;
+	//color_texto.r = color_texto.g = color_texto.b = 245;
 
 //Pantalla de inicio.
 //Acá se ingresa el nombre
@@ -200,7 +204,7 @@ int main(int argc, char *argv[]) {
 // ---
 //Modularizarlo despues.
 // ---
-	while (salir == 'N') {
+/*	while (salir == 'N') {
 		SDL_WaitEvent(&evento);
 		if(evento.key.keysym.sym != SDLK_SPACE){
 			pantalla_juego.x = 0;
@@ -250,7 +254,7 @@ int main(int argc, char *argv[]) {
 		else
 			salir = 'S';
 	usleep(100000);
-	}
+	}*/
 	salir = 'N';
 
 //Empiezo a tirar Thread.
@@ -485,6 +489,28 @@ void* EscuchaServidor(void *arg) {
 		}
 		sleep(1);
 		//usleep(10000);
+	}
+}
+
+void * EnvioServidor(void * arg)
+{
+	int fd = *(int *)arg;
+	CommunicationSocket cSocket(fd);
+	while(salir == 'N')
+	{
+		//string mensaje = cola_mensaje.front();
+		//
+		ostringstream ss1;
+		ostringstream ss2;
+		string mensaje("04");
+		ss1<<felix_posicion.fila;
+		mensaje.append(ss1.str());
+		ss2<<felix_posicion.columna;
+		mensaje.append(ss2.str());
+		//mensaje = "04" + felix_posicion.fila + felix_posicion.columna;
+		cout<<"Mensaje a enviar: "<<mensaje<<endl;
+		cSocket.SendBloq(mensaje.c_str(), sizeof(mensaje));
+		sleep(1);
 	}
 }
 
