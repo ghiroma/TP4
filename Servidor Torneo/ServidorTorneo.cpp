@@ -45,7 +45,8 @@ int main(int argc, char * argv[]) {
 	int cantVidas = 0;
 	int clientId = 1;
 	pid_t pid;
-	list<Jugador> listJugadores;
+	//list<Jugador> listJugadores;
+	map<int, Jugador* > listJugadores;
 	pthread_t thTemporizadorTorneo;
 	int resultThread;
 	threadTemporizador_data temporizacion;
@@ -74,28 +75,27 @@ int main(int argc, char * argv[]) {
 	Jugador jugador1(clientId, "pedro 1");
 	jugador1.agregarJugador(2);
 	jugador1.agregarJugador(3);
-	listJugadores.push_back(jugador1);
+	listJugadores[clientId] = &jugador1;
 	clientId++;
 
 	Jugador jugador2(clientId, "carlos 2");
 	jugador2.agregarJugador(1);
 	jugador2.agregarJugador(3);
-	listJugadores.push_back(jugador2);
+	listJugadores[clientId] = &jugador2;
 	clientId++;
 
 	Jugador jugador3(clientId, "mati 3");
 	jugador3.agregarJugador(1);
 	jugador3.agregarJugador(2);
-	listJugadores.push_back(jugador3);
+	listJugadores[clientId] = &jugador3;
 	clientId++;
 
-	listJugadores.front().obtenerOponente(&listJugadores);
+	(*listJugadores[1]).obtenerOponente(&listJugadores);
 
-	for (list<Jugador>::iterator it = (listJugadores).begin(); it != (listJugadores).end(); it++) {
+	for (map<int, Jugador*>::iterator it = (listJugadores).begin(); it != (listJugadores).end(); it++) {
+		cout << (*(*it).second).Nombre << " - partidas:" << endl;
 
-		cout << (*it).Nombre << " - partidas:" << endl;
-
-		for (map<int, int>::iterator itmap = (*it).Partidas.begin(); itmap != (*it).Partidas.end(); ++itmap) {
+		for (map<int, int>::iterator itmap = (*(*it).second).Partidas.begin(); itmap != (*(*it).second).Partidas.end(); ++itmap) {
 			std::cout << itmap->first << " => " << itmap->second << '\n';
 		}
 	}
@@ -124,7 +124,7 @@ int main(int argc, char * argv[]) {
 			delete (cSocket);
 			string nombreTemp = "juancito"; //TODO Sacar el hardcodeo y obtener nombre.
 			Jugador jugador(clientId, nombreTemp);
-			listJugadores.push_back(jugador);
+			//listJugadores.push_back(jugador);
 			clientId++;
 		}
 	}

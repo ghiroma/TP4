@@ -12,7 +12,7 @@ Jugador::Jugador() {
 	this->Nombre = "";
 	this->Puntaje = 0;
 	this->SocketAsociado = 0;
-	this->jugando = false;
+	this->Jugando = false;
 }
 
 Jugador::Jugador(int Id, string Nombre) {
@@ -20,7 +20,7 @@ Jugador::Jugador(int Id, string Nombre) {
 	this->Nombre = Nombre;
 	this->Puntaje = 0;
 	this->SocketAsociado = 0;
-	this->jugando = false;
+	this->Jugando = false;
 }
 
 int Jugador::sumarPuntaje(int Puntaje) {
@@ -32,27 +32,33 @@ void Jugador::actualizarPartida(int idOponente, int ganado) {
 }
 
 void Jugador::agregarJugador(int idOponente) {
-	this->Partidas[idOponente] = 0;
+	if(idOponente==1){
+		this->Partidas[idOponente] = 1;
+	}else{
+		this->Partidas[idOponente] = 2;
+	}
+	//this->Partidas[idOponente] = 0;
+
 }
 
 void Jugador::quitarJugador(int idOponente) {
 	this->Partidas.erase(idOponente);
 }
 
-int Jugador::obtenerOponente(list<Jugador>* listJugadores) {
+int Jugador::obtenerOponente(map<int, Jugador*>* listJugadores) {
 	bool oponenteEncontrado = false;
-	int idOponenteEncontrado = 0;
+	int idOponenteEncontrado = -1;
 	//si ya esta jugando no le busco un oponente
-	if (this->jugando) {
+	if (this->Jugando) {
 		return 0;
 	}
 
 	//busco un jugador que no haya jugado nunca contra este (que no este jugando)
-	for (list<Jugador>::iterator it = (*listJugadores).begin(); it != (*listJugadores).end(); it++) {
-		if ((*it).Id != this->Id && !(*it).jugando) {
-			if (this->Partidas[(*it).Id] == 0) {
-				cout << "oponente encontrado: " << (*it).Id << endl;
-				idOponenteEncontrado = (*it).Id;
+	for (map<int, Jugador*>::iterator it = (*listJugadores).begin(); it != (*listJugadores).end(); it++) {
+		if ((*(*it).second).Id != this->Id && !(*(*it).second).Jugando) {
+			if (this->Partidas[(*(*it).second).Id] == 0) {
+				cout << "oponente encontrado: " << (*(*it).second).Id << endl;
+				idOponenteEncontrado = (*(*it).second).Id;
 				break;
 			}
 		}
@@ -60,48 +66,76 @@ int Jugador::obtenerOponente(list<Jugador>* listJugadores) {
 
 	//si no encuentro ninguno
 	int idJugadorMenosVecesEnfrentado;
-	int minCantVecesEnfrentado;
+	int minCantVecesEnfrentado = -1;
 	map<int, int>::iterator p = this->Partidas.begin();
-	if (p != this->Partidas.end() && ) {
-		idJugadorMenosVecesEnfrentado = p->first;
-		minCantVecesEnfrentado = p->second;
-	}
-	while (p != this->Partidas.end()) {
-
+	//busco alguno que no este jugando para tomarlo como referencia(inicializar) de minCantVecesEnfrentado
+	while(p != this->Partidas.end()) {
+		if(!this->Jugando){
+			idJugadorMenosVecesEnfrentado = p->first;
+			minCantVecesEnfrentado = p->second;
+			break;
+		}
 		p++;
 	}
+	//si encontro alguno que no este jugando
+	if(minCantVecesEnfrentado != -1){
+		//busco en todo el listado el que menos veces jugo
+		p = this->Partidas.begin();
+		while (p != this->Partidas.end()) {
+			//////
+			////// cambiara a MAP sino no puedo acceder al jugador para ver si esta jungando
 
-	if (idOponenteEncontrado == 0) {
+			if(!(*(*listJugadores)[p->first]).Jugando && p->second < minCantVecesEnfrentado){
+				cout << "oponente encontrado: " << p->first << endl;
+				idJugadorMenosVecesEnfrentado = p->first;
+				minCantVecesEnfrentado = p->second;
+				break;
+			}
+
+
+			p++;
+		}
+	}
+
+	/*
+	if (idOponenteEncontrado == -1) {
 		//contabilizo los enfrentamientos y veo con quien se enfrento menos veces (que no este jugando)
 		for (list<Jugador>::iterator it = (*listJugadores).begin(); it != (*listJugadores).end(); it++) {
 			if ((*it).Id != this->Id && !(*it).jugando) {
+
 				if ((*it).Partidas[]) {
 
 				}
+
 			}
 		}
-
-	}
+	}*/
 
 	//si no encuentro ninguno
-	if (idOponenteEncontrado == 0) {
+	/*if (idOponenteEncontrado == -1) {
 		//asigno al primer jugador que encuentre (que no este jugando)
-		for (list<Jugador>::iterator it = (*listJugadores).begin(); it != (*listJugadores).end(); it++) {
-			if ((*it).Id != this->Id && !(*it).jugando) {
-
+		for (map<int,Jugador>::iterator it = (*listJugadores).begin(); it != (*listJugadores).end(); it++) {
+			if ((*it).Id != this->Id && !(*it).Jugando) {
+				cout << "oponente encontrado: " << (*it).Id << endl;
+				idOponenteEncontrado = (*it).Id;
+				break;
 			}
 		}
+	}*/
 
+	//no hay oponentes posibles
+	if (idOponenteEncontrado == -1){
+		cout<<"no hay oponentes posibles"<<endl;
+		return 0;
+	}else{
+		//seteo que los dos jugadores que van a enfrentarse estan jugando
+
+		//devuelvo los id
+		return 1;
 	}
 
-	//seteo que los dos jugadoros que van a enfrentarse estan jugando
-
-	//devuelvo los id
-
-	return 1;
 }
 
 Jugador::~Jugador() {
 	// TODO Auto-generated destructor stub
 }
-
