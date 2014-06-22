@@ -12,27 +12,19 @@
 
 #include <semaphore.h>
 
-class Semaforo
-{
+class Semaforo {
 private:
-  sem_t *sem;
-  const char* nombre;
-  pid_t pid;
+	sem_t *sem;
+	const char* nombre;
+	pid_t pid;
 public:
-  Semaforo (const char*, int); //Semaforo s1((char*)"/s1", 1);
-  void
-  getName ();
-  int
-  getValue ();
-  int
-  P ();
-  int
-  V ();
-  void
-  close ();
-  virtual
-  ~Semaforo ();
-
+	Semaforo(const char*, int); //Semaforo s1((char*)"/s1", 1);
+	void getName();
+	int getValue();
+	int P();
+	int V();
+	void close();
+	virtual ~Semaforo();
 };
 
 #endif /* SEMAFORO_H_ */
