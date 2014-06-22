@@ -1,11 +1,7 @@
-/*
- * ServidorTorneo.cpp
- *
- *  Created on: Jun 8, 2014
- *      Author: ghiroma
- */
 #include "Clases/ServerSocket.h"
 #include "Clases/CommunicationSocket.h"
+#include "Jugador.h"
+#include "Funciones.h"
 #include <string.h>
 #include <pthread.h>
 #include <iostream>
@@ -15,41 +11,25 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <signal.h>
-#include "Funciones.h"
-#include "Jugador.h"
 
-struct threadTemporizador_data {
-	bool timeIsUp;
-	int duracion;
-};
-pthread_mutex_t mutex_timeIsUp = PTHREAD_MUTEX_INITIALIZER;
-//Controla el tiempo que debe durar el torneo
-void* temporizadorTorneo(void* data) {
-	struct threadTemporizador_data *torneo;
-	torneo = (struct threadTemporizador_data *) data;
-
-	sleep(torneo->duracion * 60);
-	pthread_mutex_lock(&mutex_timeIsUp);
-	torneo->timeIsUp = true;
-	pthread_mutex_unlock(&mutex_timeIsUp);
-
-	pthread_exit(NULL);
-}
 using namespace std;
 
+pthread_mutex_t mutex_listJugadores = PTHREAD_MUTEX_INITIALIZER;
+map<int, Jugador*> listJugadores;
+unsigned int puerto;
+
 int main(int argc, char * argv[]) {
-	unsigned int puerto = 0;
+	cout<<"Comienza servidor Torneo PID:"<<getpid()<<endl;
 	string ip = "";
 	int duracionTorneo = 0;
 	int tiempoInmunidad = 0;
 	int cantVidas = 0;
-	int clientId = 1;
-	pid_t pid;
-	//list<Jugador> listJugadores;
-	map<int, Jugador*> listJugadores;
+	int clientId = 0;
 	pthread_t thTemporizadorTorneo;
-	int resultThread;
-	threadTemporizador_data temporizacion;
+	int resultThTemporizador;
+	thTemporizador_data temporizacion;
+	pthread_t thEstablecerPartidas;
+	int resultThEstablecerPartidas;
 
 	signal(SIGINT, SIGINT_Handler);
 
@@ -59,86 +39,82 @@ int main(int argc, char * argv[]) {
 		cout << "Error al obtener configuracion." << endl;
 		exit(1);
 	}
-
-	//Lanzar temporizador del torneo
-	temporizacion.timeIsUp = false;
-	temporizacion.duracion = duracionTorneo;
-	resultThread = pthread_create(&thTemporizadorTorneo, NULL, temporizadorTorneo, (void *) &temporizacion);
-	if (resultThread) {
-		cout << "Error no se pudo crear el thread de temporizacion del torneo," << resultThread << endl;
-		exit(1);
-	}
+	cout << "puerto: " << puerto << endl;
 
 	/////////////////////////////////////////////////
 	//CODIGO PARA PROBAR EL ASIGNADOR DE PARTIDAS
-	Jugador jugador1(clientId, "pedro 1");
-	jugador1.agregarJugador(2);
-	jugador1.agregarJugador(3);
-	listJugadores[clientId] = &jugador1;
 	clientId++;
-
-	Jugador jugador2(clientId, "carlos 2");
-	jugador2.agregarJugador(1);
-	jugador2.agregarJugador(3);
-	listJugadores[clientId] = &jugador2;
+	Jugador jugador1(clientId, "pedro 1", NULL);
 	clientId++;
-
-	Jugador jugador3(clientId, "mati 3");
-	jugador3.agregarJugador(1);
-	jugador3.agregarJugador(2);
-	listJugadores[clientId] = &jugador3;
+	Jugador jugador2(clientId, "carlos 2", NULL);
 	clientId++;
-
-	Jugador jugador4(clientId, "pablo 4");
-	jugador4.agregarJugador(1);
-	jugador4.agregarJugador(2);
-	jugador4.agregarJugador(3);
-	listJugadores[clientId] = &jugador4;
+	Jugador jugador3(clientId, "mati 3", NULL);
 	clientId++;
+	Jugador jugador4(clientId, "pablo 4", NULL);
+	clientId++;
+	Jugador jugador5(clientId, "martin 5", NULL);
+	clientId++;
+	Jugador jugador6(clientId, "fernando 6", NULL);
 
-	jugador1.agregarJugador(4);
-	jugador2.agregarJugador(4);
-	jugador3.agregarJugador(4);
+	agregarJugador(&jugador1);
+	agregarJugador(&jugador2);
+	agregarJugador(&jugador3);
+	agregarJugador(&jugador4);
+	agregarJugador(&jugador5);
+	agregarJugador(&jugador6);
 
-	(*listJugadores[1]).obtenerOponente(&listJugadores);
 
-	for (map<int, Jugador*>::iterator it = (listJugadores).begin(); it != (listJugadores).end(); it++) {
-		cout << (*(*it).second).Nombre << " - partidas:" << endl;
+	//cout << "oponente para el jugador 1: " << (*listJugadores[1]).obtenerOponente(&listJugadores) << endl;
 
-		for (map<int, int>::iterator itmap = (*(*it).second).Partidas.begin(); itmap != (*(*it).second).Partidas.end(); ++itmap) {
-			std::cout << itmap->first << " => " << itmap->second << '\n';
-		}
-	}
+	/**/
+	 for (map<int, Jugador*>::iterator it = (listJugadores).begin(); it != (listJugadores).end(); it++) {
+	 cout << (*(*it).second).Nombre << " - partidas:" << endl;
 
-	exit(1);
+	 for (map<int, int>::iterator itmap = (*(*it).second).Partidas.begin(); itmap != (*(*it).second).Partidas.end(); ++itmap) {
+	 std::cout << itmap->first << " => " << itmap->second << '\n';
+	 }
+	 }
+	 /**/
 	//////////////////////////////////////////////////////
-
-	//Crear Socket del Servidor
-	ServerSocket sSocket(puerto, (char *) ip.c_str());
-
-	while (!temporizacion.timeIsUp) {
-		CommunicationSocket * cSocket = sSocket.Accept();
-
-		//Verifico si es un jugador nuevo, si es asi lo agrego a mi lista de jugadores y actualizo a todos los jugadores.
-		//El cliente tambien podria tener la clase jugador, y tener siempre sus datos ahi, asi de paso puede consultarlos.
-
-		pid = fork();
-		if ((pid) == 0) {
-			//Proceso hijo. Hacer exec
-
-		} else if (pid < 0) {
-			//Hubo error
-			cout << "Error al forkear" << endl;
-		} else {
-			//Soy el padre.
-			delete (cSocket);
-			string nombreTemp = "juancito"; //TODO Sacar el hardcodeo y obtener nombre.
-			Jugador jugador(clientId, nombreTemp);
-			//listJugadores.push_back(jugador);
-			clientId++;
-		}
+	//Lanzar THREAD de establecer partidas
+	temporizacion.timeIsUp = false;
+	temporizacion.duracion = duracionTorneo;
+	resultThEstablecerPartidas = pthread_create(&thEstablecerPartidas, NULL, establecerPartidas, (void *) &temporizacion);
+	if (resultThEstablecerPartidas) {
+		cout << "Error no se pudo crear el thread de Establecer Partidas," << endl;
+		exit(1);
 	}
+
+	//Lanzar THREAD temporizador del torneo
+	temporizacion.timeIsUp = false;
+	temporizacion.duracion = duracionTorneo;
+	temporizacion.thEstablecerPartidas = thEstablecerPartidas;
+	resultThTemporizador = pthread_create(&thTemporizadorTorneo, NULL, temporizadorTorneo, (void *) &temporizacion);
+	if (resultThTemporizador) {
+		cout << "Error no se pudo crear el thread de temporizacion del torneo," << endl;
+		exit(1);
+	}
+
+	//usleep(10000);
+	//exit(1);
+
+	/*
+	 //Crear Socket del Servidor
+	 ServerSocket sSocket(puerto, (char *) ip.c_str());
+	 char * nombreJugador = NULL;
+	 while (!temporizacion.timeIsUp) {
+	 CommunicationSocket * cSocket = sSocket.Accept();
+	 cSocket->ReceiveBloq(nombreJugador, sizeof(nombreJugador));
+	 clientId++;
+	 agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
+	 // mandarle el ID al Jugador  (convertir nro a char) cSocket->SendNoBloq( (char*)clientId, sizeof(clientId));
+	 }*/
+
+
+
+	pthread_join(thEstablecerPartidas, NULL);
 
 	pthread_exit(NULL);
+	cout<<"Fin proceso Servidor Torneo"<<endl;
 }
 

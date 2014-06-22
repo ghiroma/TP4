@@ -8,12 +8,14 @@
 #ifndef JUGADOR_H_
 #define JUGADOR_H_
 
+#include "Clases/CommunicationSocket.h"
 #include <string>
 #include <map>
 #include <iostream>
 #include <list>
 
 using namespace std;
+
 
 /*
  * Class Jugador:
@@ -23,22 +25,23 @@ using namespace std;
  *  Id representa un identificador unico del jugador.
  *  Partidas indica, el id del jugador y verdadero o falso segun si ya jugo.
  */
+
 class Jugador {
 public:
-	int Puntaje;
-	int SocketAsociado;
-	string Nombre;
 	int Id;
-	map<int, int> Partidas; //Agregar a constants. 0 No jugado, -1 Perdido, 1 Ganado.
+	string Nombre;
 	bool Jugando; //true si el jugador esta jugando en una partida
+	int Puntaje;
+	CommunicationSocket * SocketAsociado;
+	map<int, int> Partidas; //<ID Jugador, cantEnfrentamientos>
 
 	Jugador();
-	Jugador(int Id, string Nombre);
+	Jugador(int Id, string Nombre, CommunicationSocket * SocketAsociado);
 	int sumarPuntaje(int puntaje);
-	void actualizarPartida(int idOponente, int ganado);
-	void agregarJugador(int idOponente);
+	void actualizarPartidaCantEnfrentamientos(int idOponente);
+	void agregarOponente(int idOponente);
 	void quitarJugador(int idOponente);
-	int obtenerOponente(map<int, Jugador*>* listJugadores);
+	int obtenerOponente();
 	//int enviarMensaje();
 	//int recibirMensaje();
 
@@ -46,6 +49,7 @@ public:
 	~Jugador();
 };
 
+extern map<int, Jugador*> listJugadores;
 
 
 #endif /* JUGADOR_H_ */
