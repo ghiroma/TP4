@@ -1,22 +1,19 @@
 #ifndef FUNCIONESSERVIDORTORNEO_H_
 #define FUNCIONESSERVIDORTORNEO_H_
 
+#include "Support/ConstantesServidorTorneo.h"
 #include "Jugador.h"
 #include <pthread.h>
 #include <list>
 
-#define PERMISOS_SHM 0777
-#define CLAVE_MEMORIA_COMPARTIDA 1322
-
-//extern pthread_mutex_t mutex_puerto;
 extern pthread_mutex_t mutex_listJugadores;
 extern map<int, Jugador*> listJugadores;
-extern unsigned int puerto;
+extern unsigned int puertoPartida;
 extern int cantVidas;
 
 struct thTemporizador_data {
-	bool timeIsUp;
 	int duracion;
+	pthread_t thAceptarJugadores;
 	pthread_t thEstablecerPartidas;
 };
 
@@ -24,11 +21,11 @@ void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* 
 void SIGINT_Handler(int inum);
 void agregarJugador(Jugador* nuevoJugador);
 void quitarJugador(int id);
-unsigned int getPort();
 unsigned int getNewPort();
 void asociarSegmento(int* idShm, int* variable);
 //THREADS
 void* temporizadorTorneo(void* data);
+void* aceptarJugadores(void* data);
 void* establecerPartidas(void* data);
 
 //AUXILIARES

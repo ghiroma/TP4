@@ -26,6 +26,8 @@ static const char* CD_PUERTO_PARTIDA = "07";
 static const char* CD_ACK = "99";
 
 
+static const int PERMISOS_SHM = 0777;
+static const int CLAVE_MEMORIA_COMPARTIDA = 1322;
 
 
 #endif /* CONSTANTESSERVIDORTORNEO_H_ */

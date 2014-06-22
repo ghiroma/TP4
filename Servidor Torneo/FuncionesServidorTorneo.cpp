@@ -1,5 +1,5 @@
 #include "Support/ConstantesServidorTorneo.h"
-#include "../Servidor Partida/FuncionesServidorPartida.h"
+#include "Clases/ServerSocket.h"
 #include "FuncionesServidorTorneo.h"
 #include "./Clases/Semaforo.h"
 #include <string.h>
@@ -13,12 +13,14 @@
 #include <stdlib.h>
 #include <sstream>
 
+extern unsigned int puertoTorneo;
 Semaforo sem_inicializarTemporizador((char*) "/sem_inicializarTemporizador", 0);
-//pthread_mutex_t mutex_timeIsUp = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mutex_puerto = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_puertoPartida = PTHREAD_MUTEX_INITIALIZER;
 using namespace std;
 
-//Obtiene la configuracion inicial del torneo
+/**
+ * Obtener la configuracion inicial del torneo
+ */
 void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* tiempoInmunidad, int* cantVidas) {
 	string content;
 	string line;
@@ -88,24 +90,22 @@ void quitarJugador(int id) {
 	pthread_mutex_unlock(&mutex_listJugadores);
 }
 
-unsigned int getPort() {
-	pthread_mutex_lock(&mutex_puerto);
-	int puertoActual = puerto;
-	pthread_mutex_unlock(&mutex_puerto);
-	return puertoActual;
-}
-
+/**
+ * Obtener un nuevo puerto para asginarlo a una nueva partida
+ */
 unsigned int getNewPort() {
-	pthread_mutex_lock(&mutex_puerto);
-	int nuevoPuerto = puerto;
-	puerto++;
-	pthread_mutex_unlock(&mutex_puerto);
+	pthread_mutex_lock(&mutex_puertoPartida);
+	puertoPartida++;
+	int nuevoPuerto = puertoPartida;
+	pthread_mutex_unlock(&mutex_puertoPartida);
 	return nuevoPuerto;
 }
 
 /////////////////////////////// THREADS ////////////////////////////
 
-//Controla el tiempo que debe durar el torneo
+/**
+ * THREAD -> Controla el tiempo que debe durar el torneo
+ */
 void* temporizadorTorneo(void* data) {
 	struct thTemporizador_data *torneo;
 	torneo = (struct thTemporizador_data *) data;
@@ -113,15 +113,79 @@ void* temporizadorTorneo(void* data) {
 	sem_inicializarTemporizador.P();
 	cout << "Comienza el temporizador" << endl;
 	sleep(torneo->duracion * 60);
-	//pthread_mutex_lock(&mutex_timeIsUp);
-	torneo->timeIsUp = true;
-	//pthread_mutex_unlock(&mutex_timeIsUp);
 
+	pthread_cancel(torneo->thAceptarJugadores);
 	pthread_cancel(torneo->thEstablecerPartidas);
 	pthread_exit(NULL);
 }
 
-//Crea los servidores de partidas
+/**
+ * THREAD -> Aceptar las conexiones de nuevos jugadores al torneo
+ */
+void* aceptarJugadores(void* data) {
+	string* ip = (string*) data;
+	int clientId = 0;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//CODIGO PARA PROBAR EL ASIGNADOR DE PARTIDAS
+	clientId++;
+	Jugador jugador1(clientId, "pedro 1", NULL);
+	clientId++;
+	Jugador jugador2(clientId, "carlos 2", NULL);
+	clientId++;
+	Jugador jugador3(clientId, "mati 3", NULL);
+	clientId++;
+	Jugador jugador4(clientId, "pablo 4", NULL);
+	clientId++;
+	Jugador jugador5(clientId, "martin 5", NULL);
+	clientId++;
+	Jugador jugador6(clientId, "fernando 6", NULL);
+
+	agregarJugador(&jugador1);
+	agregarJugador(&jugador2);
+	agregarJugador(&jugador3);
+	agregarJugador(&jugador4);
+	agregarJugador(&jugador5);
+	agregarJugador(&jugador6);
+	//cout << "oponente para el jugador 1: " << (*listJugadores[1]).obtenerOponente(&listJugadores) << endl;
+
+	/**/
+	for (map<int, Jugador*>::iterator it = (listJugadores).begin(); it != (listJugadores).end(); it++) {
+		cout << (*(*it).second).Nombre << " - partidas:" << endl;
+
+		for (map<int, int>::iterator itmap = (*(*it).second).Partidas.begin(); itmap != (*(*it).second).Partidas.end(); ++itmap) {
+			std::cout << itmap->first << " => " << itmap->second << '\n';
+		}
+	}
+	/**/
+	//FIN CODIGO PARA PROBAR EL ASIGNADOR DE PARTIDAS
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+	//Crear Socket del Servidor
+	ServerSocket sSocket(puertoTorneo, (char *) (*ip).c_str());
+	char * nombreJugador = NULL;
+	while (true) {
+		CommunicationSocket * cSocket = sSocket.Accept();
+		cSocket->ReceiveBloq(nombreJugador, sizeof(nombreJugador));
+		clientId++;
+		agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
+
+		//mandarle el ID al Jugador
+		char aux[LONGITUD_CONTENIDO];
+		string message(CD_ID_JUGADOR);
+		sprintf(aux, "%d", clientId);
+		message.append(fillMessage(aux));
+		cSocket->SendNoBloq(message.c_str(), sizeof(message.c_str()));
+	}
+
+	pthread_exit(NULL);
+}
+
+/**
+ * THREAD -> Crea los servidores de partidas
+ */
 void* establecerPartidas(void* data) {
 	pid_t pid;
 	int idJugador;
@@ -165,8 +229,8 @@ void* establecerPartidas(void* data) {
 				sprintf(auxPuertoNuevaPartida, "%d", puertoNuevaPartida);
 				string message(CD_PUERTO_PARTIDA);
 				message.append(fillMessage(auxPuertoNuevaPartida));
-				listJugadores[idJugador]->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
-				listJugadores[idOponente]->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
+				//		listJugadores[idJugador]->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
+				//		listJugadores[idOponente]->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
 
 				if ((pid = fork()) == 0) {
 					//Proceso hijo. Hacer exec
@@ -176,8 +240,8 @@ void* establecerPartidas(void* data) {
 					sprintf(auxCantVidas, "%d", cantVidas);
 
 					char *argumentos[] = { auxPuertoNuevaPartida, auxCantVidas };
-					execv("/Servidor Partida/Servidor Partida", argumentos);
-
+					//		execv("/Servidor Partida/Servidor Partida", argumentos);
+					exit(1);
 				} else if (pid < 0) {
 					//Hubo error
 					cout << "Error al forkear" << endl;
@@ -223,6 +287,9 @@ void eliminarMemoriaCompartida(void * bloqueCompartido, int IdBloqueCompartido) 
 }
 
 //AUXILIARES
+/**
+ * Formatea el mensaje para mandarlo por socket
+ */
 string fillMessage(string message) {
 	string content;
 	int cantCeros = LONGITUD_CONTENIDO - message.length();
@@ -230,6 +297,9 @@ string fillMessage(string message) {
 	return content.append(message);
 }
 
+/**
+ * Convertir un numero de tipo int a String
+ */
 string intToString(int number) {
 	stringstream ss;
 	ss << number;
