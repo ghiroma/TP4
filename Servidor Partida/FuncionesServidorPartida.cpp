@@ -34,7 +34,7 @@ CommunicationSocket * cSocket1;
 CommunicationSocket * cSocket2;
 
 Felix *felix1;
-Felix *felix2;
+//Felix felix2;
 
 Edificio *edificio;
 
@@ -53,11 +53,14 @@ timer_thread(void* arg) {
 	time_t startingTimePersiana = time(0);
 	time_t startingTimeTorta = time(0);
 
+	//TODO sacar hardcodeo.
 	while (stop == false) {
+
+		cout<<"Corriendo timer_thread"<<endl;
 
 		if (TimeDifference(INTERVALOS_KEEPALIVE, startingTimeKeepAlive)
 				== true) {
-			cout << "Entro ACK" << endl;
+			cout<<"Entro ACK"<<endl;
 
 			string message(CD_ACK);
 			string content;
@@ -68,7 +71,7 @@ timer_thread(void* arg) {
 		}
 
 		if (TimeDifference(INTERVALOS_RALPH, startingTimeRalph) == true) {
-			char aux[LONGITUD_CONTENIDO];
+			char aux[5];
 			string message(CD_MOVIMIENTO_RALPH);
 			sprintf(aux, "%d", randomRalphMovement());
 			message.append(fillMessage(aux));
@@ -79,7 +82,7 @@ timer_thread(void* arg) {
 
 		if (TimeDifference(INTERVALOS_PALOMA, startingTimePaloma) == true) {
 			string message(CD_PALOMA);
-			char aux[LONGITUD_CONTENIDO];
+			char aux[5];
 			sprintf(aux, "%d", randomPaloma(0));
 			message.append(fillMessage(aux));
 			sender1_queue.push(message);
@@ -114,7 +117,7 @@ timer_thread(void* arg) {
 void*
 sender1_thread(void * arguments) {
 	while (stop == false && cliente1_conectado) {
-		cout << "Ejecuto sender 1" << endl;
+		cout<<"Ejecuto sender 1"<<endl;
 		if (!sender1_queue.empty()) {
 			//Lo que venga del timer y validator, se replica a ambos jugadores.
 			string message = sender1_queue.front();
@@ -128,7 +131,7 @@ sender1_thread(void * arguments) {
 		sleep(1);
 	}
 
-	cout << "Termino el sender1" << endl;
+	cout<<"Termino el sender1"<<endl;
 	pthread_exit(0);
 }
 
@@ -159,13 +162,12 @@ receiver1_thread(void * fd) {
 
 	while (stop == false && cliente1_conectado) {
 		readDataCode = cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
-		//if (strlen(buffer) > 0) {
-		if (readDataCode > 0) {
+		//readDataCode = cSocket1->ReceiveNoBloq(buffer, sizeof(256));
+		if (strlen(buffer) > 0) {
 			string aux(buffer);
-			cout << "Recibi mensaje: " << buffer << endl;
+			cout<<"Recibi mensaje: "<<buffer<<endl;
 			receiver1_queue.push(aux);
-		} else if (readDataCode == 0) {
-			//} else if (strlen(buffer) == 0) {
+		} else if (strlen(buffer)==0) {
 			//cliente1_conectado = false;
 		}
 		//usleep(8000);
@@ -202,16 +204,23 @@ void * validator_thread(void * argument) {
 		if (!receiver1_queue.empty()) {
 			string message = receiver1_queue.front();
 			receiver1_queue.pop();
-			string scodigo = message.substr(0, 2);
+			string scodigo = message.substr(0,2);
 			int codigo = atoi(scodigo.c_str());
+			//Dependiendo del codigo, voy a ver que valido.
 			switch (codigo) {
+			//Escribe en el sender_queue.
 			case 4:
-				cout << "Entro a movimiento felix" << endl;
-				case_movimiento_felix(message, 1);
-				break;
-			case 5:
-				cout << "Perdieron una vida" << endl;
-				case_vida_perdida(message, 1);
+				cout<<"Entro a movimiento felix"<<endl;
+				int fila = atoi(message.substr(5,1).c_str());
+				int columna = atoi(message.substr(6,1).c_str());
+
+				if(validateMovement(felix1,fila,columna,edificio))
+				{
+					string mensaje_movimiento1 = scodigo+fillMessage("1"+message.substr(2,2));
+					string mensaje_movimiento2 = scodigo+fillMessage("2"+message.substr(2,2));
+					sender1_queue.push(mensaje_movimiento1);
+					sender2_queue.push(mensaje_movimiento2);
+				}
 				break;
 			}
 		}
@@ -234,74 +243,15 @@ void * validator_thread(void * argument) {
 	pthread_exit(0);
 }
 
-void case_movimiento_felix(string message, int jugador) {
-	int fila = atoi(message.substr(5, 1).c_str());
-	int columna = atoi(message.substr(6, 1).c_str());
-	string scodigo = message.substr(0, 2);
-
-	if (validateMovement(felix1, fila, columna, edificio)) {
-		string mensaje_movimiento1 = scodigo
-				+ fillMessage("1" + message.substr(2, 2));
-		string mensaje_movimiento2 = scodigo
-				+ fillMessage("2" + message.substr(2, 2));
-		if (jugador == 1) {
-			sender1_queue.push(mensaje_movimiento1);
-			sender2_queue.push(mensaje_movimiento2);
-		} else {
-			sender1_queue.push(mensaje_movimiento2);
-			sender2_queue.push(mensaje_movimiento1);
-		}
-	}
-}
-
-void case_vida_perdida(string message, int jugador) {
-	string contenido1("1");
-	string contenido2("2");
-
-	if (jugador == 1) {
-		if (validateLives(felix1)) {
-			string mensaje1(CD_PERDIO);
-			string mensaje2(CD_PERDIO);
-			mensaje1.append(fillMessage(contenido1));
-			mensaje2.append(fillMessage(contenido2));
-			sender1_queue.push(mensaje1);
-			sender2_queue.push(mensaje2);
-		} else {
-			string mensaje1(CD_PERDIDA_VIDA);
-			string mensaje2(CD_PERDIDA_VIDA);
-			mensaje1.append(fillMessage(contenido1));
-			mensaje2.append(fillMessage(contenido2));
-			sender1_queue.push(mensaje1);
-			sender2_queue.push(mensaje2);
-		}
-	} else {
-		if (validateLives(felix2)) {
-			string mensaje1(CD_PERDIO);
-			string mensaje2(CD_PERDIO);
-			mensaje1.append(fillMessage(contenido1));
-			mensaje2.append(fillMessage(contenido2));
-			sender1_queue.push(mensaje2);
-			sender2_queue.push(mensaje1);
-		} else {
-			string mensaje1(CD_PERDIDA_VIDA);
-			string mensaje2(CD_PERDIDA_VIDA);
-			mensaje1.append(fillMessage(contenido1));
-			mensaje2.append(fillMessage(contenido2));
-			sender1_queue.push(mensaje2);
-			sender2_queue.push(mensaje1);
-		}
-	}
-}
-
 int randomRalphMovement() {
-	return rand() % (EDIFICIO_COLUMNAS);
+	return rand() % (EDIFICIO_COLUMNAS + 1);
 }
 
 int randomPaloma(int nivel) {
 	if (nivel == 0)
-		return rand() % (EDIFICIO_FILAS_1);
+		return rand() % (EDIFICIO_FILAS_1 + 1);
 	else if (nivel == 1)
-		return rand() % (EDIFICIO_FILAS_2);
+		return rand() % (EDIFICIO_FILAS_2 + 1);
 	return 0;
 }
 
@@ -309,9 +259,9 @@ char* randomTorta() {
 	char location[3];
 	char aux[2];
 
-	sprintf(aux, "%d", rand() % (EDIFICIO_FILAS_1));
+	sprintf(aux, "%d", rand() % (EDIFICIO_FILAS_1 + 1));
 	strcpy(location, aux);
-	sprintf(aux, "%d", rand() % (EDIFICIO_COLUMNAS));
+	sprintf(aux, "%d", rand() % (EDIFICIO_COLUMNAS + 1));
 	strcat(location, aux);
 
 	return location;
@@ -334,14 +284,11 @@ bool validateMovement(Felix * felix, int fila, int columna,
 	return false;
 }
 
-string fillMessage(string message) {
+string fillMessage(string message)
+{
 	string content;
-	int cantCeros = 0;
-
-	//if (message) {
-	cantCeros = LONGITUD_CONTENIDO - message.length();
-	//}
-	content.assign(cantCeros, '0');
+	int cantCeros = LONGITUD_CONTENIDO - message.length();
+	content.assign(cantCeros,'0');
 	return content.append(message);
 }
 
