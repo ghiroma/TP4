@@ -24,12 +24,6 @@ const char* CD_PERDIDA_VIDA = "05";
 const char* CD_ID_JUGADOR = "06";
 const char* CD_PUERTO_PARTIDA = "07";
 const char* CD_ACK = "99";
-//const char *
-//const char *
-//const char *
-//const char *
-//const char *
-
 
 #endif /* CONSTANTES_H_ */
 

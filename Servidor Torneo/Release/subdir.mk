@@ -4,17 +4,17 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../Funciones.cpp \
+../FuncionesServidorTorneo.cpp \
 ../Jugador.cpp \
 ../ServidorTorneo.cpp 
 
 OBJS += \
-./Funciones.o \
+./FuncionesServidorTorneo.o \
 ./Jugador.o \
 ./ServidorTorneo.o 
 
 CPP_DEPS += \
-./Funciones.d \
+./FuncionesServidorTorneo.d \
 ./Jugador.d \
 ./ServidorTorneo.d 
 

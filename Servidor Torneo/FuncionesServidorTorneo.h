@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <list>
 
+
 #define PERMISOS_SHM 0777
 #define CLAVE_MEMORIA_COMPARTIDA 1322
 

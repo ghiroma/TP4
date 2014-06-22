@@ -5,8 +5,8 @@
  *      Author: ghiroma
  */
 
-#ifndef CONSTANTES_H_
-#define CONSTANTES_H_
+#ifndef CONSTANTESSERVIDORTORNEO_H_
+#define CONSTANTESSERVIDORTORNEO_H_
 
 #define ARRIBA "Movimiento Arriba"
 #define ABAJO "Movimiento Abajo"
@@ -43,4 +43,4 @@ enum Intervalos{
 };
 
 
-#endif /* CONSTANTES_H_ */
+#endif /* CONSTANTESSERVIDORTORNEO_H_ */

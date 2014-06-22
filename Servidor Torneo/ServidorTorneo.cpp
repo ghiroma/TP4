@@ -1,5 +1,4 @@
 #include "../Servidor Partida/FuncionesServidorPartida.h"
-#include "../Servidor Partida/Support/Constantes.h"
 #include "Clases/ServerSocket.h"
 #include "Clases/CommunicationSocket.h"
 #include "Jugador.h"
@@ -14,7 +13,10 @@
 #include <sys/types.h>
 #include <signal.h>
 
+
 using namespace std;
+extern const char* CD_ID_JUGADOR;
+extern const int LONGITUD_CONTENIDO;
 
 pthread_mutex_t mutex_listJugadores = PTHREAD_MUTEX_INITIALIZER;
 map<int, Jugador*> listJugadores;
