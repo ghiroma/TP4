@@ -31,8 +31,8 @@ extern queue<string> sender2_queue;
 extern CommunicationSocket * cSocket1;
 extern CommunicationSocket * cSocket2;
 
-extern Felix *felix1;
-extern Felix *felix2;
+extern Felix * felix1;
+extern Felix * felix2;
 
 extern Edificio *edificio;
 

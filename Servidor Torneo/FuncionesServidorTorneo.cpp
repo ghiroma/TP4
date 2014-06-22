@@ -1,6 +1,7 @@
 #include "FuncionesServidorTorneo.h"
 #include "../Servidor Partida/FuncionesServidorPartida.h"
-#include "../Servidor Partida/Support/Constantes.h"
+//#include "../Servidor Partida/Support/Constantes.h"
+#include "Support/Constantes.h"
 #include "./Clases/Semaforo.h"
 #include <string.h>
 #include <iostream>
@@ -227,4 +228,12 @@ string intToString(int number) {
 	stringstream ss;
 	ss << number;
 	return ss.str();
+}
+
+string fillMessage(string message)
+{
+	string content;
+	int cantCeros = LONGITUD_CONTENIDO - message.length();
+	content.assign(cantCeros,'0');
+	return content.append(message);
 }

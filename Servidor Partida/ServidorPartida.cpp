@@ -65,7 +65,7 @@ int main(int argc, char * argv[]) {
 		//Nivel 1:
 		edificio = new Edificio(EDIFICIO_FILAS_1, EDIFICIO_COLUMNAS, 0);
 		felix1 = new Felix(cantVidas);
-		felix2 = new Felix(cantVidas);
+		//felix2 = new Felix(cantVidas);
 		//Fin TODO Temporalmente.
 
 		//Creo los 4 thread.
