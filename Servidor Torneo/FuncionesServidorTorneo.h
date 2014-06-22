@@ -5,7 +5,6 @@
 #include <pthread.h>
 #include <list>
 
-
 #define PERMISOS_SHM 0777
 #define CLAVE_MEMORIA_COMPARTIDA 1322
 
@@ -33,6 +32,7 @@ void* temporizadorTorneo(void* data);
 void* establecerPartidas(void* data);
 
 //AUXILIARES
+string fillMessage(string message);
 string intToString(int number);
 
 #endif /* FUNCIONESSERVIDORTORNEO_H_ */

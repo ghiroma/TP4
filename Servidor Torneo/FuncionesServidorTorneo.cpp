@@ -1,6 +1,6 @@
-#include "FuncionesServidorTorneo.h"
-#include "../Servidor Partida/Support/Constantes.h"
+#include "Support/ConstantesServidorTorneo.h"
 #include "../Servidor Partida/FuncionesServidorPartida.h"
+#include "FuncionesServidorTorneo.h"
 #include "./Clases/Semaforo.h"
 #include <string.h>
 #include <iostream>
@@ -223,6 +223,13 @@ void eliminarMemoriaCompartida(void * bloqueCompartido, int IdBloqueCompartido) 
 }
 
 //AUXILIARES
+string fillMessage(string message) {
+	string content;
+	int cantCeros = LONGITUD_CONTENIDO - message.length();
+	content.assign(cantCeros, '0');
+	return content.append(message);
+}
+
 string intToString(int number) {
 	stringstream ss;
 	ss << number;

@@ -24,11 +24,8 @@ static const char* CD_PERDIDA_VIDA = "05";
 static const char* CD_ID_JUGADOR = "06";
 static const char* CD_PUERTO_PARTIDA = "07";
 static const char* CD_ACK = "99";
-//const char *
-//const char *
-//const char *
-//const char *
-//const char *
+
+
 
 
 #endif /* CONSTANTESSERVIDORTORNEO_H_ */
