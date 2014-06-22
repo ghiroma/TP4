@@ -1,4 +1,5 @@
-#include "Funciones.h"
+#include "FuncionesServidorTorneo.h"
+#include "../Servidor Partida/FuncionesServidorPartida.h"
 #include "./Clases/Semaforo.h"
 #include <string.h>
 #include <iostream>
@@ -8,6 +9,8 @@
 #include <stdlib.h>
 #include <list>
 #include <pthread.h>
+#include <stdlib.h>
+#include <sstream>
 
 Semaforo sem_inicializarTemporizador((char*) "/sem_inicializarTemporizador", 0);
 //pthread_mutex_t mutex_timeIsUp = PTHREAD_MUTEX_INITIALIZER;
@@ -129,15 +132,15 @@ void* establecerPartidas(void* data) {
 		cout << "pasada de busqueda nro: " << i++ << endl;
 
 		/*
-		pthread_mutex_lock(&mutex_listJugadores);
-		for (map<int, Jugador*>::iterator it = (listJugadores).begin(); it != (listJugadores).end(); it++) {
-			cout << (*(*it).second).Nombre << " - partidas:" << endl;
+		 pthread_mutex_lock(&mutex_listJugadores);
+		 for (map<int, Jugador*>::iterator it = (listJugadores).begin(); it != (listJugadores).end(); it++) {
+		 cout << (*(*it).second).Nombre << " - partidas:" << endl;
 
-			for (map<int, int>::iterator itmap = (*(*it).second).Partidas.begin(); itmap != (*(*it).second).Partidas.end(); ++itmap) {
-				std::cout << itmap->first << " => " << itmap->second << '\n';
-			}
-		}
-		pthread_mutex_unlock(&mutex_listJugadores);
+		 for (map<int, int>::iterator itmap = (*(*it).second).Partidas.begin(); itmap != (*(*it).second).Partidas.end(); ++itmap) {
+		 std::cout << itmap->first << " => " << itmap->second << '\n';
+		 }
+		 }
+		 pthread_mutex_unlock(&mutex_listJugadores);
 		 */
 
 		//recorro la lista de jugadores viendo a quien le puedo asignar un oponente y que comienze la partida
@@ -157,17 +160,23 @@ void* establecerPartidas(void* data) {
 
 				int puertoNuevaPartida = getNewPort();
 				//Le mando a los jugadores el nro de Puerto en el que comenzara la partida
-				//	listJugadores[idJugador]->SocketAsociado->SendNoBloq((char*) puertoNuevaPartida, sizeof(puertoNuevaPartida));
-				//	listJugadores[idOponente]->SocketAsociado->SendNoBloq((char*) puertoNuevaPartida, sizeof(puertoNuevaPartida));
+				char auxPuertoNuevaPartida[10];
+				sprintf(auxPuertoNuevaPartida, "%d", puertoNuevaPartida);
+				string message(CD_PUERTO_PARTIDA);
+				message.append(fillMessage(auxPuertoNuevaPartida));
+				listJugadores[idJugador]->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
+				listJugadores[idOponente]->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
 
 				if ((pid = fork()) == 0) {
 					//Proceso hijo. Hacer exec
 					cout << "J" << idJugador << " Crear Partida en el puerto: " << puertoNuevaPartida << " (" << idJugador << "vs" << idOponente << ")" << endl;
 
-					//char *argumentos[] = {puertoNuevaPartida, (const char*)NULL};
-					//execv("/Servidor Partida/Servidor Partida", argumentos);
+					char auxCantVidas[2];
+					sprintf(auxCantVidas, "%d", cantVidas);
 
-					exit(1); //borrar el exit cuando habilite el execv
+					char *argumentos[] = { auxPuertoNuevaPartida, auxCantVidas };
+					execv("/Servidor Partida/Servidor Partida", argumentos);
+
 				} else if (pid < 0) {
 					//Hubo error
 					cout << "Error al forkear" << endl;
@@ -177,7 +186,6 @@ void* establecerPartidas(void* data) {
 				}
 			} else {
 				cout << "J" << idJugador << " No puede jugar" << endl;
-				//exit(1);
 			}
 
 		}
@@ -211,4 +219,11 @@ void asociarSegmento(int* idShm, int* variable) {
 void eliminarMemoriaCompartida(void * bloqueCompartido, int IdBloqueCompartido) {
 	shmdt((char *) bloqueCompartido);
 	shmctl(IdBloqueCompartido, IPC_RMID, (struct shmid_ds *) NULL);
+}
+
+//AUXILIARES
+string intToString(int number) {
+	stringstream ss;
+	ss << number;
+	return ss.str();
 }

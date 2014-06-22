@@ -5,8 +5,8 @@
  *      Author: ghiroma
  */
 
-#ifndef FUNCIONES_H_
-#define FUNCIONES_H_
+#ifndef FUNCIONESSERVIDORPARTIDA_H_
+#define FUNCIONESSERVIDORPARTIDA_H_
 
 #include "Clases/CommunicationSocket.h"
 #include "Clases/Edificio.h"
@@ -55,4 +55,4 @@ bool validateWindowFix(int fila, int columna,Edificio * edificio);
 bool validateLives(Felix * felix);
 void SIGINT_Handler(int inum);
 
-#endif /* FUNCIONES_H_ */
+#endif /* FUNCIONESSERVIDORPARTIDA_H_ */

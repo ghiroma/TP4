@@ -1,7 +1,9 @@
+#include "../Servidor Partida/Support/Constantes.h"
+#include "../Servidor Partida/FuncionesServidorPartida.h"
 #include "Clases/ServerSocket.h"
 #include "Clases/CommunicationSocket.h"
 #include "Jugador.h"
-#include "Funciones.h"
+#include "FuncionesServidorTorneo.h"
 #include <string.h>
 #include <pthread.h>
 #include <iostream>
@@ -17,13 +19,13 @@ using namespace std;
 pthread_mutex_t mutex_listJugadores = PTHREAD_MUTEX_INITIALIZER;
 map<int, Jugador*> listJugadores;
 unsigned int puerto;
+int cantVidas = 0;
 
 int main(int argc, char * argv[]) {
-	cout<<"Comienza servidor Torneo PID:"<<getpid()<<endl;
+	cout << "Comienza servidor Torneo PID:" << getpid() << endl;
 	string ip = "";
 	int duracionTorneo = 0;
 	int tiempoInmunidad = 0;
-	int cantVidas = 0;
 	int clientId = 0;
 	pthread_t thTemporizadorTorneo;
 	int resultThTemporizador;
@@ -63,18 +65,17 @@ int main(int argc, char * argv[]) {
 	agregarJugador(&jugador5);
 	agregarJugador(&jugador6);
 
-
 	//cout << "oponente para el jugador 1: " << (*listJugadores[1]).obtenerOponente(&listJugadores) << endl;
 
 	/**/
-	 for (map<int, Jugador*>::iterator it = (listJugadores).begin(); it != (listJugadores).end(); it++) {
-	 cout << (*(*it).second).Nombre << " - partidas:" << endl;
+	for (map<int, Jugador*>::iterator it = (listJugadores).begin(); it != (listJugadores).end(); it++) {
+		cout << (*(*it).second).Nombre << " - partidas:" << endl;
 
-	 for (map<int, int>::iterator itmap = (*(*it).second).Partidas.begin(); itmap != (*(*it).second).Partidas.end(); ++itmap) {
-	 std::cout << itmap->first << " => " << itmap->second << '\n';
-	 }
-	 }
-	 /**/
+		for (map<int, int>::iterator itmap = (*(*it).second).Partidas.begin(); itmap != (*(*it).second).Partidas.end(); ++itmap) {
+			std::cout << itmap->first << " => " << itmap->second << '\n';
+		}
+	}
+	/**/
 	//////////////////////////////////////////////////////
 	//Lanzar THREAD de establecer partidas
 	temporizacion.timeIsUp = false;
@@ -96,25 +97,27 @@ int main(int argc, char * argv[]) {
 	}
 
 	//usleep(10000);
-	//exit(1);
+	exit(1);
 
-	/*
-	 //Crear Socket del Servidor
-	 ServerSocket sSocket(puerto, (char *) ip.c_str());
-	 char * nombreJugador = NULL;
-	 while (!temporizacion.timeIsUp) {
-	 CommunicationSocket * cSocket = sSocket.Accept();
-	 cSocket->ReceiveBloq(nombreJugador, sizeof(nombreJugador));
-	 clientId++;
-	 agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
-	 // mandarle el ID al Jugador  (convertir nro a char) cSocket->SendNoBloq( (char*)clientId, sizeof(clientId));
-	 }*/
+	//Crear Socket del Servidor
+	ServerSocket sSocket(puerto, (char *) ip.c_str());
+	char * nombreJugador = NULL;
+	while (!temporizacion.timeIsUp) {
+		CommunicationSocket * cSocket = sSocket.Accept();
+		cSocket->ReceiveBloq(nombreJugador, sizeof(nombreJugador));
+		clientId++;
+		agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
 
-
+		//mandarle el ID al Jugador
+		char aux[LONGITUD_CONTENIDO];
+		string message(CD_ID_JUGADOR);
+		sprintf(aux, "%d", clientId);
+		message.append(fillMessage(aux));
+		cSocket->SendNoBloq(message.c_str(), sizeof(message.c_str()));
+	}
 
 	pthread_join(thEstablecerPartidas, NULL);
-
 	pthread_exit(NULL);
-	cout<<"Fin proceso Servidor Torneo"<<endl;
+	cout << "Fin proceso Servidor Torneo" << endl;
 }
 

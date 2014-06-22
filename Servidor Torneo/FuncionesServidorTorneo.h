@@ -1,5 +1,5 @@
-#ifndef FUNCIONES_H_
-#define FUNCIONES_H_
+#ifndef FUNCIONESSERVIDORTORNEO_H_
+#define FUNCIONESSERVIDORTORNEO_H_
 
 #include "Jugador.h"
 #include <pthread.h>
@@ -12,6 +12,7 @@
 extern pthread_mutex_t mutex_listJugadores;
 extern map<int, Jugador*> listJugadores;
 extern unsigned int puerto;
+extern int cantVidas;
 
 struct thTemporizador_data {
 	bool timeIsUp;
@@ -30,5 +31,7 @@ void asociarSegmento(int* idShm, int* variable);
 void* temporizadorTorneo(void* data);
 void* establecerPartidas(void* data);
 
+//AUXILIARES
+string intToString(int number);
 
-#endif /* FUNCIONES_H_ */
+#endif /* FUNCIONESSERVIDORTORNEO_H_ */
