@@ -8,14 +8,18 @@
 #include "Clases/Semaforo.h"
 #include "Clases/CommunicationSocket.h"
 #include "Clases/ServerSocket.h"
-#include "FuncionesServidorPartida.h"
+#include "Clases/Felix.h"
 #include "Clases/Edificio.h"
+#include "Support/Constantes.h"
+#include "FuncionesServidorPartida.h"
 #include <pthread.h>
 #include <sys/types.h>
 #include <signal.h>
 #include <unistd.h>
 #include <iostream>
 #include <cstdio>
+#include <cstdlib>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -25,8 +29,8 @@ struct args_struct {
 };
 
 int main(int argc, char * argv[]) {
-	int fdJugador1;
-	int fdJugador2;
+	int puerto;
+	int cantVidas;
 
 	struct args_struct args;
 
@@ -41,17 +45,28 @@ int main(int argc, char * argv[]) {
 
 	srand(time(NULL));
 
-	//TODO Temporalmente hago que el servidor de partida sea un servidor de torneo.
-	ServerSocket sSocket(5556);
+	if (argc == 3) {
+		puerto = atoi(argv[1]);
+		cantVidas = atoi(argv[2]);
+	} else {
+		puerto = 5556;
+		cantVidas = 3;
+	}
+
+//TODO Temporalmente hago que el servidor de partida sea un servidor de torneo.
+	ServerSocket sSocket(puerto);
 
 	while (true) {
 		cSocket1 = sSocket.Accept();
+		cout << "Conexion 1 Recibida" << endl;
 		//cSocket2 = sSocket.Accept();
-		cout << "Conexion Recibida" << endl;
-		edificio = new Edificio(3,5,0);
-		felix1 = new Felix("Guillermo",0,0);
+		//TODO dependiendo del nivel abria que ver lo del edificio.
+
+		//Nivel 1:
+		edificio = new Edificio(EDIFICIO_FILAS_1, EDIFICIO_COLUMNAS, 0);
+		felix1 = new Felix(cantVidas);
+		felix2 = new Felix(cantVidas);
 		//Fin TODO Temporalmente.
-		//Recibo todos los datos del servidortorneo.
 
 		//Creo los 4 thread.
 		pthread_create(&thread_timer, NULL, timer_thread, NULL);
@@ -62,18 +77,17 @@ int main(int argc, char * argv[]) {
 		//pthread_create(&thread_sender2,NULL,sender2_thread,NULL);
 		pthread_create(&thread_validator, NULL, validator_thread, NULL);
 
-
 		pthread_join(thread_timer, NULL);
 		pthread_join(thread_receiver1, NULL);
 		//pthread_join(thread_receiver2,NULL);
 		pthread_join(thread_sender1, NULL);
 		//pthread_join(thread_sender2,NULL);
-		pthread_join(thread_validator,NULL);
+		pthread_join(thread_validator, NULL);
 	}
 
 	delete (cSocket1);
-	//delete(cSocket2);
-	return 0;
+//delete(cSocket2);
 	//TODO envio puntaje al padre.
+	return 0;
 }
 
