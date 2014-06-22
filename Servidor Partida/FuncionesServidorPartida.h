@@ -51,7 +51,7 @@ void case_movimiento_felix(string message, int jugador);
 void case_vida_perdida(string message, int jugador);
 char* randomTorta();
 bool validateMovement(Felix * felix,int fila, int columna, Edificio * edificio);
-bool validateWindowFix(int fila, int columna,Edificio * edificio);
+bool validateWindowFix(Felix * felix,Edificio * edificio);
 bool validateLives(Felix * felix);
 void SIGINT_Handler(int inum);
 
