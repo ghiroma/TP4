@@ -13,6 +13,7 @@ Jugador::Jugador() {
 	this->Puntaje = 0;
 	this->SocketAsociado = 0;
 	this->Jugando = false;
+	this->CantPartidasJugadas = 0;
 }
 
 Jugador::Jugador(int Id, string Nombre, CommunicationSocket* SocketAsociado) {
@@ -21,6 +22,7 @@ Jugador::Jugador(int Id, string Nombre, CommunicationSocket* SocketAsociado) {
 	this->Puntaje = 0;
 	this->SocketAsociado = SocketAsociado;
 	this->Jugando = false;
+	this->CantPartidasJugadas = 0;
 }
 
 int Jugador::sumarPuntaje(int Puntaje) {
