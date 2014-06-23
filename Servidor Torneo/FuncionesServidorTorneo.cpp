@@ -269,6 +269,8 @@ void* establecerPartidas(void* data) {
 				string message(CD_PUERTO_PARTIDA);
 				message.append(fillMessage(auxPuertoNuevaPartida));
 
+				listJugadores[idJugador]->CantPartidasJugadas++;
+				listJugadores[idOponente]->CantPartidasJugadas++;
 				listJugadores[idJugador]->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
 				listJugadores[idOponente]->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
 
