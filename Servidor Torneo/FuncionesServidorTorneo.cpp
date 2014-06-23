@@ -16,6 +16,7 @@
 extern unsigned int puertoTorneo;
 extern bool timeIsUp;
 Semaforo sem_inicializarTemporizador((char*) "/sem_inicializarTemporizador", 0);
+Semaforo sem_jugadoresKeepAlive((char*) "/sem_jugadoresKeepAlive", 1);
 pthread_mutex_t mutex_puertoPartida = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_timeIsUp = PTHREAD_MUTEX_INITIALIZER;
 using namespace std;
@@ -82,14 +83,16 @@ void agregarJugador(Jugador* nuevoJugador) {
  * Eliminar un jugador de la lista cuando abandona el torneo
  */
 void quitarJugador(int id) {
-	pthread_mutex_lock(&mutex_listJugadores);
+	//pthread_mutex_lock(&mutex_listJugadores);
+	
 	//para cada participante le quito de su lista el jugador que se da de baja
 	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 		it->second->quitarJugador(id);
 	}
 	//lo quito de la lista de jugadores del torneo
 	listJugadores.erase(id);
-	pthread_mutex_unlock(&mutex_listJugadores);
+	
+	//pthread_mutex_unlock(&mutex_listJugadores);
 }
 
 /**
@@ -134,6 +137,31 @@ void* temporizadorTorneo(void* data) {
 
 	pthread_cancel(torneo->thAceptarJugadores);
 	//pthread_cancel(torneo->thEstablecerPartidas);
+	pthread_exit(NULL);
+}
+
+/**
+ * THREAD -> KEEPALIVE Jugadores - Actualiza la lista de jugadores quitando los que ya no estan activos
+ */
+void* actualizarListaJugadores(){
+	
+	while(true){
+		//para cada jugador ver si me responden la señal de KEEPALIVE
+		pthread_mutex_lock(&mutex_listJugadores);
+		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
+			
+			/*
+			string message(CD_ACK);
+			string content;
+			message.append(fillMessage(content));
+			it->second->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
+			*/
+			//quitarJugador(it->first);
+		}
+		pthread_mutex_unlock(&mutex_listJugadores);
+		usleep(50000);
+	}
+	
 	pthread_exit(NULL);
 }
 
@@ -213,6 +241,10 @@ void* establecerPartidas(void* data) {
 
 		//recorro la lista de jugadores viendo a quien le puedo asignar un oponente y que comienze la partida
 		pthread_mutex_lock(&mutex_listJugadores);
+		
+		//KEEPALIVE - antes de buscar los oponentes actualizo la lista de jugadores por si ya no estan mas activos
+		actualizarListaJugadores();
+
 		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 			idJugador = it->first;
 			idOponente = it->second->obtenerOponente();
@@ -277,6 +309,15 @@ void* establecerPartidas(void* data) {
 }
 
 void asociarSegmento(int* idShm, int* variable) {
+	//int idShm;
+	//int *variable = NULL;
+	
+	/*
+	bool jugadoresKeepAlive[MAX_JUGADORES_SOPORTADOS];
+    int i;
+    for (i=0; i<MAX_JUGADORES_SOPORTADOS; i++) { jugadoresKeepAlive[i] = true; }
+    */
+   
 	key_t key = ftok("/bin/ls", CLAVE_MEMORIA_COMPARTIDA);
 	if (key == -1) {
 		cout << "Error al generar clave de memoria compartida" << endl;
