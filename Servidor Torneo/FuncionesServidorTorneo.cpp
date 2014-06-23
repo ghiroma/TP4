@@ -144,20 +144,27 @@ void* temporizadorTorneo(void* data) {
  * THREAD -> KEEPALIVE Jugadores - Actualiza la lista de jugadores quitando los que ya no estan activos
  */
 void* actualizarListaJugadores(){
+	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
+	int readDataCode;
+	bzero(buffer, sizeof(buffer));
 	
+	string message(CD_ACK);
+	string content;
+	message.append(fillMessage(content));
+			
 	while(true){
 		//para cada jugador ver si me responden la señal de KEEPALIVE
 		pthread_mutex_lock(&mutex_listJugadores);
 		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 			
-			/*
-			string message(CD_ACK);
-			string content;
-			message.append(fillMessage(content));
 			it->second->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
-			*/
-			//quitarJugador(it->first);
-		}
+			readDataCode = it->second->SocketAsociado->ReceiveBloq(buffer, sizeof(buffer));
+			
+			if (readDataCode == 0) {
+				//el jugador se desconecto
+				quitarJugador(it->first);
+			}
+		}pthread_mutex_destroy(&mutex_puertoPartida);
 		pthread_mutex_unlock(&mutex_listJugadores);
 		usleep(50000);
 	}
@@ -241,10 +248,6 @@ void* establecerPartidas(void* data) {
 
 		//recorro la lista de jugadores viendo a quien le puedo asignar un oponente y que comienze la partida
 		pthread_mutex_lock(&mutex_listJugadores);
-		
-		//KEEPALIVE - antes de buscar los oponentes actualizo la lista de jugadores por si ya no estan mas activos
-		actualizarListaJugadores();
-
 		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 			idJugador = it->first;
 			idOponente = it->second->obtenerOponente();
@@ -304,6 +307,10 @@ void* establecerPartidas(void* data) {
 	}	
 	pthread_mutex_unlock(&mutex_listJugadores);
 	
+	
+	//pthread_mutex_destroy(&mutex_listJugadores);
+	pthread_mutex_destroy(&mutex_puertoPartida);
+	pthread_mutex_destroy(&mutex_timeIsUp);
 	cout<<"Thread EstablecerPartidas va a hacer un Exit"<<endl;
 	pthread_exit(NULL);
 }
