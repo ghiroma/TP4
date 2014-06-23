@@ -33,5 +33,9 @@ static const int PERMISOS_SHM = 0777;
 static const int CLAVE_MEMORIA_COMPARTIDA = 1322;
 static const int INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES = 1000000;
 
+static const int ANCHO_PANTALLA	= 800;
+static const int ALTO_PANTALLA = 600;
+static const int BPP = 8;
+
 
 #endif /* CONSTANTESSERVIDORTORNEO_H_ */
