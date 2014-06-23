@@ -12,6 +12,8 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <sstream>
+#include <SDL/SDL.h>
+#include <SDL/SDL_ttf.h>
 
 extern unsigned int puertoTorneo;
 extern bool timeIsUp;
@@ -139,6 +141,54 @@ void* temporizadorTorneo(void* data) {
 	//pthread_cancel(torneo->thEstablecerPartidas);
 	pthread_exit(NULL);
 }
+
+/**
+ * THREAD -> Modo Grafico
+ */
+void* modoGrafico() {
+/*	SDL_Rect pantalla_juego, 
+		pantalla_texto;
+
+	SDL_Color color_texto;
+	TTF_Font *fuente;
+
+	short int caracter = 0;
+	char nombre[10] = { ' ' };
+
+	const char pared_bmp[] = "Sprites/pared_grande_tramo1.bmp";
+	
+	SDL_Surface *pared;
+	pared = SDL_LoadBMP(pared_bmp);
+	
+	
+	//Inicio modo video
+	SDL_Init(SDL_INIT_VIDEO);
+	//Inicio modo texto grafico
+	TTF_Init();
+	
+	//Defino las propiedades de la pantalla del juego
+	superficie = SDL_SetVideoMode(ANCHO_PANTALLA_SERVIDOR, ALTO_PANTALLA_SERVIDOR, BPP_SERVIDOR, SDL_HWSURFACE);
+	//Seteo el titulo de la pantalla
+	SDL_WM_SetCaption("Rahlp Tournament", NULL);
+	//Cargo la fuente
+	fuente = TTF_OpenFont("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf",24);
+	//Color del texto
+	color_texto.r = color_texto.g = color_texto.b = 245;
+	
+	//Dimensiones rectangulo donde irá el texto
+	pantalla_texto.x = 10;
+	pantalla_texto.y = 10;
+	
+	//Texto del texto
+	nombre[caracter]='\0';
+	texto = TTF_RenderText_Solid(fuente, nombre, color_texto);
+	SDL_BlitSurface(texto,NULL, superficie, &pantalla_texto);	
+	SDL_Flip(superficie);	
+	
+*/	
+	pthread_exit(NULL);
+}
+
 
 /**
  * THREAD -> KEEPALIVE Jugadores - Actualiza la lista de jugadores quitando los que ya no estan activos
