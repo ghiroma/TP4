@@ -22,6 +22,7 @@ Jugador*> listJugadores;
 unsigned int puertoTorneo;
 unsigned int puertoPartida;
 int cantVidas = 0;
+bool timeIsUp = false;
 
 int main(int argc, char * argv[]) {
 	cout << "Comienza servidor Torneo PID:" << getpid() << endl;

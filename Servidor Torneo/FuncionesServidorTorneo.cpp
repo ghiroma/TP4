@@ -14,8 +14,10 @@
 #include <sstream>
 
 extern unsigned int puertoTorneo;
+extern bool timeIsUp;
 Semaforo sem_inicializarTemporizador((char*) "/sem_inicializarTemporizador", 0);
 pthread_mutex_t mutex_puertoPartida = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_timeIsUp = PTHREAD_MUTEX_INITIALIZER;
 using namespace std;
 
 /**
@@ -94,11 +96,23 @@ void quitarJugador(int id) {
  * Obtener un nuevo puerto para asginarlo a una nueva partida
  */
 unsigned int getNewPort() {
+	int nuevoPuerto;
 	pthread_mutex_lock(&mutex_puertoPartida);
 	puertoPartida++;
-	int nuevoPuerto = puertoPartida;
+	nuevoPuerto = puertoPartida;
 	pthread_mutex_unlock(&mutex_puertoPartida);
 	return nuevoPuerto;
+}
+
+/**
+ * Verificar el estado del torneo para saber si finalizo el tiempo de inscripcion al torneo
+ */
+bool torneoFinalizado(){
+	bool estado = false;
+	pthread_mutex_lock(&mutex_timeIsUp);
+	estado = timeIsUp;
+	pthread_mutex_unlock(&mutex_timeIsUp);
+	return estado;
 }
 
 /////////////////////////////// THREADS ////////////////////////////
@@ -112,10 +126,14 @@ void* temporizadorTorneo(void* data) {
 
 	sem_inicializarTemporizador.P();
 	cout << "Comienza el temporizador" << endl;
-	sleep(torneo->duracion * 60);
+	sleep(torneo->duracion * 30);
+
+	pthread_mutex_lock(&mutex_timeIsUp);
+	timeIsUp = true;
+	pthread_mutex_unlock(&mutex_timeIsUp);
 
 	pthread_cancel(torneo->thAceptarJugadores);
-	pthread_cancel(torneo->thEstablecerPartidas);
+	//pthread_cancel(torneo->thEstablecerPartidas);
 	pthread_exit(NULL);
 }
 
@@ -128,40 +146,37 @@ void* aceptarJugadores(void* data) {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//CODIGO PARA PROBAR EL ASIGNADOR DE PARTIDAS
-	clientId++;
-	Jugador jugador1(clientId, "pedro 1", NULL);
-	clientId++;
-	Jugador jugador2(clientId, "carlos 2", NULL);
-	clientId++;
-	Jugador jugador3(clientId, "mati 3", NULL);
-	clientId++;
-	Jugador jugador4(clientId, "pablo 4", NULL);
-	clientId++;
-	Jugador jugador5(clientId, "martin 5", NULL);
-	clientId++;
-	Jugador jugador6(clientId, "fernando 6", NULL);
+	/*clientId++;
+	 Jugador jugador1(clientId, "pedro 1", NULL);
+	 clientId++;
+	 Jugador jugador2(clientId, "carlos 2", NULL);
+	 clientId++;
+	 Jugador jugador3(clientId, "mati 3", NULL);
+	 clientId++;
+	 Jugador jugador4(clientId, "pablo 4", NULL);
+	 clientId++;
+	 Jugador jugador5(clientId, "martin 5", NULL);
+	 clientId++;
+	 Jugador jugador6(clientId, "fernando 6", NULL);
 
-	agregarJugador(&jugador1);
-	agregarJugador(&jugador2);
-	agregarJugador(&jugador3);
-	agregarJugador(&jugador4);
-	agregarJugador(&jugador5);
-	agregarJugador(&jugador6);
-	//cout << "oponente para el jugador 1: " << (*listJugadores[1]).obtenerOponente(&listJugadores) << endl;
+	 agregarJugador(&jugador1);
+	 agregarJugador(&jugador2);
+	 agregarJugador(&jugador3);
+	 agregarJugador(&jugador4);
+	 agregarJugador(&jugador5);
+	 agregarJugador(&jugador6);
+	 //cout << "oponente para el jugador 1: " << (*listJugadores[1]).obtenerOponente(&listJugadores) << endl;
 
-	/**/
-	for (map<int, Jugador*>::iterator it = (listJugadores).begin(); it != (listJugadores).end(); it++) {
-		cout << (*(*it).second).Nombre << " - partidas:" << endl;
+	 for (map<int, Jugador*>::iterator it = (listJugadores).begin(); it != (listJugadores).end(); it++) {
+	 cout << (*(*it).second).Nombre << " - partidas:" << endl;
 
-		for (map<int, int>::iterator itmap = (*(*it).second).Partidas.begin(); itmap != (*(*it).second).Partidas.end(); ++itmap) {
-			std::cout << itmap->first << " => " << itmap->second << '\n';
-		}
-	}
-	/**/
+	 for (map<int, int>::iterator itmap = (*(*it).second).Partidas.begin(); itmap != (*(*it).second).Partidas.end(); ++itmap) {
+	 std::cout << itmap->first << " => " << itmap->second << '\n';
+	 }
+	 }
+	 /**/
 	//FIN CODIGO PARA PROBAR EL ASIGNADOR DE PARTIDAS
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 
 	//Crear Socket del Servidor
 	ServerSocket sSocket(puertoTorneo, (char *) (*ip).c_str());
@@ -193,20 +208,8 @@ void* establecerPartidas(void* data) {
 	int nroPartida = 1;
 
 	int i = 1;
-	while (true) {
+	while (!torneoFinalizado()) {
 		cout << "pasada de busqueda nro: " << i++ << endl;
-
-		/*
-		 pthread_mutex_lock(&mutex_listJugadores);
-		 for (map<int, Jugador*>::iterator it = (listJugadores).begin(); it != (listJugadores).end(); it++) {
-		 cout << (*(*it).second).Nombre << " - partidas:" << endl;
-
-		 for (map<int, int>::iterator itmap = (*(*it).second).Partidas.begin(); itmap != (*(*it).second).Partidas.end(); ++itmap) {
-		 std::cout << itmap->first << " => " << itmap->second << '\n';
-		 }
-		 }
-		 pthread_mutex_unlock(&mutex_listJugadores);
-		 */
 
 		//recorro la lista de jugadores viendo a quien le puedo asignar un oponente y que comienze la partida
 		pthread_mutex_lock(&mutex_listJugadores);
@@ -224,13 +227,15 @@ void* establecerPartidas(void* data) {
 				nroPartida++;
 
 				int puertoNuevaPartida = getNewPort();
+
 				//Le mando a los jugadores el nro de Puerto en el que comenzara la partida
 				char auxPuertoNuevaPartida[10];
 				sprintf(auxPuertoNuevaPartida, "%d", puertoNuevaPartida);
 				string message(CD_PUERTO_PARTIDA);
 				message.append(fillMessage(auxPuertoNuevaPartida));
-				//		listJugadores[idJugador]->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
-				//		listJugadores[idOponente]->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
+
+				listJugadores[idJugador]->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
+				listJugadores[idOponente]->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
 
 				if ((pid = fork()) == 0) {
 					//Proceso hijo. Hacer exec
@@ -240,8 +245,8 @@ void* establecerPartidas(void* data) {
 					sprintf(auxCantVidas, "%d", cantVidas);
 
 					char *argumentos[] = { auxPuertoNuevaPartida, auxCantVidas };
-					//		execv("/Servidor Partida/Servidor Partida", argumentos);
-					exit(1);
+					execv("/Servidor Partida/Servidor Partida", argumentos);
+					//exit(1);
 				} else if (pid < 0) {
 					//Hubo error
 					cout << "Error al forkear" << endl;
@@ -252,12 +257,12 @@ void* establecerPartidas(void* data) {
 			} else {
 				cout << "J" << idJugador << " No puede jugar" << endl;
 			}
-
 		}
 		pthread_mutex_unlock(&mutex_listJugadores);
-		usleep(10000000);
+		usleep(INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES);
 	}
 
+	cout<<"Thread EstablecerPartidas va a hacer un Exit"<<endl;
 	pthread_exit(NULL);
 }
 

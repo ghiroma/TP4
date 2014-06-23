@@ -22,6 +22,7 @@ void SIGINT_Handler(int inum);
 void agregarJugador(Jugador* nuevoJugador);
 void quitarJugador(int id);
 unsigned int getNewPort();
+bool torneoFinalizado();
 void asociarSegmento(int* idShm, int* variable);
 //THREADS
 void* temporizadorTorneo(void* data);
