@@ -27,6 +27,7 @@ void asociarSegmento(int* idShm, int* variable);
 //THREADS
 void* temporizadorTorneo(void* data);
 void* actualizarListaJugadores();
+void* modoGrafico();
 void* aceptarJugadores(void* data);
 void* establecerPartidas(void* data);
 
