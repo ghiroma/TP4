@@ -87,6 +87,10 @@ int main(int argc, char * argv[]) {
 //hacer destroy de los pthread_mutex, semaforos, etc
 
 	pthread_join(thEstablecerPartidas, NULL);
+	pthread_exit(thActualizarListaJugadores);
+	
+	pthread_mutex_destroy(&mutex_listJugadores);
+	
 	pthread_exit(NULL);
 	cout << "Fin proceso Servidor Torneo" << endl;
 }
