@@ -27,6 +27,8 @@ static const char* CD_FIN_TORNEO = "08";
 static const char* CD_ACK = "99";
 
 
+static const int MAX_JUGADORES_SOPORTADOS = 100;
+
 static const int PERMISOS_SHM = 0777;
 static const int CLAVE_MEMORIA_COMPARTIDA = 1322;
 static const int INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES = 1000000;
