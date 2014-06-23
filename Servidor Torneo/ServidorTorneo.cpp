@@ -1,6 +1,5 @@
 #include "Support/ConstantesServidorTorneo.h"
 #include "../Servidor Partida/FuncionesServidorPartida.h"
-
 #include "Clases/CommunicationSocket.h"
 #include "Jugador.h"
 #include "FuncionesServidorTorneo.h"
@@ -13,6 +12,8 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <signal.h>
+#include <SDL/SDL.h>
+#include <SDL/SDL_ttf.h>
 
 using namespace std;
 
@@ -39,6 +40,8 @@ int main(int argc, char * argv[]) {
 	int resultThAceptarJugadores;
 	pthread_t thActualizarListaJugadores;
 	int resultThActualizarListaJugadores;
+	pthread_t thModoGrafico;
+	int resultThModoGrafico;
 
 	signal(SIGINT, SIGINT_Handler);
 
@@ -64,6 +67,13 @@ int main(int argc, char * argv[]) {
 	resultThActualizarListaJugadores = pthread_create(&thActualizarListaJugadores, NULL, actualizarListaJugadores, NULL);
 	if (resultThActualizarListaJugadores) {
 		cout << "Error no se pudo crear el thread de Actualizar Lista de Jugadores" << endl;
+		exit(1);
+	}
+	
+	//Lanzar THREAD ModoGrafico
+	resultThModoGrafico = pthread_create(&thModoGrafico, NULL, modoGrafico, NULL);
+	if (resultThModoGrafico) {
+		cout << "Error no se pudo crear el thread de Modo Grafico" << endl;
 		exit(1);
 	}
 	
