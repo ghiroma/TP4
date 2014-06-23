@@ -37,6 +37,8 @@ int main(int argc, char * argv[]) {
 	int resultThEstablecerPartidas;
 	pthread_t thAceptarJugadores;
 	int resultThAceptarJugadores;
+	pthread_t thActualizarListaJugadores;
+	int resultThActualizarListaJugadores;
 
 	signal(SIGINT, SIGINT_Handler);
 
@@ -58,6 +60,13 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
+	//Lanzar THREAD actualizar lista de jugadores (KEEPALIVE)
+	resultThActualizarListaJugadores = pthread_create(&thActualizarListaJugadores, NULL, actualizarListaJugadores, NULL);
+	if (resultThActualizarListaJugadores) {
+		cout << "Error no se pudo crear el thread de Actualizar Lista de Jugadores" << endl;
+		exit(1);
+	}
+	
 	//Lanzar THREAD aceptar jugadores
 	resultThAceptarJugadores = pthread_create(&thAceptarJugadores, NULL, aceptarJugadores, (void *) &ip);
 	if (resultThAceptarJugadores) {
@@ -75,25 +84,7 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
-	//usleep(10000);
-	/*exit(1);
-
-	 //Crear Socket del Servidor
-	 ServerSocket sSocket(puertoTorneo, (char *) ip.c_str());
-	 char * nombreJugador = NULL;
-	 while (!temporizacion.timeIsUp) {
-	 CommunicationSocket * cSocket = sSocket.Accept();
-	 cSocket->ReceiveBloq(nombreJugador, sizeof(nombreJugador));
-	 clientId++;
-	 agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
-
-	 //mandarle el ID al Jugador
-	 char aux[LONGITUD_CONTENIDO];
-	 string message(CD_ID_JUGADOR);
-	 sprintf(aux, "%d", clientId);
-	 message.append(fillMessage(aux));
-	 cSocket->SendNoBloq(message.c_str(), sizeof(message.c_str()));
-	 }*/
+//hacer destroy de los pthread_mutex, semaforos, etc
 
 	pthread_join(thEstablecerPartidas, NULL);
 	pthread_exit(NULL);
