@@ -14,7 +14,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "Clases/Edificio.h"
-#include "Support/Estructuras.h"
+#include "Support/Helper.h"
 #include <cstdio>
 
 using namespace std;
@@ -34,7 +34,7 @@ CommunicationSocket * cSocket1;
 CommunicationSocket * cSocket2;
 
 Felix *felix1;
-//Felix felix2;
+//Felix *felix2;
 
 Edificio *edificio;
 
@@ -59,7 +59,7 @@ timer_thread(void* arg) {
 				== true) {
 			string message(CD_ACK);
 			string content;
-			message.append(fillMessage(content));
+			message.append(Helper::fillMessage(content));
 			sender1_queue.push(message);
 			//sender2_queue.push(message);
 			startingTimeKeepAlive = time(0);
@@ -69,7 +69,7 @@ timer_thread(void* arg) {
 			char aux[5];
 			string message(CD_MOVIMIENTO_RALPH);
 			sprintf(aux, "%d", randomRalphMovement());
-			message.append(fillMessage(aux));
+			message.append(Helper::fillMessage(aux));
 			sender1_queue.push(message);
 			//sender2_queue.push(message);
 			startingTimeRalph = time(0);
@@ -79,7 +79,7 @@ timer_thread(void* arg) {
 			string message(CD_PALOMA);
 			char aux[5];
 			sprintf(aux, "%d", randomPaloma(0));
-			message.append(fillMessage(aux));
+			message.append(Helper::fillMessage(aux));
 			sender1_queue.push(message);
 			//sender2_queue.push(message);
 			startingTimePaloma = time(0);
@@ -94,8 +94,6 @@ timer_thread(void* arg) {
 		}
 
 		if (TimeDifference(INTERVALOS_PERSIANA, startingTimePersiana) == true) {
-			struct mensaje message;
-
 			//strcpy(message.codigo_mensaje,CD_PERSIANA);
 			//strcpy(message.contenido,randomPersiana);
 			//sender_queue.push(message);
@@ -214,9 +212,9 @@ validator_thread(void * argument) {
 
 				if (validateMovement(felix1, fila, columna, edificio)) {
 					string mensaje_movimiento1 = scodigo
-							+ fillMessage("1" + message.substr(2, 2));
+							+ Helper::fillMessage("1" + message.substr(2, 2));
 					string mensaje_movimiento2 = scodigo
-							+ fillMessage("2" + message.substr(2, 2));
+							+ Helper::fillMessage("2" + message.substr(2, 2));
 					sender1_queue.push(mensaje_movimiento1);
 					sender2_queue.push(mensaje_movimiento2);
 				}
@@ -226,15 +224,15 @@ validator_thread(void * argument) {
 				if (validateLives(felix1)) {
 					string message1(CD_PERDIDA_VIDA);
 					string message2(CD_PERDIDA_VIDA);
-					message1.append(fillMessage("1"));
-					message2.append(fillMessage("2"));
+					message1.append(Helper::fillMessage("1"));
+					message2.append(Helper::fillMessage("2"));
 					sender1_queue.push(message1);
 					sender2_queue.push(message2);
 				} else {
 					string message1(CD_PERDIO);
 					string message2(CD_PERDIO);
-					message1.append(fillMessage("1"));
-					message2.append(fillMessage("2"));
+					message1.append(Helper::fillMessage("1"));
+					message2.append(Helper::fillMessage("2"));
 					sender1_queue.push(message1);
 					sender2_queue.push(message2);
 				}
@@ -243,8 +241,8 @@ validator_thread(void * argument) {
 				if (validateWindowFix(felix1, edificio)) {
 					string message1(CD_VENTANA_ARREGLADA);
 					string message2(CD_VENTANA_ARREGLADA);
-					message1.append(fillMessage("1"));
-					message2.append(fillMessage("2"));
+					message1.append(Helper::fillMessage("1"));
+					message2.append(Helper::fillMessage("2"));
 					sender1_queue.push(message1);
 					sender2_queue.push(message2);
 				}
@@ -313,12 +311,6 @@ bool validateMovement(Felix * felix, int fila, int columna,
 	return false;
 }
 
-string fillMessage(string message) {
-	string content;
-	int cantCeros = LONGITUD_CONTENIDO - message.length();
-	content.assign(cantCeros, '0');
-	return content.append(message);
-}
 
 bool validateWindowFix(Felix * felix, Edificio * edificio) {
 	if (edificio->ventanas[felix->posicion_x][felix->posicion_y].ventanaRota
