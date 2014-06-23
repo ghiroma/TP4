@@ -262,6 +262,16 @@ void* establecerPartidas(void* data) {
 		usleep(INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES);
 	}
 
+
+	//el tiempo del Torneo llego a su fin, informar a cada cliente
+	pthread_mutex_lock(&mutex_listJugadores);
+	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
+		string message(CD_FIN_TORNEO);
+		message.append(fillMessage("1"));
+		it->second->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
+	}	
+	pthread_mutex_unlock(&mutex_listJugadores);
+	
 	cout<<"Thread EstablecerPartidas va a hacer un Exit"<<endl;
 	pthread_exit(NULL);
 }
