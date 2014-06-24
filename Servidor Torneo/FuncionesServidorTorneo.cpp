@@ -16,7 +16,7 @@
 #include <SDL/SDL_ttf.h>
 
 extern unsigned int puertoTorneo;
-extern bool timeIsUp;
+bool timeIsUp = false;
 Semaforo sem_inicializarTemporizador((char*) "/sem_inicializarTemporizador", 0);
 Semaforo sem_jugadoresKeepAlive((char*) "/sem_jugadoresKeepAlive", 1);
 pthread_mutex_t mutex_puertoPartida = PTHREAD_MUTEX_INITIALIZER;
@@ -86,14 +86,14 @@ void agregarJugador(Jugador* nuevoJugador) {
  */
 void quitarJugador(int id) {
 	//pthread_mutex_lock(&mutex_listJugadores);
-	
+
 	//para cada participante le quito de su lista el jugador que se da de baja
 	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 		it->second->quitarJugador(id);
 	}
 	//lo quito de la lista de jugadores del torneo
 	listJugadores.erase(id);
-	
+
 	//pthread_mutex_unlock(&mutex_listJugadores);
 }
 
@@ -112,7 +112,7 @@ unsigned int getNewPort() {
 /**
  * Verificar el estado del torneo para saber si finalizo el tiempo de inscripcion al torneo
  */
-bool torneoFinalizado(){
+bool torneoFinalizado() {
 	bool estado = false;
 	pthread_mutex_lock(&mutex_timeIsUp);
 	estado = timeIsUp;
@@ -142,12 +142,19 @@ void* temporizadorTorneo(void* data) {
 	pthread_exit(NULL);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+void cargarImagenes();
+void esperarConexiones();
+void limpiarPantalla();
+void limpiarPantalla2();
+void dibujarImagen(SDL_Surface *, int, int);
+void escribir(const char *, int, int);
+void mostrarJugadores();
 /**
  * THREAD -> Modo Grafico
  */
-void* modoGrafico() {
-/*	SDL_Rect pantalla_juego, 
-		pantalla_texto;
+void* modoGrafico(void*) {
+	SDL_Rect pantalla_juego, pantalla_texto;
 
 	SDL_Color color_texto;
 	TTF_Font *fuente;
@@ -155,70 +162,148 @@ void* modoGrafico() {
 	short int caracter = 0;
 	char nombre[10] = { ' ' };
 
-	const char pared_bmp[] = "Sprites/pared_grande_tramo1.bmp";
-	
-	SDL_Surface *pared;
+	const char pared_bmp[] = "Img/listado.bmp";
+
+	SDL_Surface *superficie, *pared, *texto;
 	pared = SDL_LoadBMP(pared_bmp);
-	
-	
+
 	//Inicio modo video
 	SDL_Init(SDL_INIT_VIDEO);
 	//Inicio modo texto grafico
 	TTF_Init();
-	
+
 	//Defino las propiedades de la pantalla del juego
 	superficie = SDL_SetVideoMode(ANCHO_PANTALLA_SERVIDOR, ALTO_PANTALLA_SERVIDOR, BPP_SERVIDOR, SDL_HWSURFACE);
 	//Seteo el titulo de la pantalla
 	SDL_WM_SetCaption("Rahlp Tournament", NULL);
 	//Cargo la fuente
-	fuente = TTF_OpenFont("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf",24);
+	fuente = TTF_OpenFont("Img/letra.ttf", 24);
 	//Color del texto
 	color_texto.r = color_texto.g = color_texto.b = 245;
-	
+
 	//Dimensiones rectangulo donde irá el texto
 	pantalla_texto.x = 10;
 	pantalla_texto.y = 10;
-	
+
 	//Texto del texto
-	nombre[caracter]='\0';
+	nombre[caracter] = '\0';
 	texto = TTF_RenderText_Solid(fuente, nombre, color_texto);
-	SDL_BlitSurface(texto,NULL, superficie, &pantalla_texto);	
-	SDL_Flip(superficie);	
-	
-*/	
+	SDL_BlitSurface(texto, NULL, superficie, &pantalla_texto);
+	SDL_Flip(superficie);
+
 	pthread_exit(NULL);
 }
 
+//**************************
+//***dibujarImagen**********
+//**************************
+/*
+void dibujarImagen(SDL_Surface *image, int x, int y) {
+	SDL_Rect src, dest;
+	src.x = 0;
+	src.y = 0;
+	src.w = image->w;
+	src.h = image->h;
+	dest.x = x;
+	dest.y = y;
+	dest.w = image->w;
+	dest.h = image->h;
+	SDL_BlitSurface(image, &src, screen, &dest);
+}*/
+
+//**************************
+//***escribir***************
+//**************************
+/*
+void escribir(const char *texto, int x, int y) {
+	SDL_Surface *image;
+	SDL_Color colorTexto = { 0, 174, 0 };
+	image = TTF_RenderText_Solid(fuente, texto, colorTexto);
+	if (image == NULL) {
+		cout << "TTF_RenderText_Solid() fallo." << endl;
+		salir(0);
+	}
+	dibujarImagen(image, x, y);
+}*/
+
+//**************************
+//***mostrarJugadores*******
+//**************************
+/*
+void mostrarJugadores() {
+	int posicion;
+	while (true) {
+		pthread_mutex_lock (&posiciones);
+		for (int i = 0; i < lista.size(); i++)
+			lista[i] = shmBuffer[i];
+		limpiarPantalla2();
+		int posicionY = 130;
+		int posicionX = fondo2->w / 2 - 300;
+		char aux[TAMBUF];
+
+		sprintf(aux, "%d", (int) lista.size());
+		escribir(aux, 320, fondo->h - 78);
+		sprintf(aux, "%d", srvTorneo.numRonda);
+		escribir(aux, fondo->w / 2 + 112, fondo->h - 78);
+		sprintf(aux, "%d", srvTorneo.cantRondas - srvTorneo.numRonda);
+		escribir(aux, fondo->w - 95, fondo->h - 78);
+		sort(lista.rbegin(), lista.rend());
+
+		posicion = 1;
+		for (int i = 0; i < lista.size(); i++) {
+			if (i != 0)
+				if (lista[i].puntaje != lista[i - 1].puntaje || lista[i].cantRanas != lista[i - 1].cantRanas)
+					posicion = i + 1;
+			shmBuffer[i].posicion = posicion;
+			posicionY += TAMFUENTE + 20;
+			sprintf(aux, "%d", posicion);
+			escribir(aux, posicionX - (3 * TAMFUENTE), posicionY);
+			strncpy(aux, lista[i].nombre, 10);
+			escribir(aux, posicionX, posicionY);
+			sprintf(aux, "%d", lista[i].puntaje);
+			escribir(aux, posicionX + 215, posicionY);
+			sprintf(aux, "%d", lista[i].victorias);
+			escribir(aux, posicionX + 415, posicionY);
+			sprintf(aux, "%d", lista[i].derrotas);
+			escribir(aux, posicionX + 615, posicionY);
+
+		}
+		SDL_Flip (screen);
+	}
+}*/
+//////////////////////////////////////////////////
 
 /**
  * THREAD -> KEEPALIVE Jugadores - Actualiza la lista de jugadores quitando los que ya no estan activos
  */
-void* actualizarListaJugadores(){
+void* actualizarListaJugadores(void*) {
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
-	int readDataCode;
 	bzero(buffer, sizeof(buffer));
-	
+	int readDataCode;
+
 	string message(CD_ACK);
 	string content;
 	message.append(fillMessage(content));
-			
-	while(true){
+
+	while (true) {
 		//para cada jugador ver si me responden la señal de KEEPALIVE
 		pthread_mutex_lock(&mutex_listJugadores);
 		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
-			
-			it->second->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
-			readDataCode = it->second->SocketAsociado->ReceiveBloq(buffer, sizeof(buffer));
-			
+
+			it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
+			readDataCode = it->second->SocketAsociado->ReceiveBloq(buffer, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
+
 			if (readDataCode == 0) {
 				//el jugador se desconecto
 				quitarJugador(it->first);
+			} else {
+
 			}
-		}pthread_mutex_destroy(&mutex_puertoPartida);
+		}
 		pthread_mutex_unlock(&mutex_listJugadores);
 		usleep(50000);
 	}
-	
+
 	pthread_exit(NULL);
 }
 
@@ -226,11 +311,10 @@ void* actualizarListaJugadores(){
  * THREAD -> Aceptar las conexiones de nuevos jugadores al torneo
  */
 void* aceptarJugadores(void* data) {
-	string* ip = (string*) data;
 	int clientId = 0;
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//CODIGO PARA PROBAR EL ASIGNADOR DE PARTIDAS
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//CODIGO PARA PROBAR EL ASIGNADOR DE PARTIDAS
 	/*clientId++;
 	 Jugador jugador1(clientId, "pedro 1", NULL);
 	 clientId++;
@@ -260,15 +344,15 @@ void* aceptarJugadores(void* data) {
 	 }
 	 }
 	 /**/
-	//FIN CODIGO PARA PROBAR EL ASIGNADOR DE PARTIDAS
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//FIN CODIGO PARA PROBAR EL ASIGNADOR DE PARTIDAS
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Crear Socket del Servidor
+	ServerSocket sSocket(puertoTorneo);
+	char nombreJugador[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 
-	//Crear Socket del Servidor
-	ServerSocket sSocket(puertoTorneo, (char *) (*ip).c_str());
-	char * nombreJugador = NULL;
 	while (true) {
 		CommunicationSocket * cSocket = sSocket.Accept();
-		cSocket->ReceiveBloq(nombreJugador, sizeof(nombreJugador));
+		cSocket->ReceiveBloq(nombreJugador, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
 		clientId++;
 		agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
 
@@ -277,7 +361,7 @@ void* aceptarJugadores(void* data) {
 		string message(CD_ID_JUGADOR);
 		sprintf(aux, "%d", clientId);
 		message.append(fillMessage(aux));
-		cSocket->SendNoBloq(message.c_str(), sizeof(message.c_str()));
+		cSocket->SendNoBloq(message.c_str(), message.length());
 	}
 
 	pthread_exit(NULL);
@@ -321,8 +405,8 @@ void* establecerPartidas(void* data) {
 
 				listJugadores[idJugador]->CantPartidasJugadas++;
 				listJugadores[idOponente]->CantPartidasJugadas++;
-				listJugadores[idJugador]->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
-				listJugadores[idOponente]->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
+				listJugadores[idJugador]->SocketAsociado->SendNoBloq(message.c_str(), message.length());
+				listJugadores[idOponente]->SocketAsociado->SendNoBloq(message.c_str(), message.length());
 
 				if ((pid = fork()) == 0) {
 					//Proceso hijo. Hacer exec
@@ -333,7 +417,7 @@ void* establecerPartidas(void* data) {
 
 					char *argumentos[] = { auxPuertoNuevaPartida, auxCantVidas };
 					execv("/Servidor Partida/Servidor Partida", argumentos);
-					//exit(1);
+					//return 1;
 				} else if (pid < 0) {
 					//Hubo error
 					cout << "Error al forkear" << endl;
@@ -349,50 +433,54 @@ void* establecerPartidas(void* data) {
 		usleep(INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES);
 	}
 
-
-	//el tiempo del Torneo llego a su fin, informar a cada cliente
+//ver si hace falta??????????
+//el tiempo del Torneo llego a su fin, informar a cada cliente
 	pthread_mutex_lock(&mutex_listJugadores);
 	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 		string message(CD_FIN_TORNEO);
 		message.append(fillMessage("1"));
-		it->second->SocketAsociado->SendNoBloq(message.c_str(), sizeof(message.c_str()));
-	}	
+		it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
+	}
 	pthread_mutex_unlock(&mutex_listJugadores);
-	
-	
-	//pthread_mutex_destroy(&mutex_listJugadores);
+
+	/**
+	 * hacer calculos del ganador y mandar a cada cliente su puntaje y ranking
+	 *
+	 */
+
+//pthread_mutex_destroy(&mutex_listJugadores);
 	pthread_mutex_destroy(&mutex_puertoPartida);
 	pthread_mutex_destroy(&mutex_timeIsUp);
-	cout<<"Thread EstablecerPartidas va a hacer un Exit"<<endl;
+	cout << "Thread EstablecerPartidas va a hacer un Exit" << endl;
 	pthread_exit(NULL);
 }
 
 void asociarSegmento(int* idShm, int* variable) {
-	//int idShm;
-	//int *variable = NULL;
-	
+//int idShm;
+//int *variable = NULL;
+
 	/*
-	bool jugadoresKeepAlive[MAX_JUGADORES_SOPORTADOS];
-    int i;
-    for (i=0; i<MAX_JUGADORES_SOPORTADOS; i++) { jugadoresKeepAlive[i] = true; }
-    */
-   
+	 bool jugadoresKeepAlive[MAX_JUGADORES_SOPORTADOS];
+	 int i;
+	 for (i=0; i<MAX_JUGADORES_SOPORTADOS; i++) { jugadoresKeepAlive[i] = true; }
+	 */
+
 	key_t key = ftok("/bin/ls", CLAVE_MEMORIA_COMPARTIDA);
 	if (key == -1) {
 		cout << "Error al generar clave de memoria compartida" << endl;
-		exit(1);
+		return;
 	}
 
 	*idShm = shmget(key, sizeof(int) * 1, IPC_CREAT | PERMISOS_SHM);
 	if (*idShm == -1) {
 		cout << "Error al obtener memoria compartida" << endl;
-		exit(1);
+		return;
 	}
 
 	variable = (int*) shmat(*idShm, 0, 0);
 	if (variable == NULL) {
 		cout << "Error al asignar memoria compartida reservada" << endl;
-		exit(1);
+		return;
 	}
 }
 

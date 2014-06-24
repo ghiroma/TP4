@@ -31,6 +31,7 @@ public:
 	int Id;
 	string Nombre;
 	bool Jugando; //true si el jugador esta jugando en una partida
+	int Ranking;
 	int CantPartidasJugadas;
 	int Puntaje;
 	CommunicationSocket * SocketAsociado;
