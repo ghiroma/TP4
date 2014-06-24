@@ -9,7 +9,6 @@ using namespace std;
 
 #include "Helper.h"
 #include "Constantes.h"
-#include <string>
 
 Helper::Helper() {
 	// TODO Auto-generated constructor stub
@@ -25,4 +24,22 @@ string Helper::fillMessage(string message) {
 	int cantCeros = LONGITUD_CONTENIDO - message.length();
 	content.assign(cantCeros, '0');
 	return content.append(message);
+}
+
+void Helper::encolar(string *message, queue<string> *cola,pthread_mutex_t *mutex)
+{
+	pthread_mutex_lock(mutex);
+	cola->push(*message);
+	pthread_mutex_unlock(mutex);
+}
+
+string Helper::desencolar(string *message, queue<string> *cola, pthread_mutex_t *mutex)
+{
+	string aux;
+	pthread_mutex_lock(mutex);
+	aux = cola->front();
+	cola->pop();
+	pthread_mutex_unlock(mutex);
+
+	return aux;
 }
