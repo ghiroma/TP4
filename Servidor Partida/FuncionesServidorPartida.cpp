@@ -15,8 +15,13 @@
 #include <stdlib.h>
 #include "Clases/Edificio.h"
 #include "Support/Helper.h"
+#include "Support/Estructuras.h"
 #include <cstdio>
 #include <pthread.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <semaphore.h>
+#include <errno.h>
 
 using namespace std;
 
@@ -30,6 +35,7 @@ queue<string> receiver1_queue;
 queue<string> receiver2_queue;
 queue<string> sender1_queue;
 queue<string> sender2_queue;
+queue<puntajes> puntajes_queue;
 
 CommunicationSocket * cSocket1;
 CommunicationSocket * cSocket2;
@@ -43,6 +49,7 @@ pthread_mutex_t mutex_receiver1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_receiver2 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_sender1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_sender2 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_puntajes = PTHREAD_MUTEX_INITIALIZER;
 
 bool TimeDifference(int timeDifference, time_t startingTime) {
 	if ((time(0) - startingTime) > timeDifference) {
@@ -106,8 +113,8 @@ timer_thread(void* arg) {
 			startingTimePersiana = time(0);
 		}
 
-		//usleep(8000);
-		sleep(1);
+		usleep(POOLING_DEADTIME);
+		//sleep(1);
 	}
 
 	pthread_exit(0);
@@ -126,7 +133,8 @@ sender1_thread(void * arguments) {
 			}
 		}
 
-		sleep(1);
+		usleep(POOLING_DEADTIME);
+		//sleep(1);
 	}
 
 	pthread_exit(0);
@@ -144,8 +152,8 @@ sender2_thread(void * arguments) {
 				cSocket2->SendBloq(message.c_str(), message.length());
 			}
 		}
-
-		sleep(1);
+		usleep(POOLING_DEADTIME);
+		//sleep(1);
 	}
 
 	pthread_exit(0);
@@ -169,8 +177,8 @@ receiver1_thread(void * fd) {
 			//TODO decirle al jugador nro2 que el cliente 1 se desconecto.
 			cliente1_conectado = false;
 		}
-		//usleep(8000);
-		sleep(1);
+		usleep(POOLING_DEADTIME);
+		//sleep(1);
 	}
 
 	pthread_exit(0);
@@ -190,7 +198,8 @@ receiver2_thread(void * fd) {
 		} else if (readDataCode == 0) {
 			cliente2_conectado = false;
 		}
-		usleep(8000);
+
+		usleep(POOLING_DEADTIME);
 	}
 
 	pthread_exit(0);
@@ -270,9 +279,54 @@ validator_thread(void * argument) {
 		if (cliente1_jugando == false && cliente2_jugando == false) {
 			stop = true;
 		}
+
+		usleep(POOLING_DEADTIME);
 	}
 
 	pthread_exit(0);
+}
+
+void* sharedMemory_thread(void * arguments)
+{
+	struct shmIds * shmIds = (struct shmIds *)arguments;
+	int shmId = shmget(shmIds->shmId,1024,0660);
+	int shmKAId = shmget(shmIds->shmKAId,1024,0660);
+	sem_t * sem = sem_open(shmIds->semName,0);
+	struct puntajes * puntaje;
+	char * buffer;
+	struct timespec ts;
+	ts.tv_sec = SEMAPHORE_TIMEOUT;
+
+	puntaje = (struct puntajes * )shmat(shmId,NULL,0);
+	buffer = (char *)shmat(shmKAId,NULL,0);
+
+	//Envio de puntajes.
+	if(!puntajes_queue.empty())
+	{
+		pthread_mutex_lock(&mutex_puntajes);
+		(*puntajes) = puntajes_queue.front();
+		puntajes_queue.pop();
+		//Bloquear y mandar por memo compartida los puntajes.
+		pthread_mutex_unlock(&mutex_puntajes);
+	}
+
+	//Manenjo de keepalive
+	if(sem_timedwait(sem,&ts)!=-1)
+	{
+
+	}
+	else
+	{
+		//Deberia setear alarma que si en cierto tiempo no se desbloquea
+		//asumo que el servidor murio.
+		//Averiguar por sem_timedwait.
+		if(errno== ETIMEDOUT)
+		{
+			//TODO Murio el servidor asi que tengo que cancelar todo y cerrar todo.
+			cout<<"Se cerro el servidor torneo"<<endl;
+		}
+	}
+
 }
 
 int randomRalphMovement() {
