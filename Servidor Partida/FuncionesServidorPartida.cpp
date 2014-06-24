@@ -16,6 +16,7 @@
 #include "Clases/Edificio.h"
 #include "Support/Helper.h"
 #include <cstdio>
+#include <pthread.h>
 
 using namespace std;
 
@@ -37,6 +38,11 @@ Felix *felix1;
 //Felix *felix2;
 
 Edificio *edificio;
+
+pthread_mutex_t mutex_receiver1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_receiver2 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_sender1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_sender2 = PTHREAD_MUTEX_INITIALIZER;
 
 bool TimeDifference(int timeDifference, time_t startingTime) {
 	if ((time(0) - startingTime) > timeDifference) {
