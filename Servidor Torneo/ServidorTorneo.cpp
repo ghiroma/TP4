@@ -41,6 +41,7 @@ int main(int argc, char * argv[]) {
 	int resultThActualizarListaJugadores;
 	pthread_t thModoGrafico;
 	int resultThModoGrafico;
+	thModoGrafico_data modoGraficoData;
 
 	signal(SIGINT, SIGINT_Handler);
 
@@ -70,7 +71,8 @@ int main(int argc, char * argv[]) {
 	}
 
 	//Lanzar THREAD ModoGrafico
-	resultThModoGrafico = pthread_create(&thModoGrafico, NULL, modoGrafico, (void*)NULL);
+	modoGraficoData.duracion = duracionTorneo;
+	resultThModoGrafico = pthread_create(&thModoGrafico, NULL, modoGrafico, (void*)&modoGraficoData);
 	if (resultThModoGrafico) {
 		cout << "Error no se pudo crear el thread de Modo Grafico" << endl;
 		return 1;

@@ -17,6 +17,10 @@ struct thTemporizador_data {
 	pthread_t thEstablecerPartidas;
 };
 
+struct thModoGrafico_data {
+	int duracion;
+};
+
 void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* tiempoInmunidad, int* cantVidas);
 void SIGINT_Handler(int inum);
 void agregarJugador(Jugador* nuevoJugador);

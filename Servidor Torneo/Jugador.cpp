@@ -13,7 +13,10 @@ Jugador::Jugador() {
 	this->Puntaje = 0;
 	this->SocketAsociado = 0;
 	this->Jugando = false;
+	this->PartidasGanadas = 0;
+	this->PartidasPerdidas = 0;
 	this->CantPartidasJugadas = 0;
+	this->Promedio = 0;
 	this->Ranking = 0;
 }
 
@@ -23,7 +26,10 @@ Jugador::Jugador(int Id, string Nombre, CommunicationSocket* SocketAsociado) {
 	this->Puntaje = 0;
 	this->SocketAsociado = SocketAsociado;
 	this->Jugando = false;
+	this->PartidasGanadas = 0;
+	this->PartidasPerdidas = 0;
 	this->CantPartidasJugadas = 0;
+	this->Promedio = 0;
 	this->Ranking = 0;
 }
 
@@ -40,20 +46,18 @@ void Jugador::agregarOponente(int idOponente) {
 	//CODIGO DE PRUEBA
 	if (idOponente == 1) {
 		this->Partidas[idOponente] = 2;
-	}else
-	if (idOponente == 2) {
+	} else if (idOponente == 2) {
 		this->Partidas[idOponente] = 2;
-	} else
-	if (idOponente == 3) {
+	} else if (idOponente == 3) {
 		this->Partidas[idOponente] = 1;
-	}else
-	if (idOponente == 4) {
+	} else if (idOponente == 4) {
 		this->Partidas[idOponente] = 1;
-	}else{
+	} else {
 		this->Partidas[idOponente] = 1;
 	}
 	/////////////////////////////////
 
+	//codigo que hay que poner
 	//this->Partidas[idOponente] = 0;
 
 }

@@ -32,8 +32,11 @@ public:
 	string Nombre;
 	bool Jugando; //true si el jugador esta jugando en una partida
 	int Ranking;
+	int PartidasGanadas;
+	int PartidasPerdidas;
 	int CantPartidasJugadas;
 	int Puntaje;
+	float Promedio;
 	CommunicationSocket * SocketAsociado;
 	map<int, int> Partidas; //<ID Jugador, cantEnfrentamientos>
 

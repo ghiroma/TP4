@@ -142,136 +142,166 @@ void* temporizadorTorneo(void* data) {
 	pthread_exit(NULL);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-void cargarImagenes();
-void esperarConexiones();
-void limpiarPantalla();
-void limpiarPantalla2();
-void dibujarImagen(SDL_Surface *, int, int);
-void escribir(const char *, int, int);
-void mostrarJugadores();
 /**
  * THREAD -> Modo Grafico
  */
-void* modoGrafico(void*) {
-	SDL_Rect pantalla_juego, pantalla_texto;
+void* modoGrafico(void* data) {
+	struct thModoGrafico_data *torneo;
+	torneo = (struct thModoGrafico_data *) data;
 
-	SDL_Color color_texto;
-	TTF_Font *fuente;
+	SDL_Surface *screen, *background, *tiempo, *jugadores, *infoJugador;
+	SDL_Rect posDestino, posBackground, posTiempo, posJugadores, posInfoJugadores;
+	SDL_Color colorNegro, colorBlanco;
+	TTF_Font *font;
 
-	short int caracter = 0;
-	char nombre[10] = { ' ' };
+	//Colores
+	colorNegro.r = colorNegro.g = colorNegro.b = 0;
+	colorBlanco.r = colorBlanco.g = colorBlanco.b = 255;
 
-	const char pared_bmp[] = "Img/listado.bmp";
+	background = SDL_LoadBMP("Img/background.bmp");
+	//verificamos si ha ocurrido algun error cargando la imagen
+	if (background == NULL) {
+		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
+		pthread_exit(NULL);
+	}
 
-	SDL_Surface *superficie, *pared, *texto;
-	pared = SDL_LoadBMP(pared_bmp);
+	//creo una copia del background
+	posBackground.x = 0;
+	posBackground.y = 0;
+	//SDL_BlitSurface(backgroundOriginal, NULL, background, &posBackground);
 
 	//Inicio modo video
-	SDL_Init(SDL_INIT_VIDEO);
+	if (SDL_Init(SDL_INIT_VIDEO) == -1) {
+		printf("Error al iniciar SDL: %s\n", SDL_GetError());
+		pthread_exit(NULL);
+	}
 	//Inicio modo texto grafico
-	TTF_Init();
+	if (TTF_Init() < 0) {
+		printf("Error al iniciar SDL_TTF\n");
+		pthread_exit(NULL);
+	}
 
 	//Defino las propiedades de la pantalla del juego
-	superficie = SDL_SetVideoMode(ANCHO_PANTALLA_SERVIDOR, ALTO_PANTALLA_SERVIDOR, BPP_SERVIDOR, SDL_HWSURFACE);
+	screen = SDL_SetVideoMode(ANCHO_PANTALLA_SERVIDOR, ALTO_PANTALLA_SERVIDOR, BPP_SERVIDOR, SDL_HWSURFACE);
+	if (screen == NULL) {
+		printf("Error estableciendo el modo de video: %s\n", SDL_GetError());
+		pthread_exit(NULL);
+	}
+
 	//Seteo el titulo de la pantalla
-	SDL_WM_SetCaption("Rahlp Tournament", NULL);
+	SDL_WM_SetCaption("Ralph Tournament SERVIDOR", NULL);
+
 	//Cargo la fuente
-	fuente = TTF_OpenFont("Img/letra.ttf", 24);
-	//Color del texto
-	color_texto.r = color_texto.g = color_texto.b = 245;
+	font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24);
+	if (font == NULL) {
+		printf("Error abriendo la fuente ttf: %s\n", SDL_GetError());
+		pthread_exit(NULL);
+	}
 
-	//Dimensiones rectangulo donde irá el texto
-	pantalla_texto.x = 10;
-	pantalla_texto.y = 10;
+	int minutos = torneo->duracion;
+	int segundos = 0;
+	posTiempo.x = 50;
+	posTiempo.y = 140;
+	char txtTiempo[10];
+	sprintf(txtTiempo, "TIME %02d:%02d", minutos, segundos);
+	tiempo = TTF_RenderText_Solid(font, txtTiempo, colorBlanco);
+	SDL_BlitSurface(tiempo, NULL, background, &posTiempo);
 
-	//Texto del texto
-	nombre[caracter] = '\0';
-	texto = TTF_RenderText_Solid(fuente, nombre, color_texto);
-	SDL_BlitSurface(texto, NULL, superficie, &pantalla_texto);
-	SDL_Flip(superficie);
+	posJugadores.x = 530;
+	posJugadores.y = 140;
+	char txtPlayers[10];
+	sprintf(txtPlayers, "Players: %d", 0);
+	jugadores = TTF_RenderText_Solid(font, txtPlayers, colorBlanco);
+	SDL_BlitSurface(jugadores, NULL, background, &posJugadores);
+
+	posBackground.x = 0;
+	posBackground.y = 0;
+	SDL_BlitSurface(background, NULL, screen, &posBackground);
+	SDL_Flip(screen);
+
+	sleep(3);
+
+	char txtInfoJugador[50];
+	int cantPlayersConectados;
+	//varaible timeIsUp habilitar cuanto comienze la partida
+	while (true) {
+		background = SDL_LoadBMP("Img/background.bmp");
+		//actualizar tiempo
+		if (minutos > 0 && segundos == 0) {
+			minutos--;
+			segundos = 59;
+		} else if (segundos > 0) {
+			segundos--;
+		}
+		if (minutos == 0 && segundos == 0) {
+			strcpy(txtTiempo, "Tournament finished, waiting matchs...");
+		} else {
+			sprintf(txtTiempo, "TIME %02d:%02d", minutos, segundos);
+		}
+		tiempo = TTF_RenderText_Solid(font, txtTiempo, colorBlanco);
+		SDL_BlitSurface(tiempo, NULL, background, &posTiempo);
+
+		//actualizar ranking
+		//sacar promedios
+		pthread_mutex_lock(&mutex_listJugadores);
+		cantPlayersConectados = listJugadores.size();
+
+		/*this->Puntaje = 0;
+		 this->SocketAsociado = SocketAsociado;
+		 this->Jugando = false;
+		 this->PartidasGanadas = 0;
+		 this->PartidasPerdidas = 0;
+		 this->CantPartidasJugadas = 0;
+		 this->Ranking = 0;*/
+		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
+			if (it->second->CantPartidasJugadas > 0) {
+				it->second->Promedio = it->second->Puntaje / it->second->CantPartidasJugadas;
+			}
+		}
+
+		//ordenar en un array los puntajes con los ID        //podria actualizar el ranking
+		//
+		//
+
+		pthread_mutex_unlock(&mutex_listJugadores);
+		posDestino.x = 115;
+		posDestino.y = 180;
+		int i;
+		for (i = 1; i <= 10; ++i) {
+			sprintf(txtInfoJugador, "%02d    %-10.10s    %06d    %02d    %02d", i, "peepee7891", 5500, 4, 3);
+			infoJugador = TTF_RenderText_Solid(font, txtInfoJugador, colorBlanco);
+			SDL_BlitSurface(infoJugador, NULL, background, &posDestino);
+			posDestino.y += 30;
+		}
+
+		//actualizar cantidad de jugadores conectados
+		sprintf(txtPlayers, "Players: %d", cantPlayersConectados);
+		jugadores = TTF_RenderText_Solid(font, txtPlayers, colorBlanco);
+		SDL_BlitSurface(jugadores, NULL, background, &posJugadores);
+
+		SDL_BlitSurface(background, NULL, screen, &posBackground);
+		SDL_Flip(screen);
+
+		//cambiar esto por algo mejor
+		if (minutos == 0 && segundos == 0) {
+			break;
+		}
+
+		usleep(1000000);
+	}
+
+	sleep(40);
+	SDL_FreeSurface(screen);
+	SDL_FreeSurface(background);
+	SDL_FreeSurface(tiempo);
+	SDL_FreeSurface(jugadores);
+	SDL_FreeSurface(infoJugador);
+	TTF_CloseFont(font);
+	TTF_Quit();
+	SDL_Quit();
 
 	pthread_exit(NULL);
 }
-
-//**************************
-//***dibujarImagen**********
-//**************************
-/*
-void dibujarImagen(SDL_Surface *image, int x, int y) {
-	SDL_Rect src, dest;
-	src.x = 0;
-	src.y = 0;
-	src.w = image->w;
-	src.h = image->h;
-	dest.x = x;
-	dest.y = y;
-	dest.w = image->w;
-	dest.h = image->h;
-	SDL_BlitSurface(image, &src, screen, &dest);
-}*/
-
-//**************************
-//***escribir***************
-//**************************
-/*
-void escribir(const char *texto, int x, int y) {
-	SDL_Surface *image;
-	SDL_Color colorTexto = { 0, 174, 0 };
-	image = TTF_RenderText_Solid(fuente, texto, colorTexto);
-	if (image == NULL) {
-		cout << "TTF_RenderText_Solid() fallo." << endl;
-		salir(0);
-	}
-	dibujarImagen(image, x, y);
-}*/
-
-//**************************
-//***mostrarJugadores*******
-//**************************
-/*
-void mostrarJugadores() {
-	int posicion;
-	while (true) {
-		pthread_mutex_lock (&posiciones);
-		for (int i = 0; i < lista.size(); i++)
-			lista[i] = shmBuffer[i];
-		limpiarPantalla2();
-		int posicionY = 130;
-		int posicionX = fondo2->w / 2 - 300;
-		char aux[TAMBUF];
-
-		sprintf(aux, "%d", (int) lista.size());
-		escribir(aux, 320, fondo->h - 78);
-		sprintf(aux, "%d", srvTorneo.numRonda);
-		escribir(aux, fondo->w / 2 + 112, fondo->h - 78);
-		sprintf(aux, "%d", srvTorneo.cantRondas - srvTorneo.numRonda);
-		escribir(aux, fondo->w - 95, fondo->h - 78);
-		sort(lista.rbegin(), lista.rend());
-
-		posicion = 1;
-		for (int i = 0; i < lista.size(); i++) {
-			if (i != 0)
-				if (lista[i].puntaje != lista[i - 1].puntaje || lista[i].cantRanas != lista[i - 1].cantRanas)
-					posicion = i + 1;
-			shmBuffer[i].posicion = posicion;
-			posicionY += TAMFUENTE + 20;
-			sprintf(aux, "%d", posicion);
-			escribir(aux, posicionX - (3 * TAMFUENTE), posicionY);
-			strncpy(aux, lista[i].nombre, 10);
-			escribir(aux, posicionX, posicionY);
-			sprintf(aux, "%d", lista[i].puntaje);
-			escribir(aux, posicionX + 215, posicionY);
-			sprintf(aux, "%d", lista[i].victorias);
-			escribir(aux, posicionX + 415, posicionY);
-			sprintf(aux, "%d", lista[i].derrotas);
-			escribir(aux, posicionX + 615, posicionY);
-
-		}
-		SDL_Flip (screen);
-	}
-}*/
-//////////////////////////////////////////////////
 
 /**
  * THREAD -> KEEPALIVE Jugadores - Actualiza la lista de jugadores quitando los que ya no estan activos
@@ -315,7 +345,8 @@ void* aceptarJugadores(void* data) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //CODIGO PARA PROBAR EL ASIGNADOR DE PARTIDAS
-	/*clientId++;
+	/*pthread_mutex_lock(&mutex_listJugadores);
+	clientId++;
 	 Jugador jugador1(clientId, "pedro 1", NULL);
 	 clientId++;
 	 Jugador jugador2(clientId, "carlos 2", NULL);
@@ -334,6 +365,7 @@ void* aceptarJugadores(void* data) {
 	 agregarJugador(&jugador4);
 	 agregarJugador(&jugador5);
 	 agregarJugador(&jugador6);
+	 pthread_mutex_unlock(&mutex_listJugadores);
 	 //cout << "oponente para el jugador 1: " << (*listJugadores[1]).obtenerOponente(&listJugadores) << endl;
 
 	 for (map<int, Jugador*>::iterator it = (listJugadores).begin(); it != (listJugadores).end(); it++) {
@@ -343,7 +375,7 @@ void* aceptarJugadores(void* data) {
 	 std::cout << itmap->first << " => " << itmap->second << '\n';
 	 }
 	 }
-	 /**/
+	 */
 //FIN CODIGO PARA PROBAR EL ASIGNADOR DE PARTIDAS
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Crear Socket del Servidor
