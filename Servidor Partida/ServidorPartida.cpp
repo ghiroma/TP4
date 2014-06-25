@@ -12,6 +12,7 @@
 #include "Clases/Edificio.h"
 #include "Support/Constantes.h"
 #include "FuncionesServidorPartida.h"
+#include "Support/Estructuras.h"
 #include <pthread.h>
 #include <sys/types.h>
 #include <signal.h>
@@ -31,8 +32,11 @@ struct args_struct {
 int main(int argc, char * argv[]) {
 	int puerto;
 	int cantVidas;
+	int idSM;
+	int idSMKA;
+	char * semaphore;
 
-	struct args_struct args;
+	struct shmIds ids;
 
 	pthread_t thread_timer;
 	pthread_t thread_receiver1;
@@ -40,15 +44,25 @@ int main(int argc, char * argv[]) {
 	pthread_t thread_sender1;
 	pthread_t thread_sender2;
 	pthread_t thread_validator;
+	pthread_t thread_sharedMemory;
 
 	signal(SIGINT, SIGINT_Handler);
 
 	srand(time(NULL));
 
-	if (argc == 3) {
+	if (argc == 5) {
 		puerto = atoi(argv[1]);
 		cantVidas = atoi(argv[2]);
+		idSM = atoi(argv[3]);
+		idSMKA = atoi(argv[4]);
+		semaphore = argv[5];
+
+		ids.semName = semaphore;
+		ids.shmId = idSM;
+		ids.shmKAId = idSMKA;
+
 	} else {
+		//TODO Error y cerrar servidor partida porque faltan datos.
 		puerto = 5556;
 		cantVidas = 3;
 	}
@@ -70,12 +84,13 @@ int main(int argc, char * argv[]) {
 
 		//Creo los 4 thread.
 		pthread_create(&thread_timer, NULL, timer_thread, NULL);
-		pthread_create(&thread_receiver1, NULL, receiver1_thread,
-				(void *) &cSocket1->ID);
+		pthread_create(&thread_receiver1, NULL, receiver1_thread,NULL);
 		//pthread_create(&thread_receiver2,NULL,receiver2_thread,NULL);
 		pthread_create(&thread_sender1, NULL, sender1_thread, NULL);
 		//pthread_create(&thread_sender2,NULL,sender2_thread,NULL);
 		pthread_create(&thread_validator, NULL, validator_thread, NULL);
+		pthread_create(&thread_sharedMemory,NULL,sharedMemory_thread,(void *)&ids);
+
 
 		pthread_join(thread_timer, NULL);
 		pthread_join(thread_receiver1, NULL);
@@ -83,6 +98,15 @@ int main(int argc, char * argv[]) {
 		pthread_join(thread_sender1, NULL);
 		//pthread_join(thread_sender2,NULL);
 		pthread_join(thread_validator, NULL);
+		pthread_join(thread_sharedMemory,NULL);
+
+		//TODO finalizada la partida, enviar los puntajes actualizados.
+
+		pthread_mutex_destroy(&mutex_receiver1);
+		pthread_mutex_destroy(&mutex_receiver2);
+		pthread_mutex_destroy(&mutex_puntajes);
+		pthread_mutex_destroy(&mutex_sender1);
+		pthread_mutex_destroy(&mutex_sender2);
 	}
 
 	delete (cSocket1);

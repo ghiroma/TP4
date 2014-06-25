@@ -8,6 +8,16 @@
 #include "Felix.h"
 
 Felix::Felix(int cantVidas) {
+	this->id = 0;
+	this->posicion_x = 0;
+	this->posicion_y = 0;
+	this->puntaje_parcial = 0;
+	this->cantidad_vidas = cantVidas;
+}
+
+Felix::Felix(int cantVidas, int id)
+{
+	this->id = id;
 	this->posicion_x = 0;
 	this->posicion_y = 0;
 	this->puntaje_parcial = 0;
