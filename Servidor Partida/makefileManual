@@ -2,8 +2,8 @@ CC=g++
 CFLAGS = -I ./src/includes -pthread
 LFLAGS = -L ./src/libs -pthread
 
-all:FuncionesServidorPartida.o ServidorPartida.o CommunicationSocket.o ServerSocket.o Felix.o Edificio.o Ventana.o Semaforo.o
-	$(CC) $(LFLAGS) -o ServidorPartida FuncionesServidorPartida.o ServidorPartida.o CommunicationSocket.o ServerSocket.o Felix.o Edificio.o Ventana.o Semaforo.o
+all:FuncionesServidorPartida.o ServidorPartida.o CommunicationSocket.o ServerSocket.o Felix.o Edificio.o Ventana.o Semaforo.o Helper.o
+	$(CC) $(LFLAGS) -o ServidorPartida FuncionesServidorPartida.o ServidorPartida.o CommunicationSocket.o ServerSocket.o Felix.o Edificio.o Ventana.o Semaforo.o Helper.o
 FuncionesServidorPartida.o:FuncionesServidorPartida.cpp
 	$(CC) $(CFLAGS) -c FuncionesServidorPartida.cpp
 ServidorPartida.o:ServidorPartida.cpp
@@ -20,3 +20,5 @@ Ventana.o:Clases/Ventana.cpp
 	$(CC) $(CFLAGS) -c Clases/Ventana.cpp
 Semaforo.o:Clases/Semaforo.cpp
 	$(CC) $(CFLAGS) -c Clases/Semaforo.cpp
+Helper.o:Support/Helper.cpp
+	$(CC) $(CFLAGS) -c Support/Helper.cpp

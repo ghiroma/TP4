@@ -27,7 +27,7 @@ extern queue<string> receiver1_queue;
 extern queue<string> receiver2_queue;
 extern queue<string> sender1_queue;
 extern queue<string> sender2_queue;
-extern queue<puntajes> puntajes_queue;
+extern queue<struct puntajes> puntajes_queue;
 
 extern CommunicationSocket * cSocket1;
 extern CommunicationSocket * cSocket2;
@@ -36,6 +36,12 @@ extern Felix * felix1;
 extern Felix * felix2;
 
 extern Edificio *edificio;
+
+extern pthread_mutex_t mutex_receiver1;
+extern pthread_mutex_t mutex_receiver2;
+extern pthread_mutex_t mutex_sender1;
+extern pthread_mutex_t mutex_sender2;
+extern pthread_mutex_t mutex_puntajes;
 
 bool TimeDifference(int timeDifference, time_t startingTime);
 void* timer_thread(void* argument);

@@ -33,13 +33,10 @@ void Helper::encolar(string *message, queue<string> *cola,pthread_mutex_t *mutex
 	pthread_mutex_unlock(mutex);
 }
 
-string Helper::desencolar(string *message, queue<string> *cola, pthread_mutex_t *mutex)
+void Helper::desencolar(string *message, queue<string> *cola, pthread_mutex_t *mutex)
 {
-	string aux;
 	pthread_mutex_lock(mutex);
-	aux = cola->front();
+	*message = cola->front();
 	cola->pop();
 	pthread_mutex_unlock(mutex);
-
-	return aux;
 }

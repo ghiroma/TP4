@@ -35,7 +35,7 @@ queue<string> receiver1_queue;
 queue<string> receiver2_queue;
 queue<string> sender1_queue;
 queue<string> sender2_queue;
-queue<puntajes> puntajes_queue;
+queue<struct puntajes> puntajes_queue;
 
 CommunicationSocket * cSocket1;
 CommunicationSocket * cSocket2;
@@ -73,8 +73,8 @@ timer_thread(void* arg) {
 			string message(CD_ACK);
 			string content;
 			message.append(Helper::fillMessage(content));
-			sender1_queue.push(message);
-			//sender2_queue.push(message);
+			//Helper::encolar(&message,&sender1_queue,&mutex_sender1);
+			//Helper::encolar(&message,&sender2_queue,&mutex_sender2);
 			startingTimeKeepAlive = time(0);
 		}
 
@@ -83,8 +83,8 @@ timer_thread(void* arg) {
 			string message(CD_MOVIMIENTO_RALPH);
 			sprintf(aux, "%d", randomRalphMovement());
 			message.append(Helper::fillMessage(aux));
-			sender1_queue.push(message);
-			//sender2_queue.push(message);
+			Helper::encolar(&message, &sender1_queue, &mutex_sender1);
+			//Helper::encolar(&message, &sender2_queue, &mutex_sender2);
 			startingTimeRalph = time(0);
 		}
 
@@ -93,27 +93,28 @@ timer_thread(void* arg) {
 			char aux[5];
 			sprintf(aux, "%d", randomPaloma(0));
 			message.append(Helper::fillMessage(aux));
-			sender1_queue.push(message);
-			//sender2_queue.push(message);
+			Helper::encolar(&message, &sender1_queue, &mutex_sender1);
+			//Helper::encolar(&message,&sender2_queue,&mutex_sender2);
 			startingTimePaloma = time(0);
 		}
 
 		if (TimeDifference(INTERVALOS_TORTA, startingTimeTorta) == true) {
 			string message(CD_TORTA);
 			message.append(randomTorta());
-			sender1_queue.push(message);
-			//sender2_queue.push(message);
+			Helper::encolar(&message, &sender1_queue, &mutex_sender1);
+			//Helper::encolar(&message, &sender2_queue, &mutex_sender2);
 			startingTimeTorta = time(0);
 		}
 
 		if (TimeDifference(INTERVALOS_PERSIANA, startingTimePersiana) == true) {
 			//strcpy(message.codigo_mensaje,CD_PERSIANA);
 			//strcpy(message.contenido,randomPersiana);
-			//sender_queue.push(message);
+			//Helper::encolar(&message, &sender1_queue, &mutex_sender1);
+			//Helper::encolar(&message, &sender2_queue, &mutex_sender2);
 			startingTimePersiana = time(0);
 		}
 
-		usleep(POOLING_DEADTIME);
+		usleep(POLLING_DEADTIME);
 		//sleep(1);
 	}
 
@@ -125,15 +126,15 @@ sender1_thread(void * arguments) {
 	while (stop == false && cliente1_conectado) {
 		if (!sender1_queue.empty()) {
 			//Lo que venga del timer y validator, se replica a ambos jugadores.
-			string message = sender1_queue.front();
-			sender1_queue.pop();
+			string message;
+			Helper::desencolar(&message, &sender1_queue, &mutex_sender1);
 			cout << "Mensaje a enviar: " << message.c_str() << endl;
 			if (cliente1_conectado) {
 				cSocket1->SendBloq(message.c_str(), message.length());
 			}
 		}
 
-		usleep(POOLING_DEADTIME);
+		usleep(POLLING_DEADTIME);
 		//sleep(1);
 	}
 
@@ -145,14 +146,14 @@ sender2_thread(void * arguments) {
 	while (stop == false && cliente2_conectado) {
 		if (!sender2_queue.empty()) {
 			//Lo que venga del timer y validator, se replica a ambos jugadores.
-			string message = sender2_queue.front();
-			sender2_queue.pop();
+			string message;
+			Helper::desencolar(&message, &sender2_queue, &mutex_sender2);
 			cout << "Mensaje a enviar: " << message.c_str() << endl;
 			if (cliente2_conectado) {
 				cSocket2->SendBloq(message.c_str(), message.length());
 			}
 		}
-		usleep(POOLING_DEADTIME);
+		usleep(POLLING_DEADTIME);
 		//sleep(1);
 	}
 
@@ -171,14 +172,13 @@ receiver1_thread(void * fd) {
 		if (readDataCode > 0) {
 			string aux(buffer);
 			cout << "Recibi mensaje: " << buffer << endl;
-			receiver1_queue.push(aux);
+			Helper::encolar(&aux, &receiver1_queue, &mutex_receiver1);
 		} else if (readDataCode == 0) {
 			cout << "Se desconecto el cliente nro 1" << endl;
 			//TODO decirle al jugador nro2 que el cliente 1 se desconecto.
 			cliente1_conectado = false;
 		}
-		usleep(POOLING_DEADTIME);
-		//sleep(1);
+		usleep(POLLING_DEADTIME);
 	}
 
 	pthread_exit(0);
@@ -194,12 +194,12 @@ receiver2_thread(void * fd) {
 		readDataCode = cSocket2->ReceiveNoBloq(buffer, sizeof(buffer));
 		if (readDataCode > 0) {
 			string mensaje(buffer);
-			receiver2_queue.push(mensaje);
+			Helper::encolar(&mensaje, &receiver2_queue, &mutex_receiver2);
 		} else if (readDataCode == 0) {
 			cliente2_conectado = false;
 		}
 
-		usleep(POOLING_DEADTIME);
+		usleep(POLLING_DEADTIME);
 	}
 
 	pthread_exit(0);
@@ -208,6 +208,8 @@ receiver2_thread(void * fd) {
 //TODO el validator tambien se encarga de cerrar los socket una vez que el cliente se desconecto?
 void *
 validator_thread(void * argument) {
+
+	struct puntajes puntaje;
 
 	while (stop == false) {
 		if (!receiver1_queue.empty()) {
@@ -230,8 +232,10 @@ validator_thread(void * argument) {
 							+ Helper::fillMessage("1" + message.substr(2, 2));
 					string mensaje_movimiento2 = scodigo
 							+ Helper::fillMessage("2" + message.substr(2, 2));
-					sender1_queue.push(mensaje_movimiento1);
-					sender2_queue.push(mensaje_movimiento2);
+					Helper::encolar(&mensaje_movimiento1, &sender1_queue,
+							&mutex_sender1);
+					Helper::encolar(&mensaje_movimiento2, &sender2_queue,
+							&mutex_sender2);
 				}
 				break;
 			case CD_PERDIDA_VIDA_I:
@@ -241,15 +245,15 @@ validator_thread(void * argument) {
 					string message2(CD_PERDIDA_VIDA);
 					message1.append(Helper::fillMessage("1"));
 					message2.append(Helper::fillMessage("2"));
-					sender1_queue.push(message1);
-					sender2_queue.push(message2);
+					Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
+					Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
 				} else {
 					string message1(CD_PERDIO);
 					string message2(CD_PERDIO);
 					message1.append(Helper::fillMessage("1"));
 					message2.append(Helper::fillMessage("2"));
-					sender1_queue.push(message1);
-					sender2_queue.push(message2);
+					Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
+					Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
 				}
 				break;
 			case CD_VENTANA_ARREGLADA_I:
@@ -258,8 +262,17 @@ validator_thread(void * argument) {
 					string message2(CD_VENTANA_ARREGLADA);
 					message1.append(Helper::fillMessage("1"));
 					message2.append(Helper::fillMessage("2"));
-					sender1_queue.push(message1);
-					sender2_queue.push(message2);
+					Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
+					Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
+
+					puntaje.idJugador1 = felix1->id;
+					//puntaje.idJugador2 = felix2->id;
+					puntaje.jugando = true;
+					puntaje.puntajeJugador1 = felix1->puntaje_parcial;
+					//puntaje.puntajeJugador2 = felix2->puntaje_parcial;
+					pthread_mutex_lock(&mutex_puntajes);
+					puntajes_queue.push(puntaje);
+					pthread_mutex_unlock(&mutex_puntajes);
 				}
 				break;
 			}
@@ -277,54 +290,69 @@ validator_thread(void * argument) {
 
 		//Murieron los dos jugadores.
 		if (cliente1_jugando == false && cliente2_jugando == false) {
+			//Por race condition podria terminar antes de enviarme los  ultimos puntajes..
+			puntaje.idJugador1 = felix1->id;
+			//puntaje.idJugador2 = felix2->id;
+			puntaje.jugando = false;
+			puntaje.puntajeJugador1 = felix1->puntaje_parcial;
+			//puntaje.puntajeJugador2 = felix2->puntaje_parcial;
+			pthread_mutex_lock(&mutex_puntajes);
+			puntajes_queue.push(puntaje);
+			pthread_mutex_unlock(&mutex_puntajes);
+			//Le doy sleep de 1 asi llego a mandar los puntajes?
+			sleep(1);
 			stop = true;
 		}
 
-		usleep(POOLING_DEADTIME);
+		usleep(POLLING_DEADTIME);
 	}
 
 	pthread_exit(0);
 }
 
-void* sharedMemory_thread(void * arguments)
-{
-	struct shmIds * shmIds = (struct shmIds *)arguments;
-	int shmId = shmget(shmIds->shmId,1024,0660);
-	int shmKAId = shmget(shmIds->shmKAId,1024,0660);
-	sem_t * sem = sem_open(shmIds->semName,0);
+void* sharedMemory_thread(void * arguments) {
+	struct shmIds * shmIds = (struct shmIds *) arguments;
+	int shmId = shmget(shmIds->shmId, 1024, 0660);
+	int shmKAId = shmget(shmIds->shmKAId, 1024, 0660);
+	sem_t * sem = sem_open(shmIds->semName, 0);
 	struct puntajes * puntaje;
 	char * buffer;
 	struct timespec ts;
 	ts.tv_sec = SEMAPHORE_TIMEOUT;
 
-	puntaje = (struct puntajes * )shmat(shmId,NULL,0);
-	buffer = (char *)shmat(shmKAId,NULL,0);
+	puntaje = (struct puntajes *) shmat(shmId, NULL, 0);
+	buffer = (char *) shmat(shmKAId, NULL, 0);
 
-	//Envio de puntajes.
-	if(!puntajes_queue.empty())
-	{
-		pthread_mutex_lock(&mutex_puntajes);
-		(*puntajes) = puntajes_queue.front();
-		puntajes_queue.pop();
-		//Bloquear y mandar por memo compartida los puntajes.
-		pthread_mutex_unlock(&mutex_puntajes);
-	}
-
-	//Manenjo de keepalive
-	if(sem_timedwait(sem,&ts)!=-1)
-	{
-
-	}
-	else
-	{
-		//Deberia setear alarma que si en cierto tiempo no se desbloquea
-		//asumo que el servidor murio.
-		//Averiguar por sem_timedwait.
-		if(errno== ETIMEDOUT)
-		{
-			//TODO Murio el servidor asi que tengo que cancelar todo y cerrar todo.
-			cout<<"Se cerro el servidor torneo"<<endl;
+	while (stop == false) {
+		//Envio de puntajes.
+		if (!puntajes_queue.empty()) {
+			pthread_mutex_lock(&mutex_puntajes);
+			*puntaje = puntajes_queue.front();
+			puntajes_queue.pop();
+			//Bloquear y mandar por memo compartida los puntajes.
+			pthread_mutex_unlock(&mutex_puntajes);
 		}
+
+		//Manenjo de keepalive
+		if (sem_timedwait(sem, &ts) != -1) {
+
+		} else {
+			//Deberia setear alarma que si en cierto tiempo no se desbloquea
+			//asumo que el servidor murio.
+			//Averiguar por sem_timedwait.
+			if (errno == ETIMEDOUT) {
+				//TODO Murio el servidor asi que tengo que cancelar todo y cerrar todo.
+				cout << "Se cerro el servidor torneo" << endl;
+				sem_close(sem);
+				sem_unlink(shmIds->semName);
+				shmdt(puntaje);
+				shmctl(shmId, IPC_RMID, 0);
+				shmdt(buffer);
+				shmctl(shmKAId, IPC_RMID, 0);
+				stop = true;
+			}
+		}
+		usleep(POLLING_DEADTIME);
 	}
 
 }
@@ -370,7 +398,6 @@ bool validateMovement(Felix * felix, int fila, int columna,
 	}
 	return false;
 }
-
 
 bool validateWindowFix(Felix * felix, Edificio * edificio) {
 	if (edificio->ventanas[felix->posicion_x][felix->posicion_y].ventanaRota
