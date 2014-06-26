@@ -14,6 +14,7 @@
 #include <sstream>
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
+#include <list>
 
 extern unsigned int puertoTorneo;
 bool timeIsUp = false;
@@ -22,6 +23,14 @@ Semaforo sem_jugadoresKeepAlive((char*) "/sem_jugadoresKeepAlive", 1);
 pthread_mutex_t mutex_puertoPartida = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_timeIsUp = PTHREAD_MUTEX_INITIALIZER;
 using namespace std;
+
+struct datosPartida {
+	int idShm;
+	sem_t* semaforo;
+	int lecturasFallidas;
+};
+
+list<datosPartida> recursosDeLasPartidas;
 
 /**
  * Obtener la configuracion inicial del torneo
@@ -143,6 +152,46 @@ void* temporizadorTorneo(void* data) {
 }
 
 /**
+ * THREAD -> KeepAlive partidas y torneo
+ */
+void* keepAlive(void* data) {
+	/*	struct datosPartida {
+	 int idShm;
+	 sem_t* semaforo;
+	 int lecturasFallidas;
+	 };
+
+	 list<datosPartida> recursosDeLasPartidas;*/
+	Semaforo aux("/aux", 1);
+	sem_t * semAuxSem_t = aux.getSem_t();
+	while (true) {
+		for (list<datosPartida>::iterator it = recursosDeLasPartidas.begin(); it != recursosDeLasPartidas.end(); it++) {
+			aux.setSem_t(it->semaforo);
+			aux.V();
+
+			if (it->lecturasFallidas >= 5) {
+				//la partida murio
+
+				aux.close();
+				//shmdt((struct datosPartida) bloqueCompartido);
+				shmctl(it->idShm, IPC_RMID, (struct shmid_ds *) NULL);
+			} else {
+				//mutex SHM
+				/*if (keepAlivestruct == false) {
+				 it->lecturasFallidas++;
+				 } else {
+				 keepAlivestruct = false;
+				 }*/
+				//mutex unlock SHM
+			}
+			usleep(500000);
+		}
+	}
+	aux.setSem_t(semAuxSem_t);
+	aux.close();
+	pthread_exit(NULL);
+}
+/**
  * THREAD -> Modo Grafico
  */
 void* modoGrafico(void* data) {
@@ -219,11 +268,10 @@ void* modoGrafico(void* data) {
 	SDL_BlitSurface(background, NULL, screen, &posBackground);
 	SDL_Flip(screen);
 
-	sleep(3);
-
-	char txtInfoJugador[50];
+	char txtInfoJugador[10][50];
 	int cantPlayersConectados;
-	//varaible timeIsUp habilitar cuanto comienze la partida
+	multimap<float, int> rankings;
+	//varaible timeIsUp habilitar cuanto comienze la partida ******************************************
 	while (true) {
 		background = SDL_LoadBMP("Img/background.bmp");
 		//actualizar tiempo
@@ -246,33 +294,34 @@ void* modoGrafico(void* data) {
 		pthread_mutex_lock(&mutex_listJugadores);
 		cantPlayersConectados = listJugadores.size();
 
-		/*this->Puntaje = 0;
-		 this->SocketAsociado = SocketAsociado;
-		 this->Jugando = false;
-		 this->PartidasGanadas = 0;
-		 this->PartidasPerdidas = 0;
-		 this->CantPartidasJugadas = 0;
-		 this->Ranking = 0;*/
+		rankings.clear();
 		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 			if (it->second->CantPartidasJugadas > 0) {
 				it->second->Promedio = it->second->Puntaje / it->second->CantPartidasJugadas;
+				//ordenar en un array los promedios con los ID
+				rankings.insert(pair<float, int>(it->second->Promedio, it->second->Id));
+			} else {
+				rankings.insert(pair<float, int>(0, it->second->Id));
 			}
 		}
 
-		//ordenar en un array los puntajes con los ID        //podria actualizar el ranking
-		//
-		//
-
-		pthread_mutex_unlock(&mutex_listJugadores);
 		posDestino.x = 115;
-		posDestino.y = 180;
-		int i;
-		for (i = 1; i <= 10; ++i) {
-			sprintf(txtInfoJugador, "%02d    %-10.10s    %06d    %02d    %02d", i, "peepee7891", 5500, 4, 3);
-			infoJugador = TTF_RenderText_Solid(font, txtInfoJugador, colorBlanco);
+		posDestino.y = 220;
+		int i = 0;
+		for (multimap<float, int>::iterator it = rankings.begin(); it != rankings.end(); it++) {
+			sprintf(txtInfoJugador[i], "%02d    %-10.10s    %06d    %02d    %02d", (i + 1), listJugadores[it->second]->Nombre.c_str(), listJugadores[it->second]->Puntaje, listJugadores[it->second]->PartidasGanadas, listJugadores[it->second]->PartidasPerdidas);
+			infoJugador = TTF_RenderText_Solid(font, txtInfoJugador[i], colorNegro);
 			SDL_BlitSurface(infoJugador, NULL, background, &posDestino);
 			posDestino.y += 30;
 		}
+		pthread_mutex_unlock(&mutex_listJugadores);
+
+		for (i = 1; i <= 10; ++i) {
+		 sprintf(txtInfoJugador[i], "%02d    %-10.10s    %06d    %02d    %02d", i, "peepee7891", 5500, 4, 3);
+		 infoJugador = TTF_RenderText_Solid(font, txtInfoJugador[i], colorNegro);
+		 SDL_BlitSurface(infoJugador, NULL, background, &posDestino);
+		 posDestino.y += 30;
+		 }
 
 		//actualizar cantidad de jugadores conectados
 		sprintf(txtPlayers, "Players: %d", cantPlayersConectados);
@@ -346,7 +395,7 @@ void* aceptarJugadores(void* data) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //CODIGO PARA PROBAR EL ASIGNADOR DE PARTIDAS
 	/*pthread_mutex_lock(&mutex_listJugadores);
-	clientId++;
+	 clientId++;
 	 Jugador jugador1(clientId, "pedro 1", NULL);
 	 clientId++;
 	 Jugador jugador2(clientId, "carlos 2", NULL);
@@ -408,6 +457,15 @@ void* establecerPartidas(void* data) {
 	int idOponente;
 	int nroPartida = 1;
 
+	/*struct datosPartida {
+	 int idShm;
+	 char* nombreSemaforo;
+	 };
+
+	 list<datosPartida> recursosDeLasPartidas;*/
+
+	datosPartida structuraDatosPartida;
+
 	int i = 1;
 	while (!torneoFinalizado()) {
 		cout << "pasada de busqueda nro: " << i++ << endl;
@@ -429,14 +487,18 @@ void* establecerPartidas(void* data) {
 
 				int puertoNuevaPartida = getNewPort();
 
+				//structuraDatosPartida.idShm =
+
 				//Le mando a los jugadores el nro de Puerto en el que comenzara la partida
 				char auxPuertoNuevaPartida[10];
 				sprintf(auxPuertoNuevaPartida, "%d", puertoNuevaPartida);
 				string message(CD_PUERTO_PARTIDA);
 				message.append(fillMessage(auxPuertoNuevaPartida));
 
-				listJugadores[idJugador]->CantPartidasJugadas++;
-				listJugadores[idOponente]->CantPartidasJugadas++;
+				//sumar solo cuando me devuelve el mensaje de que termino
+				//listJugadores[idJugador]->CantPartidasJugadas++;
+				//listJugadores[idOponente]->CantPartidasJugadas++;
+
 				listJugadores[idJugador]->SocketAsociado->SendNoBloq(message.c_str(), message.length());
 				listJugadores[idOponente]->SocketAsociado->SendNoBloq(message.c_str(), message.length());
 
@@ -447,7 +509,7 @@ void* establecerPartidas(void* data) {
 					char auxCantVidas[2];
 					sprintf(auxCantVidas, "%d", cantVidas);
 
-					char *argumentos[] = { auxPuertoNuevaPartida, auxCantVidas };
+					char *argumentos[] = { auxPuertoNuevaPartida, auxCantVidas /*, idShm*/};
 					execv("/Servidor Partida/Servidor Partida", argumentos);
 					//return 1;
 				} else if (pid < 0) {

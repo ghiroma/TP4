@@ -35,6 +35,14 @@ int Semaforo::getValue() {
     return value;
 }
 
+sem_t * Semaforo::getSem_t(){
+	return this->sem;
+}
+
+void Semaforo::setSem_t(sem_t* dirSem){
+	this->sem = dirSem;
+}
+
 int Semaforo::P() {
     if (sem_wait(this->sem) == -1) {
         cout << "Error - " << this->nombre << ".P()" << endl;

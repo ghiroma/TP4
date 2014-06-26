@@ -14,17 +14,61 @@
 #include <signal.h>
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
+#include <list>
+
+#include "Clases/Semaforo.h"
 
 using namespace std;
 
 pthread_mutex_t mutex_listJugadores = PTHREAD_MUTEX_INITIALIZER;
-map<int,Jugador*> listJugadores;
+map<int,
+Jugador*> listJugadores;
 unsigned int puertoTorneo;
 unsigned int puertoPartida;
 int cantVidas = 0;
 
-
 int main(int argc, char * argv[]) {
+	/*
+	 Semaforo s("/borrar1",1);
+	 while(true)
+	 {
+	 Semaforo semer("/ff1",1);
+	 s.setSem_t(semer.getSem_t());
+	 int j;
+	 for (j = 0; j < 10; ++j) {
+	 semer.V();
+	 }
+
+	 s.V();
+	 s.V();
+	 cout<<semer.getValue()<<endl;
+	 usleep(1000000);
+	 break;
+	 }
+	 sleep(100);
+	 exit(1);*/
+	/*
+	 map<int, string> Employees;
+	 // 1) Assignment using array index notation
+	 Employees[1] = "1";
+	 Employees[2] = "2";
+	 Employees[3] = "3";
+	 Employees[4] = "4";
+	 Employees[5] = "5";
+	 cout << "Map size: " << Employees.size() << endl;
+
+	 for (map<int, string>::iterator ii = Employees.begin(); ii != Employees.end(); ii++) {
+	 cout << (*ii).first << ": " << (*ii).second << endl;
+	 if ((*ii).first == 3 || (*ii).first==4) {
+	 Employees.erase((*ii).first);
+	 }
+	 }
+	 cout << "Map size: " << Employees.size() << endl;
+	 for (map<int, string>::iterator ii = Employees.begin(); ii != Employees.end(); ++ii) {
+	 cout << (*ii).first << ": " << (*ii).second << endl;
+	 }
+	 exit(1);*/
+
 	cout << "Comienza servidor Torneo PID:" << getpid() << endl;
 	string ip = "";
 	int duracionTorneo = 0;
@@ -42,6 +86,8 @@ int main(int argc, char * argv[]) {
 	pthread_t thModoGrafico;
 	int resultThModoGrafico;
 	thModoGrafico_data modoGraficoData;
+	pthread_t thKeepAlive;
+	int resultThKeepAlive;
 
 	signal(SIGINT, SIGINT_Handler);
 
@@ -64,24 +110,32 @@ int main(int argc, char * argv[]) {
 	}
 
 	//Lanzar THREAD actualizar lista de jugadores (KEEPALIVE)
-	resultThActualizarListaJugadores = pthread_create(&thActualizarListaJugadores, NULL, actualizarListaJugadores, (void*)NULL);
+	resultThActualizarListaJugadores = pthread_create(&thActualizarListaJugadores, NULL, actualizarListaJugadores, (void*) NULL);
 	if (resultThActualizarListaJugadores) {
 		cout << "Error no se pudo crear el thread de Actualizar Lista de Jugadores" << endl;
 		return 1;
 	}
 
-	//Lanzar THREAD ModoGrafico
-	modoGraficoData.duracion = duracionTorneo;
-	resultThModoGrafico = pthread_create(&thModoGrafico, NULL, modoGrafico, (void*)&modoGraficoData);
-	if (resultThModoGrafico) {
-		cout << "Error no se pudo crear el thread de Modo Grafico" << endl;
-		return 1;
-	}
+
+	 //Lanzar THREAD ModoGrafico
+	 modoGraficoData.duracion = duracionTorneo;
+	 resultThModoGrafico = pthread_create(&thModoGrafico, NULL, modoGrafico, (void*) &modoGraficoData);
+	 if (resultThModoGrafico) {
+	 cout << "Error no se pudo crear el thread de Modo Grafico" << endl;
+	 return 1;
+	 }
 
 	//Lanzar THREAD aceptar jugadores
 	resultThAceptarJugadores = pthread_create(&thAceptarJugadores, NULL, aceptarJugadores, (void *) &ip);
 	if (resultThAceptarJugadores) {
 		cout << "Error no se pudo crear el thread de Aceptar Jugadores" << endl;
+		return 1;
+	}
+
+	//Lanzar THREAD KEEPALIVE (partidas)
+	resultThKeepAlive = pthread_create(&thKeepAlive, NULL, keepAlive, (void *) NULL);
+	if (resultThKeepAlive) {
+		cout << "Error no se pudo crear el thread de KeepAlive" << endl;
 		return 1;
 	}
 
@@ -98,7 +152,6 @@ int main(int argc, char * argv[]) {
 //hacer destroy de los pthread_mutex, semaforos, etc
 
 	pthread_join(thEstablecerPartidas, NULL);
-
 	pthread_mutex_destroy(&mutex_listJugadores);
 
 	pthread_exit(NULL);

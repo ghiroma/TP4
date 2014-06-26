@@ -21,6 +21,8 @@ public:
 	Semaforo(const char*, int); //Semaforo s1((char*)"/s1", 1);
 	void getName();
 	int getValue();
+	sem_t * getSem_t();
+	void setSem_t(sem_t*);
 	int P();
 	int V();
 	void close();
