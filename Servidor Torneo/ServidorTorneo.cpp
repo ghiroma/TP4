@@ -20,6 +20,10 @@
 
 using namespace std;
 
+extern pthread_mutex_t mutex_partidasActivas;
+extern pthread_mutex_t mutex_todasLasPartidasFinalizadas;
+extern bool todasLasPartidasFinalizadas;
+
 pthread_mutex_t mutex_listJugadores = PTHREAD_MUTEX_INITIALIZER;
 map<int,
 Jugador*> listJugadores;
@@ -105,12 +109,58 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 
+	
+	pthread_join(thEstablecerPartidas, NULL);
+
+	//esperar que todas las partidas finalicen
+	int cantPartidasActivas;
+	while(true){
+		cout << "mutex partidasActivas" << endl;
+		pthread_mutex_lock(&mutex_partidasActivas);
+		cantPartidasActivas = partidasActivas.size();
+		pthread_mutex_unlock(&mutex_partidasActivas);
+		cout << "unmutex partidasActivas" << endl;
+
+		if (cantPartidasActivas == 0) {
+			break;
+		}	
+		usleep(1000000);
+	}
+	pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
+	cout << "mutex main todasLasPartidasFinalizadas" << endl;
+	todasLasPartidasFinalizadas = true;
+	pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);
+	cout << "unmutex main todasLasPartidasFinalizadas" << endl;
+				
+
+	///////////////////
+	//ver si hace falta??????????
+	//el tiempo del Torneo llego a su fin, informar a cada cliente
+	/*pthread_mutex_lock(&mutex_listJugadores);
+	 for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
+	 string message(CD_FIN_TORNEO);
+	 message.append(fillMessage("1"));
+	 it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
+	 }
+	 pthread_mutex_unlock(&mutex_listJugadores);*/
+
+	//mandar a cada cliente su puntaje y ranking
+	pthread_mutex_lock(&mutex_listJugadores);
+	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
+		string message(CD_FIN_TORNEO);
+		message.append(fillMessage("1"));
+		it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
+	}
+	pthread_mutex_unlock(&mutex_listJugadores);
+
 	//hacer destroy de los pthread_mutex, semaforos, etc sockets
 	///
 	//
-	pthread_join(thEstablecerPartidas, NULL);
+	pthread_cancel(thKeepAlive);
 	pthread_mutex_destroy(&mutex_listJugadores);
-
+	pthread_mutex_destroy(&mutex_puertoPartida);
+	pthread_mutex_destroy(&mutex_timeIsUp);
+	
 	pthread_exit(NULL);
 	//bloqueo en espera de que ingrese una tecla para cerrar la pantalla
 	getchar();
