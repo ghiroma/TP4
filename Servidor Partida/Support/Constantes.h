@@ -16,7 +16,7 @@ static const int LONGITUD_CODIGO = 2;
 static const int LONGITUD_CONTENIDO = 5;
 
 static const int POLLING_DEADTIME = 1000; //Nanosegundos
-static const int SEMAPHORE_TIMEOUT = 7; //Segundos
+static const int SEMAPHORE_TIMEOUT = 2; //Segundos
 
 //CD viene de codigo mensaje.
 static const char* CD_MOVIMIENTO_RALPH = "00";

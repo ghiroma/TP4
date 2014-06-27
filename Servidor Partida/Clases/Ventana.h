@@ -16,6 +16,7 @@ public:
 	Felix * felix;
 	bool torta;
 	bool marquesina;
+	bool persiana;
 	int ventanaRota;
 
 	Ventana();

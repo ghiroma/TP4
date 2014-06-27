@@ -12,6 +12,7 @@ Ventana::Ventana() {
 	this->felix = NULL;
 	this->marquesina = false;
 	this->torta = false;
+	this->persiana = false;
 	this->ventanaRota = 0;
 }
 
@@ -20,6 +21,7 @@ Ventana::Ventana(Felix * felix, bool torta, bool marquesina, int rota)
 	this->felix = felix;
 	this->torta = torta;
 	this->marquesina = marquesina;
+	this->persiana = false;
 	this->ventanaRota = rota;
 }
 
@@ -28,6 +30,7 @@ Ventana::Ventana(bool torta,bool marquesina,int rota)
 	this->felix = NULL;
 	this->torta = torta;
 	this->marquesina = marquesina;
+	this->persiana = false;
 	this->ventanaRota = rota;
 }
 
@@ -36,6 +39,7 @@ Ventana::Ventana(int rota)
 	this->felix = NULL;
 	this->marquesina = false;
 	this->torta = false;
+	this->persiana = false;
 	this->ventanaRota = rota;
 }
 

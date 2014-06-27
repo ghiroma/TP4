@@ -14,6 +14,7 @@ struct puntajes
 	int idJugador2;
 	int puntajeJugador1;
 	int puntajeJugador2;
+	bool keepAlive;
 	bool jugando;
 };
 

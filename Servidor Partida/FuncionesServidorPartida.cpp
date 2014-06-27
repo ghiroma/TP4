@@ -25,6 +25,9 @@
 
 using namespace std;
 
+int filaPreviaPersiana = 0;
+int columnaPreviaPersiana = 0;
+
 bool stop = false;
 bool cliente1_conectado = true;
 bool cliente2_conectado = true;
@@ -41,7 +44,7 @@ CommunicationSocket * cSocket1;
 CommunicationSocket * cSocket2;
 
 Felix *felix1;
-//Felix *felix2;
+Felix *felix2;
 
 Edificio *edificio;
 
@@ -218,6 +221,8 @@ validator_thread(void * argument) {
 			string scodigo = message.substr(0, 2);
 			int codigo = atoi(scodigo.c_str());
 			//Dependiendo del codigo, voy a ver que valido.
+			//TODO me van mandar el id, asi que yo tengo que crear los Felix de cada
+			//Jugador.
 			switch (codigo) {
 			//Escribe en el sender_queue.
 			case CD_MOVIMIENTO_FELIX_I:
@@ -254,6 +259,7 @@ validator_thread(void * argument) {
 					message2.append(Helper::fillMessage("2"));
 					Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 					Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
+					cliente1_jugando = false;
 				}
 				break;
 			case CD_VENTANA_ARREGLADA_I:
@@ -267,7 +273,7 @@ validator_thread(void * argument) {
 
 					puntaje.idJugador1 = felix1->id;
 					//puntaje.idJugador2 = felix2->id;
-					puntaje.jugando = true;
+					puntaje.keepAlive = true;
 					puntaje.puntajeJugador1 = felix1->puntaje_parcial;
 					//puntaje.puntajeJugador2 = felix2->puntaje_parcial;
 					pthread_mutex_lock(&mutex_puntajes);
@@ -286,22 +292,6 @@ validator_thread(void * argument) {
 			//{
 
 			//}
-		}
-
-		//Murieron los dos jugadores.
-		if (cliente1_jugando == false && cliente2_jugando == false) {
-			//Por race condition podria terminar antes de enviarme los  ultimos puntajes..
-			puntaje.idJugador1 = felix1->id;
-			//puntaje.idJugador2 = felix2->id;
-			puntaje.jugando = false;
-			puntaje.puntajeJugador1 = felix1->puntaje_parcial;
-			//puntaje.puntajeJugador2 = felix2->puntaje_parcial;
-			pthread_mutex_lock(&mutex_puntajes);
-			puntajes_queue.push(puntaje);
-			pthread_mutex_unlock(&mutex_puntajes);
-			//Le doy sleep de 1 asi llego a mandar los puntajes?
-			sleep(1);
-			stop = true;
 		}
 
 		usleep(POLLING_DEADTIME);
@@ -324,22 +314,30 @@ void* sharedMemory_thread(void * arguments) {
 	buffer = (char *) shmat(shmKAId, NULL, 0);
 
 	while (stop == false) {
-		//Envio de puntajes.
-		if (!puntajes_queue.empty()) {
-			pthread_mutex_lock(&mutex_puntajes);
-			*puntaje = puntajes_queue.front();
-			puntajes_queue.pop();
-			//Bloquear y mandar por memo compartida los puntajes.
-			pthread_mutex_unlock(&mutex_puntajes);
-		}
-
-		//Manenjo de keepalive
-		if (sem_timedwait(sem, &ts) != -1) {
-
+		if (sem_timedwait(sem, &ts) == 0) {
+			if ((cliente1_jugando || cliente2_jugando) && (cliente1_conectado || cliente2_conectado)) {
+				struct puntajes aux;
+				aux.idJugador1 = felix1->id;
+				aux.idJugador2 = felix2->id;
+				aux.puntajeJugador1 = felix1->puntaje_parcial;
+				aux.puntajeJugador2 = felix2->puntaje_parcial;
+				aux.keepAlive = true;
+				aux.jugando = true;
+				puntaje = &aux;
+			}
+			else //Murieron los dos jugadores.
+			{
+				struct puntajes aux;
+				aux.idJugador1 = felix1->id;
+				aux.idJugador2 = felix2->id;
+				aux.puntajeJugador1 = felix1->puntaje_parcial;
+				aux.puntajeJugador2 = felix2->puntaje_parcial;
+				aux.keepAlive = true;
+				aux.jugando = false;
+				puntaje = &aux;
+				stop = true;
+			}
 		} else {
-			//Deberia setear alarma que si en cierto tiempo no se desbloquea
-			//asumo que el servidor murio.
-			//Averiguar por sem_timedwait.
 			if (errno == ETIMEDOUT) {
 				//TODO Murio el servidor asi que tengo que cancelar todo y cerrar todo.
 				cout << "Se cerro el servidor torneo" << endl;
@@ -382,12 +380,39 @@ randomTorta() {
 	return location;
 }
 
+char * randomPersiana() {
+	char location[3];
+	char aux[2];
+
+	//No hay persiana cerrada. Actualizo el edificio.
+	if (filaPreviaPersiana != 0 && columnaPreviaPersiana != 0) {
+		sprintf(aux,"%d",rand()%(EDIFICIO_FILAS_1));
+		strcpy(location,aux);
+		filaPreviaPersiana = atoi(aux);
+		sprintf(aux,"%d",rand()%(EDIFICIO_COLUMNAS));
+		strcat(location,aux);
+		columnaPreviaPersiana = atoi(aux);
+		return location;
+	} else //Hay persiana cerrada. Debo abrirla.
+	{
+		sprintf(aux,"%d",filaPreviaPersiana);
+		strcpy(location,aux);
+		sprintf(aux,"%d",columnaPreviaPersiana);
+		strcat(location,aux);
+		filaPreviaPersiana = 0;
+		columnaPreviaPersiana = 0;
+		return location;
+	}
+
+}
+
 bool validateMovement(Felix * felix, int fila, int columna,
 		Edificio * edificio) {
 	if (((fila < edificio->filas || fila >= 0)
 			&& (columna < edificio->columnas || columna >= 0))
 			&& !edificio->ventanas[fila][columna].marquesina
-			&& edificio->ventanas[fila][columna].felix == NULL) {
+			&& edificio->ventanas[fila][columna].felix == NULL
+			&& !edificio->ventanas[fila][columna].persiana) {
 
 		edificio->ventanas[felix->posicion_x][felix->posicion_y].felix = NULL;
 		edificio->ventanas[fila][columna].felix = felix;
@@ -401,7 +426,7 @@ bool validateMovement(Felix * felix, int fila, int columna,
 
 bool validateWindowFix(Felix * felix, Edificio * edificio) {
 	if (edificio->ventanas[felix->posicion_x][felix->posicion_y].ventanaRota
-			> 0) {
+			> 0 && !edificio->ventanas[felix->posicion_x][felix->posicion_y].persiana) {
 		felix->puntaje_parcial++;
 		edificio->ventanas[felix->posicion_x][felix->posicion_y].ventanaRota--;
 		return true;
