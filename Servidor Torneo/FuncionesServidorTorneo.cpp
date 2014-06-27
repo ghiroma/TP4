@@ -19,11 +19,15 @@
 extern unsigned int puertoTorneo;
 bool timeIsUp = false;
 bool comenzoConteo = false;
+bool todasLasPartidasFinalizadas = false;
 Semaforo sem_inicializarTemporizador((char*) "/sem_inicializarTemporizador", 0);
 Semaforo sem_jugadoresKeepAlive((char*) "/sem_jugadoresKeepAlive", 1);
 pthread_mutex_t mutex_puertoPartida = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_timeIsUp = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_comenzoConteo = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_todasLasPartidasFinalizadas = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_partidasActivas = PTHREAD_MUTEX_INITIALIZER;
+
 
 extern pthread_mutex_t mutex_listJugadores;
 extern map<int,
@@ -39,7 +43,7 @@ struct datosPartida {
 	int lecturasFallidas;
 };
 
-list<datosPartida> recursosDeLasPartidas;
+list<datosPartida> partidasActivas;
 
 struct puntajesPartida {
 	int idJugador1;
@@ -185,7 +189,6 @@ void* temporizadorTorneo(void* data) {
 	//////////////////////////////////////////////////
 	//ver si se necesita cancelar algun thread mas
 	///////////////////////////////////////////////
-	//pthread_cancel(torneo->thEstablecerPartidas);
 	sem_inicializarTemporizador.close();
 	pthread_exit(NULL);
 }
@@ -201,49 +204,102 @@ void* keepAlive(void* data) {
 	 int lecturasFallidas;
 	 };
 
-	 list<datosPartida> recursosDeLasPartidas;
+	 list<datosPartida> partidasActivas;
 
 	 struct puntajesPartida {
 	 int idJugador1;
 	 int idJugador2;
 	 int puntajeJugador1;
 	 int puntajeJugador2;
+	 bool jugador1Alive; 
+	 bool jugador2Alive;
 	 bool jugando;
 	 bool keepAlive;
 	 };
 	 */
-	puntajesPartida resumenPartida;
+	puntajesPartida* resumenPartida;
 	Semaforo aux("/aux", 1);
 	sem_t * semAuxSem_t = aux.getSem_t();
 	while (true) {
-		for (list<datosPartida>::iterator it = recursosDeLasPartidas.begin(); it != recursosDeLasPartidas.end(); it++) {
+
+		cout << "mutex keepAlive partidasActivas" << endl;
+		pthread_mutex_lock(&mutex_partidasActivas);
+		for (list<datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
+			//le sumo al semaforo que utiliza el ServidorPartida para que sepa que el Torneo sigue vivo
 			aux.setSem_t(it->semaforo);
 			aux.V();
-
+			/////
+			/////ver de cambiarle el nombre al semaforo, es de keepaliveTorneo
+			sem_wait(it->semaforo);
+			resumenPartida = (puntajesPartida *)shmat (it->idShm, (char *)0, 0);
 			if (it->lecturasFallidas >= 5) {
-				//la partida murio o termino
-				//verificar y sumar ptns y cant partidas jugadas
-				//if()
-				//listJugadores[idJugador]->CantPartidasJugadas++;
-				//listJugadores[idOponente]->CantPartidasJugadas++;
+				//verificar si la partida murio o termino
+				if(resumenPartida->jugando == false ){
+					//SERVIDOR PARTIDA termino OK
+					//verificar y sumar pts y cant partidas jugadas
+					cout << "mutex keepAlive" << endl;
+					pthread_mutex_lock(&mutex_listJugadores);
 
+					if(resumenPartida->jugador1Alive == true){
+						listJugadores[resumenPartida->idJugador1]->Puntaje += resumenPartida->puntajeJugador1;
+						listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas++;
+
+						//si el otro jugador se desconecto asumo que este gano porque el otro avandono
+						if(resumenPartida->jugador2Alive == false){
+							listJugadores[resumenPartida->idJugador1]->PartidasGanadas++;
+						}
+					}
+					if(resumenPartida->jugador2Alive == true){
+						listJugadores[resumenPartida->idJugador2]->Puntaje += resumenPartida->puntajeJugador2;
+						listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas++;
+
+						//si el otro jugador se desconecto asumo que este gano porque el otro avandono
+						if(resumenPartida->jugador1Alive == false){
+							listJugadores[resumenPartida->idJugador2]->PartidasGanadas++;
+						}
+					}
+
+					//si los dos estan vivos veo quien gano
+					if(resumenPartida->jugador1Alive == true && resumenPartida->jugador2Alive == true){
+						if((listJugadores[resumenPartida->idJugador1]->Puntaje/listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas) >
+							(listJugadores[resumenPartida->idJugador2]->Puntaje/listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas)){
+							//J1 Gana
+							listJugadores[resumenPartida->idJugador1]->PartidasGanadas++;
+							listJugadores[resumenPartida->idJugador2]->PartidasPerdidas++;
+						}else{
+							//J2 Gana
+							listJugadores[resumenPartida->idJugador2]->PartidasGanadas++;
+							listJugadores[resumenPartida->idJugador1]->PartidasPerdidas++;
+						}
+					}
+					pthread_mutex_unlock(&mutex_listJugadores);
+					cout << "unmutex keepAlive" << endl;
+				}else{
+					//SERVIDOR PARTIDA MURIO
+				}
+
+				//quitar el de la lista
+				partidasActivas.erase (it);
+				//limpiar memoria compartida
 				aux.close();
-				//shmdt((struct datosPartida) bloqueCompartido);
+				shmdt((struct datosPartida *) resumenPartida);
 				shmctl(it->idShm, IPC_RMID, (struct shmid_ds *) NULL);
 			} else {
-				sem_wait(it->semaforo);
 				if (resumenPartida.keepAlive == false) {
 					it->lecturasFallidas++;
 				} else {
+					it->lecturasFallidas = 0;
 					resumenPartida.keepAlive = false;
 				}
-				sem_post(it->semaforo);
 			}
+			sem_post(it->semaforo);
 			usleep(600000);
 		}
-		if (recursosDeLasPartidas.size() == 0) {
+		if (partidasActivas.size() == 0) {
 			usleep(600000);
 		}
+		pthread_mutex_unlock(&mutex_partidasActivas);
+		cout << "unmutex keepAlive partidasActivas" << endl;
 	}
 	aux.setSem_t(semAuxSem_t);
 	aux.close();
@@ -273,10 +329,8 @@ void* modoGrafico(void* data) {
 		pthread_exit(NULL);
 	}
 
-	//creo una copia del background
 	posBackground.x = 0;
 	posBackground.y = 0;
-	//SDL_BlitSurface(backgroundOriginal, NULL, background, &posBackground);
 
 	//Inicio modo video
 	if (SDL_Init(SDL_INIT_VIDEO) == -1) {
@@ -390,12 +444,12 @@ void* modoGrafico(void* data) {
 
 		////////////////////////////////////////////////////////
 		///para probar listado (borrar)//////////////////////////////////////////
-		for (i = 1; i <= 10; ++i) {
+		/*for (i = 1; i <= 10; ++i) {
 			sprintf(txtInfoJugador[i], "%02d           %-10.10s            %06d       %02d       %02d", i, "peepee7891", 5500, 4, 3);
 			infoJugador = TTF_RenderText_Solid(font, txtInfoJugador[i], colorNegro);
 			SDL_BlitSurface(infoJugador, NULL, background, &posDestino);
 			posDestino.y += 30;
-		}
+		}*/
 		////////////////////////////////////////////////////////////////
 		////////////////////////////////////////////////////////////
 
@@ -415,9 +469,19 @@ void* modoGrafico(void* data) {
 	}
 
 	//esperar que todos terminen sus partidas
-	//
-	// mecanismo
-	sleep(3);
+	pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
+	cout << "mutex modoGrafico todasLasPartidasFinalizadas" << endl;
+	bool partidasFinalizadas = todasLasPartidasFinalizadas;
+	pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);
+	cout << "unmutex modoGrafico todasLasPartidasFinalizadas" << endl;
+	while(!partidasFinalizadas){
+		pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
+		cout << "mutex modoGrafico todasLasPartidasFinalizadas" << endl;
+		partidasFinalizadas = todasLasPartidasFinalizadas;
+		pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);
+		cout << "unmutex modoGrafico todasLasPartidasFinalizadas" << endl;
+		usleep(1000000);
+	}
 
 	//mostrar pantalla final
 	background = SDL_LoadBMP("Img/background.bmp");
@@ -504,43 +568,7 @@ void* actualizarListaJugadores(void*) {
  */
 void* aceptarJugadores(void* data) {
 	int clientId = 0;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//CODIGO PARA PROBAR EL ASIGNADOR DE PARTIDAS
-	/*pthread_mutex_lock(&mutex_listJugadores);
-	 clientId++;
-	 Jugador jugador1(clientId, "pedro 1", NULL);
-	 clientId++;
-	 Jugador jugador2(clientId, "carlos 2", NULL);
-	 clientId++;
-	 Jugador jugador3(clientId, "mati 3", NULL);
-	 clientId++;
-	 Jugador jugador4(clientId, "pablo 4", NULL);
-	 clientId++;
-	 Jugador jugador5(clientId, "martin 5", NULL);
-	 clientId++;
-	 Jugador jugador6(clientId, "fernando 6", NULL);
-
-	 agregarJugador(&jugador1);
-	 agregarJugador(&jugador2);
-	 agregarJugador(&jugador3);
-	 agregarJugador(&jugador4);
-	 agregarJugador(&jugador5);
-	 agregarJugador(&jugador6);
-	 pthread_mutex_unlock(&mutex_listJugadores);
-	 //cout << "oponente para el jugador 1: " << (*listJugadores[1]).obtenerOponente(&listJugadores) << endl;
-
-	 for (map<int, Jugador*>::iterator it = (listJugadores).begin(); it != (listJugadores).end(); it++) {
-	 cout << (*(*it).second).Nombre << " - partidas:" << endl;
-
-	 for (map<int, int>::iterator itmap = (*(*it).second).Partidas.begin(); itmap != (*(*it).second).Partidas.end(); ++itmap) {
-	 std::cout << itmap->first << " => " << itmap->second << '\n';
-	 }
-	 }
-	 */
-//FIN CODIGO PARA PROBAR EL ASIGNADOR DE PARTIDAS
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//Crear Socket del Servidor
+	//Crear Socket del Servidor
 	ServerSocket sSocket(puertoTorneo);
 	char nombreJugador[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 
@@ -572,12 +600,11 @@ void* establecerPartidas(void* data) {
 
 	/*struct datosPartida {
 	 int idShm;
+	 struct  * 
 	 char* nombreSemaforo;
 	 };
 
-	 list<datosPartida> recursosDeLasPartidas;*/
-
-	datosPartida structuraDatosPartida;
+	 list<datosPartida> partidasActivas;*/
 
 	int i = 1;
 	while (!torneoFinalizado()) {
@@ -617,10 +644,12 @@ void* establecerPartidas(void* data) {
 					break;
 				}
 
+				datosPartida structuraDatosPartida;
 				structuraDatosPartida.idShm = idShm;
 				structuraDatosPartida.lecturasFallidas = 0;
-				//structuraDatosPartida.semaforo =
+				//structuraDatosPartida.semaforo = puertoNuevaPartida;
 				//
+				partidasActivas.push_back(structuraDatosPartida);
 
 				//Le mando a los jugadores el nro de Puerto en el que comenzara la partida
 				char auxPuertoNuevaPartida[10];
@@ -657,42 +686,17 @@ void* establecerPartidas(void* data) {
 		usleep(INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES);
 	}
 
-	//ver si hace falta??????????
-	//el tiempo del Torneo llego a su fin, informar a cada cliente
-	/*pthread_mutex_lock(&mutex_listJugadores);
-	 for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
-	 string message(CD_FIN_TORNEO);
-	 message.append(fillMessage("1"));
-	 it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
-	 }
-	 pthread_mutex_unlock(&mutex_listJugadores);*/
-
-	//mandar a cada cliente su puntaje y ranking
-	pthread_mutex_lock(&mutex_listJugadores);
-	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
-		string message(CD_FIN_TORNEO);
-		message.append(fillMessage("1"));
-		it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
-	}
-	pthread_mutex_unlock(&mutex_listJugadores);
-
-	//pthread_mutex_destroy(&mutex_listJugadores);
-	//
-	pthread_mutex_destroy(&mutex_puertoPartida);
-	pthread_mutex_destroy(&mutex_timeIsUp);
 	cout << "Thread EstablecerPartidas va a hacer un Exit" << endl;
 	pthread_exit(NULL);
 }
 
+
+
+
+
 void asociarSegmento(int* idShm, int* variable) {
 //int idShm;
 //int *variable = NULL;
-
-	/*
-	 bool jugadoresKeepAlive[MAX_JUGADORES_SOPORTADOS];
-	 int i;
-	 for (i=0; i<MAX_JUGADORES_SOPORTADOS; i++) { jugadoresKeepAlive[i] = true; }
-	 */
 
 	key_t key = ftok("/bin/ls", CLAVE_MEMORIA_COMPARTIDA);
 	if (key == -1) {
