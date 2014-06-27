@@ -6,11 +6,6 @@
 #include <pthread.h>
 #include <list>
 
-extern pthread_mutex_t mutex_listJugadores;
-extern map<int, Jugador*> listJugadores;
-extern unsigned int puertoPartida;
-extern int cantVidas;
-
 struct thTemporizador_data {
 	int duracion;
 	pthread_t thAceptarJugadores;

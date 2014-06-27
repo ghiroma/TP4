@@ -28,47 +28,6 @@ unsigned int puertoPartida;
 int cantVidas = 0;
 
 int main(int argc, char * argv[]) {
-	/*
-	 Semaforo s("/borrar1",1);
-	 while(true)
-	 {
-	 Semaforo semer("/ff1",1);
-	 s.setSem_t(semer.getSem_t());
-	 int j;
-	 for (j = 0; j < 10; ++j) {
-	 semer.V();
-	 }
-
-	 s.V();
-	 s.V();
-	 cout<<semer.getValue()<<endl;
-	 usleep(1000000);
-	 break;
-	 }
-	 sleep(100);
-	 exit(1);*/
-	/*
-	 map<int, string> Employees;
-	 // 1) Assignment using array index notation
-	 Employees[1] = "1";
-	 Employees[2] = "2";
-	 Employees[3] = "3";
-	 Employees[4] = "4";
-	 Employees[5] = "5";
-	 cout << "Map size: " << Employees.size() << endl;
-
-	 for (map<int, string>::iterator ii = Employees.begin(); ii != Employees.end(); ii++) {
-	 cout << (*ii).first << ": " << (*ii).second << endl;
-	 if ((*ii).first == 3 || (*ii).first==4) {
-	 Employees.erase((*ii).first);
-	 }
-	 }
-	 cout << "Map size: " << Employees.size() << endl;
-	 for (map<int, string>::iterator ii = Employees.begin(); ii != Employees.end(); ++ii) {
-	 cout << (*ii).first << ": " << (*ii).second << endl;
-	 }
-	 exit(1);*/
-
 	cout << "Comienza servidor Torneo PID:" << getpid() << endl;
 	string ip = "";
 	int duracionTorneo = 0;
@@ -100,8 +59,6 @@ int main(int argc, char * argv[]) {
 	puertoPartida = puertoTorneo;
 	cout << "puertoTorneo: " << puertoTorneo << endl;
 
-	//////////////////////////////////////////////////////
-
 	//Lanzar THREAD establecer partidas
 	resultThEstablecerPartidas = pthread_create(&thEstablecerPartidas, NULL, establecerPartidas, NULL);
 	if (resultThEstablecerPartidas) {
@@ -116,14 +73,13 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 
-
-	 //Lanzar THREAD ModoGrafico
-	 modoGraficoData.duracion = duracionTorneo;
-	 resultThModoGrafico = pthread_create(&thModoGrafico, NULL, modoGrafico, (void*) &modoGraficoData);
-	 if (resultThModoGrafico) {
-	 cout << "Error no se pudo crear el thread de Modo Grafico" << endl;
-	 return 1;
-	 }
+	//Lanzar THREAD ModoGrafico
+	modoGraficoData.duracion = duracionTorneo;
+	resultThModoGrafico = pthread_create(&thModoGrafico, NULL, modoGrafico, (void*) &modoGraficoData);
+	if (resultThModoGrafico) {
+		cout << "Error no se pudo crear el thread de Modo Grafico" << endl;
+		return 1;
+	}
 
 	//Lanzar THREAD aceptar jugadores
 	resultThAceptarJugadores = pthread_create(&thAceptarJugadores, NULL, aceptarJugadores, (void *) &ip);
@@ -149,8 +105,9 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 
-//hacer destroy de los pthread_mutex, semaforos, etc
-
+	//hacer destroy de los pthread_mutex, semaforos, etc sockets
+	///
+	//
 	pthread_join(thEstablecerPartidas, NULL);
 	pthread_mutex_destroy(&mutex_listJugadores);
 

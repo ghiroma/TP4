@@ -42,24 +42,7 @@ void Jugador::actualizarPartidaCantEnfrentamientos(int idOponente) {
 }
 
 void Jugador::agregarOponente(int idOponente) {
-	/////////////////////////////////
-	//CODIGO DE PRUEBA
-	if (idOponente == 1) {
-		this->Partidas[idOponente] = 2;
-	} else if (idOponente == 2) {
-		this->Partidas[idOponente] = 2;
-	} else if (idOponente == 3) {
-		this->Partidas[idOponente] = 1;
-	} else if (idOponente == 4) {
-		this->Partidas[idOponente] = 1;
-	} else {
-		this->Partidas[idOponente] = 1;
-	}
-	/////////////////////////////////
-
-	//codigo que hay que poner
-	//this->Partidas[idOponente] = 0;
-
+	this->Partidas[idOponente] = 0;
 }
 
 void Jugador::quitarJugador(int idOponente) {
@@ -77,7 +60,6 @@ int Jugador::obtenerOponente() {
 	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 		if ((*(*it).second).Id != this->Id && !(*(*it).second).Jugando) {
 			if (this->Partidas[(*(*it).second).Id] == 0) {
-				//cout << "oponente encontrado: " << (*(*it).second).Id << endl;
 				idOponenteEncontrado = (*(*it).second).Id;
 				break;
 			}
@@ -131,5 +113,4 @@ int Jugador::obtenerOponente() {
 }
 
 Jugador::~Jugador() {
-	// TODO Auto-generated destructor stub
 }
