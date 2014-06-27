@@ -112,6 +112,8 @@ int main(int argc, char * argv[]) {
 	pthread_mutex_destroy(&mutex_listJugadores);
 
 	pthread_exit(NULL);
+	//bloqueo en espera de que ingrese una tecla para cerrar la pantalla
+	getchar();
 	cout << "Fin proceso Servidor Torneo" << endl;
 }
 
