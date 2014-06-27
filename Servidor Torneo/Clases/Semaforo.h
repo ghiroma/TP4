@@ -1,10 +1,3 @@
-/*
- * Semaforo.h
- *
- *  Created on: Jun 8, 2014
- *      Author: ghiroma
- */
-
 #ifndef SEMAFORO_H_
 #define SEMAFORO_H_
 
@@ -19,6 +12,7 @@ private:
 	pid_t pid;
 public:
 	Semaforo(const char*, int); //Semaforo s1((char*)"/s1", 1);
+	Semaforo(const char*); //Semaforo s1((char*)"/s1");
 	void getName();
 	int getValue();
 	sem_t * getSem_t();

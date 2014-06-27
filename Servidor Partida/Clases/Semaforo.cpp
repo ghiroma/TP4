@@ -1,10 +1,3 @@
-/*
- * Semaforo.cpp
- *
- *  Created on: Jun 8, 2014
- *      Author: ghiroma
- */
-
 #include <semaphore.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -25,6 +18,15 @@ Semaforo::Semaforo(const char* nombre, int valor) {
     this->pid = getpid();
 }
 
+Semaforo::Semaforo(const char* nombre) {
+    this->sem = sem_open(nombre, O_CREAT, PERMISOS);
+    if (this->sem == (sem_t*) - 1) {
+        cout << "Error creando el semaforo: " << nombre << endl;
+    }
+    this->nombre = nombre;
+    this->pid = getpid();
+}
+
 void Semaforo::getName() {
     cout << "Nombre: " << this->nombre << endl;
 }
@@ -33,6 +35,14 @@ int Semaforo::getValue() {
     int value;
     sem_getvalue(this->sem, &value);
     return value;
+}
+
+sem_t * Semaforo::getSem_t(){
+	return this->sem;
+}
+
+void Semaforo::setSem_t(sem_t* dirSem){
+	this->sem = dirSem;
 }
 
 int Semaforo::P() {

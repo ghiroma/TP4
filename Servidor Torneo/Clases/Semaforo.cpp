@@ -1,10 +1,3 @@
-/*
- * Semaforo.cpp
- *
- *  Created on: Jun 8, 2014
- *      Author: ghiroma
- */
-
 #include <semaphore.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -18,6 +11,15 @@ using namespace std;
 Semaforo::Semaforo(const char* nombre, int valor) {
 
     this->sem = sem_open(nombre, O_CREAT, PERMISOS, valor);
+    if (this->sem == (sem_t*) - 1) {
+        cout << "Error creando el semaforo: " << nombre << endl;
+    }
+    this->nombre = nombre;
+    this->pid = getpid();
+}
+
+Semaforo::Semaforo(const char* nombre) {
+    this->sem = sem_open(nombre, O_CREAT, PERMISOS);
     if (this->sem == (sem_t*) - 1) {
         cout << "Error creando el semaforo: " << nombre << endl;
     }
