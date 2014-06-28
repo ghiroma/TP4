@@ -303,7 +303,7 @@ validator_thread(void * argument) {
 void* sharedMemory_thread(void * arguments) {
 	struct shmIds * shmIds = (struct shmIds *) arguments;
 	int shmId = shmget(shmIds->shmId, 1024, 0660);
-	int shmKAId = shmget(shmIds->shmKAId, 1024, 0660);
+	//int shmKAId = shmget(shmIds->shmKAId, 1024, 0660);
 	sem_t * sem = sem_open(shmIds->semName, 0);
 	struct puntajes * puntaje;
 	char * buffer;
@@ -311,7 +311,7 @@ void* sharedMemory_thread(void * arguments) {
 	ts.tv_sec = SEMAPHORE_TIMEOUT;
 
 	puntaje = (struct puntajes *) shmat(shmId, NULL, 0);
-	buffer = (char *) shmat(shmKAId, NULL, 0);
+	//buffer = (char *) shmat(shmKAId, NULL, 0);
 
 	while (stop == false) {
 		if (sem_timedwait(sem, &ts) == 0) {
@@ -346,7 +346,7 @@ void* sharedMemory_thread(void * arguments) {
 				shmdt(puntaje);
 				shmctl(shmId, IPC_RMID, 0);
 				shmdt(buffer);
-				shmctl(shmKAId, IPC_RMID, 0);
+				//shmctl(shmKAId, IPC_RMID, 0);
 				stop = true;
 			}
 		}

@@ -15,12 +15,14 @@
 #include "Support/Estructuras.h"
 #include <pthread.h>
 #include <sys/types.h>
+#include <sys/ipc.h>
 #include <signal.h>
 #include <unistd.h>
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
 #include <stdlib.h>
+#include <string.h>
 
 using namespace std;
 
@@ -56,16 +58,14 @@ int main(int argc, char * argv[]) {
 
 	srand(time(NULL));
 
-	if (argc == 5) {
+	if (argc == 3) {
 		puerto = atoi(argv[1]);
 		cantVidas = atoi(argv[2]);
-		idSM = atoi(argv[3]);
-		idSMKA = atoi(argv[4]);
-		semaphore = argv[5];
-
-		ids.semName = semaphore;
-		ids.shmId = idSM;
-		ids.shmKAId = idSMKA;
+		ids.shmId = ftok("/bin/ls",puerto);
+		char * aux;
+		sprintf(aux,"%d",puerto);
+		strcpy(ids.semName,"/sem");
+		strcat(ids.semName,aux);
 
 	} else {
 		//TODO Error y cerrar servidor partida porque faltan datos.
