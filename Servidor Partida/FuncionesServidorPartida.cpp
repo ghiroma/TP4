@@ -38,7 +38,6 @@ queue<string> receiver1_queue;
 queue<string> receiver2_queue;
 queue<string> sender1_queue;
 queue<string> sender2_queue;
-queue<struct puntajes> puntajes_queue;
 
 CommunicationSocket * cSocket1;
 CommunicationSocket * cSocket2;
@@ -52,7 +51,6 @@ pthread_mutex_t mutex_receiver1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_receiver2 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_sender1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_sender2 = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mutex_puntajes = PTHREAD_MUTEX_INITIALIZER;
 
 bool TimeDifference(int timeDifference, time_t startingTime) {
 	if ((time(0) - startingTime) > timeDifference) {
@@ -61,8 +59,10 @@ bool TimeDifference(int timeDifference, time_t startingTime) {
 		return false;
 	}
 }
+
 void*
 timer_thread(void* arg) {
+
 	time_t startingTimeKeepAlive = time(0);
 	time_t startingTimeRalph = time(0);
 	time_t startingTimePaloma = time(0);
@@ -270,15 +270,6 @@ validator_thread(void * argument) {
 					message2.append(Helper::fillMessage("2"));
 					Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 					Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
-
-					puntaje.idJugador1 = felix1->id;
-					//puntaje.idJugador2 = felix2->id;
-					puntaje.keepAlive = true;
-					puntaje.puntajeJugador1 = felix1->puntaje_parcial;
-					//puntaje.puntajeJugador2 = felix2->puntaje_parcial;
-					pthread_mutex_lock(&mutex_puntajes);
-					puntajes_queue.push(puntaje);
-					pthread_mutex_unlock(&mutex_puntajes);
 				}
 				break;
 			}
@@ -301,9 +292,9 @@ validator_thread(void * argument) {
 }
 
 void* sharedMemory_thread(void * arguments) {
+	//TODO usar la clase de semaforo.
 	struct shmIds * shmIds = (struct shmIds *) arguments;
 	int shmId = shmget(shmIds->shmId, 1024, 0660);
-	//int shmKAId = shmget(shmIds->shmKAId, 1024, 0660);
 	sem_t * sem = sem_open(shmIds->semName, 0);
 	struct puntajes * puntaje;
 	char * buffer;
@@ -311,7 +302,6 @@ void* sharedMemory_thread(void * arguments) {
 	ts.tv_sec = SEMAPHORE_TIMEOUT;
 
 	puntaje = (struct puntajes *) shmat(shmId, NULL, 0);
-	//buffer = (char *) shmat(shmKAId, NULL, 0);
 
 	while (stop == false) {
 		if (sem_timedwait(sem, &ts) == 0) {
@@ -346,7 +336,6 @@ void* sharedMemory_thread(void * arguments) {
 				shmdt(puntaje);
 				shmctl(shmId, IPC_RMID, 0);
 				shmdt(buffer);
-				//shmctl(shmKAId, IPC_RMID, 0);
 				stop = true;
 			}
 		}

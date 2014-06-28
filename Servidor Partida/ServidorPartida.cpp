@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <stdlib.h>
 #include <string.h>
+#include <poll.h>
 
 using namespace std;
 
@@ -36,13 +37,14 @@ int main(int argc, char * argv[]) {
 	int cantVidas;
 	int idSM;
 	int idSMKA;
-	int response=0;
-	int cantClientes=0;
+	int response = 0;
+	int cantClientes = 0;
 
 	char * semaphore;
 
 	struct shmIds ids;
 	struct timeval timeout;
+	struct pollfd ufds[2];
 
 	fd_set fds;
 
@@ -61,11 +63,13 @@ int main(int argc, char * argv[]) {
 	if (argc == 3) {
 		puerto = atoi(argv[1]);
 		cantVidas = atoi(argv[2]);
-		ids.shmId = ftok("/bin/ls",puerto);
+		ids.shmId = ftok("/bin/ls", puerto);
 		char * aux;
-		sprintf(aux,"%d",puerto);
-		strcpy(ids.semName,"/sem");
-		strcat(ids.semName,aux);
+		sprintf(aux, "%d", puerto);
+		strcpy(ids.semName, "/sem");
+		strcat(ids.semName, aux);
+		cout << "Nombre de semaforo: " << ids.semName << endl;
+		cout << "ID de memoria compartida: " << ids.shmId << endl;
 
 	} else {
 		//TODO Error y cerrar servidor partida porque faltan datos.
@@ -83,7 +87,7 @@ int main(int argc, char * argv[]) {
 	FD_SET(sSocket.ID, &fds);
 	while (true) {
 		//TODO Hacer algo si estoy mucho tiempo en el accept y no se conecta nadie.
-		do{
+		do {
 			if (int response = select(sSocket.ID + 1, &fds, NULL, NULL,
 					&timeout) > 0) {
 				if (cSocket1 == NULL) {
@@ -93,7 +97,7 @@ int main(int argc, char * argv[]) {
 					cSocket2 = sSocket.Accept();
 					cout << "Conexion recibida 2" << endl;
 				}
-				cantClientes ++;
+				cantClientes++;
 			} else if (response == 0) {
 				//Timeout
 				cout
@@ -105,18 +109,43 @@ int main(int argc, char * argv[]) {
 				//TODO Enviar mensaje al cliente de que su oponente no se conecto.
 				exit(1);
 			}
-		}while(cantClientes<2);
+		} while (cantClientes < 2);
 
-		/*cSocket1 = sSocket.Accepxt();
-		 cout << "Conexion 1 Recibida" << endl;
-		 cSocket2 = sSocket.Accept();
-		 cout<<"Conexion 2 Recibida"<<endl;*/
 		//TODO dependiendo del nivel abria que ver lo del edificio.
-		//Nivel 1:
+		//TODO Recibir los ids de los jugadores
+		ufds[0].fd = cSocket1->ID;
+		ufds[0].events = POLLIN;
+		ufds[1].fd = cSocket2->ID;
+		ufds[1].events = POLLIN;
+
+		//Solo mandarme el codigo, nada mas.
+		char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
+
+		while (felix1 == NULL && felix2 == NULL) {
+			if (int result = poll(ufds, 2, CLIENT_ID_TIMEOUT) > 0) {
+				if (ufds[0].revents & POLLIN) {
+					cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
+					felix1 = new Felix(cantClientes, atoi(buffer));
+				} else if (ufds[1].revents & POLLIN) {
+					cSocket2->ReceiveNoBloq(buffer, sizeof(buffer));
+					felix2 = new Felix(cantClientes, atoi(buffer));
+				}
+			} else if (result == 0)		//timeout
+					{
+				//TODO Cerrar todo.
+				cout << "No se ha recibido los ids del cliente" << endl;
+				//Enviar mensaje al cliente de que se desconecte y vuelva al torneo.
+				delete (cSocket1);
+				delete (cSocket2);
+				if (felix1 != NULL)
+					delete (felix1);
+				if (felix2 != NULL)
+					delete (felix2);
+				exit(1);
+			}
+		}
+
 		edificio = new Edificio(EDIFICIO_FILAS_1, EDIFICIO_COLUMNAS, 0);
-		felix1 = new Felix(cantVidas);
-		felix2 = new Felix(cantVidas);
-		//Fin TODO Temporalmente.
 
 		//Creo los 4 thread.
 		pthread_create(&thread_timer, NULL, timer_thread, NULL);
@@ -139,7 +168,6 @@ int main(int argc, char * argv[]) {
 
 		pthread_mutex_destroy(&mutex_receiver1);
 		pthread_mutex_destroy(&mutex_receiver2);
-		//pthread_mutex_destroy(&mutex_puntajes);
 		pthread_mutex_destroy(&mutex_sender1);
 		pthread_mutex_destroy(&mutex_sender2);
 	}
