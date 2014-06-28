@@ -1,6 +1,13 @@
 #ifndef CONSTANTES_H_
 #define CONSTANTES_H_
 
+static const int ANCHO_PANTALLA = 640;
+static const int ALT0_PANTALLA = 480;
+static const int BPP = 8;
+
+static const int PARED_X = 90;
+static const int PARED_Y = 110;
+
 static const int EDIFICIO_COLUMNAS = 5;
 static const int EDIFICIO_FILAS_1 = 3;
 static const int EDIFICIO_FILAS_2 = 4;

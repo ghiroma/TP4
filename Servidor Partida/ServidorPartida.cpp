@@ -33,6 +33,10 @@ struct args_struct {
 };
 
 int main(int argc, char * argv[]) {
+
+	cout<<"Servidor Partida iniciado"<<endl;
+	sleep(5);
+
 	int puerto;
 	int cantVidas;
 	int idSM;
