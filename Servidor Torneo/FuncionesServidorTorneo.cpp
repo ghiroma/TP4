@@ -653,7 +653,7 @@ void* establecerPartidas(void* data) {
 					sprintf(auxCantVidas, "%d", cantVidas);
 
 					char *argumentos[] = { auxPuertoNuevaPartida, auxCantVidas, NULL };
-					execv("/Servidor Partida/Servidor Partida", argumentos);
+					execv("../Servidor Partida/Debug/Servidor Partida", argumentos);
 					cout << "ERROR al ejecutar execv Nueva Partida" << endl;
 					exit(1);
 				} else if (pid < 0) {

@@ -35,7 +35,6 @@ struct args_struct {
 int main(int argc, char * argv[]) {
 
 	cout<<"Servidor Partida iniciado"<<endl;
-	sleep(5);
 
 	int puerto;
 	int cantVidas;
@@ -64,19 +63,25 @@ int main(int argc, char * argv[]) {
 
 	srand(time(NULL));
 
-	if (argc == 3) {
-		puerto = atoi(argv[1]);
-		cantVidas = atoi(argv[2]);
-		ids.shmId = ftok("/bin/ls", puerto);
+	if (argc == 2) {
+		cout<<"Recibi la cantidad de parametros correcta"<<endl;
+		cout<<"Parametro 1 "<<argv[0]<<endl;
+		cout<<"Parametro 2 "<<argv[1]<<endl;
+		puerto = atoi(argv[0]);
+		cantVidas = atoi(argv[1]);
+		cout<<"Numero de puerto "<<puerto<<endl;
+		cout<<"Cantidad de vidas "<<cantVidas<<endl;
+		//ids.shmId = ftok("/bin/ls", puerto);
 		char * aux;
-		sprintf(aux, "%d", puerto);
-		strcpy(ids.semName, "/sem");
-		strcat(ids.semName, aux);
+		//sprintf(aux, "%d", puerto);
+		//strcpy(ids.semName, "/sem");
+		//strcat(ids.semName, aux);
 		cout << "Nombre de semaforo: " << ids.semName << endl;
 		cout << "ID de memoria compartida: " << ids.shmId << endl;
 
 	} else {
 		//TODO Error y cerrar servidor partida porque faltan datos.
+		cout<<"No recibi cant correcta datos"<<endl;
 		puerto = 5556;
 		cantVidas = 3;
 	}
@@ -92,6 +97,7 @@ int main(int argc, char * argv[]) {
 	while (true) {
 		//TODO Hacer algo si estoy mucho tiempo en el accept y no se conecta nadie.
 		do {
+			cout<<"Esperando IDS"<<endl;
 			if (int response = select(sSocket.ID + 1, &fds, NULL, NULL,
 					&timeout) > 0) {
 				if (cSocket1 == NULL) {
@@ -130,11 +136,13 @@ int main(int argc, char * argv[]) {
 				if (ufds[0].revents & POLLIN) {
 					cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
 					string message(buffer);
+					cout<<"SERVIDOR PARTIDA: id1 "<<buffer<<endl;
 					if(message.substr(0,LONGITUD_CODIGO)==CD_ID_JUGADOR)
 						felix1 = new Felix(cantClientes, atoi(message.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str()));
 				} else if (ufds[1].revents & POLLIN) {
 					cSocket2->ReceiveNoBloq(buffer, sizeof(buffer));
 					string message(buffer);
+					cout<<"SERVIDOR PARTIDA: id2 "<<buffer<<endl;
 					if(message.substr(0,LONGITUD_CODIGO)==CD_ID_JUGADOR)
 						felix2 = new Felix(cantClientes, atoi(message.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str()));
 				}

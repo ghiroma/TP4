@@ -246,6 +246,11 @@ int main(int argc, char *argv[]) {
 	cout<<"Antes de inicializar el socketPartida "<<puertoServidorPartida<<endl;
 	socketPartida = new CommunicationSocket(puertoServidorPartida, "127.0.0.11");
 
+	string message(CD_ID_JUGADOR);
+	message.append(fillMessage(mi_id));
+
+	socketPartida->SendBloq(message.c_str(),message.length());
+
 //Empiezo a tirar Thread para comunicarme con el servidor de partida.
 	pthread_create(&tpid_teclas, NULL, EscuchaServidor, &socketPartida->ID);
 	pthread_create(&tpid_envia, NULL, EnvioServidor, &socketPartida->ID);

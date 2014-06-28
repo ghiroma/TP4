@@ -102,11 +102,11 @@ timer_thread(void* arg) {
 		}
 
 		if (TimeDifference(INTERVALOS_TORTA, startingTimeTorta) == true) {
-			string message(CD_TORTA);
-			message.append(randomTorta());
-			Helper::encolar(&message, &sender1_queue, &mutex_sender1);
+			//string message(CD_TORTA);
+			//message.append(randomTorta());
+			//Helper::encolar(&message, &sender1_queue, &mutex_sender1);
 			//Helper::encolar(&message, &sender2_queue, &mutex_sender2);
-			startingTimeTorta = time(0);
+			//startingTimeTorta = time(0);
 		}
 
 		if (TimeDifference(INTERVALOS_PERSIANA, startingTimePersiana) == true) {
