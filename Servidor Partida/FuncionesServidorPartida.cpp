@@ -69,7 +69,7 @@ timer_thread(void* arg) {
 	time_t startingTimePersiana = time(0);
 	time_t startingTimeTorta = time(0);
 
-	//TODO sacar hardcodeo.
+	//TODO Agregar variacion segun el nivel.
 	while (stop == false) {
 		if (TimeDifference(INTERVALOS_KEEPALIVE, startingTimeKeepAlive)
 				== true) {
