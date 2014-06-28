@@ -218,7 +218,7 @@ validator_thread(void * argument) {
 		if (!receiver1_queue.empty()) {
 			string message = receiver1_queue.front();
 			receiver1_queue.pop();
-			string scodigo = message.substr(0, 2);
+			string scodigo = message.substr(0, LONGITUD_CODIGO);
 			int codigo = atoi(scodigo.c_str());
 			//Dependiendo del codigo, voy a ver que valido.
 			//TODO me van mandar el id, asi que yo tengo que crear los Felix de cada

@@ -125,10 +125,14 @@ int main(int argc, char * argv[]) {
 			if (int result = poll(ufds, 2, CLIENT_ID_TIMEOUT) > 0) {
 				if (ufds[0].revents & POLLIN) {
 					cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
-					felix1 = new Felix(cantClientes, atoi(buffer));
+					string message(buffer);
+					if(message.substr(0,LONGITUD_CODIGO)==CD_ID_JUGADOR)
+						felix1 = new Felix(cantClientes, atoi(message.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str()));
 				} else if (ufds[1].revents & POLLIN) {
 					cSocket2->ReceiveNoBloq(buffer, sizeof(buffer));
-					felix2 = new Felix(cantClientes, atoi(buffer));
+					string message(buffer);
+					if(message.substr(0,LONGITUD_CODIGO)==CD_ID_JUGADOR)
+						felix2 = new Felix(cantClientes, atoi(message.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str()));
 				}
 			} else if (result == 0)		//timeout
 					{
