@@ -10,6 +10,15 @@
 
 #include "Felix.h"
 
+/*
+ * Representa las ventanas del edificio.
+ * felix: Puntero a objeto de clase Felix.
+ * torta: Booleano si hay una torta en la ventana.
+ * marquesina: Booleano si hay una marquesina en la ventana.
+ * persiana: Booleano si la persiana esta cerrada.
+ * ventanaRota: Int, que tan roto esta la ventana. Valores posibles: 0,1,2
+ */
+
 class Ventana {
 
 public:

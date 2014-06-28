@@ -59,10 +59,22 @@ void CargarVentanasDelTramo(struct ventana*, unsigned short int, unsigned short 
 void *EscuchaTeclas(void *);
 void *EnvioServidor(void *);
 void *EscuchaServidor(void *);
+char IngresaNombre();
+char CambiaTramo();
+char CambiaNivel();
 char ventana_reparada(struct posicion *);
 string fillMessage(string);
+void PantallaIntermedia(char);
+/* 
 
-SDL_Surface *superficie, *pared, *ventana_sana, *ventana_rota1, *ventana_rota2,
+0 - Pantalla intermedia para ingresar el nombre.
+1 - Pantalla intermedia de cambio de tramo.
+2 - Pantalla intermedia a la espera de partidas.
+
+*/
+
+SDL_Surface *superficie, *pared_tramo1n1, *pared_tramo2n1, *pared_tramo3n1, 
+		*pared, *ventana_sana, *ventana_rota1, *ventana_rota2,
 		*ventana_rota3, *ventana_rota4, *ventana, *puerta, *felix_d1, *felix_i1,
 		*felix_r11, *felix_r21, *felix_r31, *felix_r41, *felix_r51,
 		*felix_d2, *felix_i2, *felix1, *felix2, *ralph_1, *ralph_2, *ralph_3,
@@ -93,30 +105,34 @@ char ralph_sentido;
 char felix1_reparar = 'N';
 char ventanas_cargadas = 'N';
 char torta_aparece = 'N';
-char felix1_cartel_puntos[10]={0};
-char felix1_cartel_vidas[10]={0};
+char felix_cartel_puntos[10]={0};
+char felix_cartel_vidas[10]={0};
+char felix1_nombre[10] = { ' ' };
+char felix2_nombre[10] = { "Player 2" };
 short int felix1_puntos = 0;
 short int felix2_puntos = 0;
 short int felix1_vidas = 3;
 short int felix2_vidas = 3;
+short int ventanas_reparadas = 10;
 SDL_Event evento;
 SDL_keysym keysym;
+
+SDL_Rect pantalla_juego, 
+	pantalla_texto,
+ 	pantalla_puntos,
+	pantalla_vidas;
+
+SDL_Color color_texto;
+TTF_Font *fuente;
+
 
 int main(int argc, char *argv[]) {
 	CommunicationSocket * socket;
 
-	SDL_Rect pantalla_juego, 
-		pantalla_texto,
- 		pantalla_puntos,
-		 pantalla_vidas;
-
-	SDL_Color color_texto;
-	TTF_Font *fuente;
-
-	short int caracter = 0;
-	char nombre[10] = { ' ' };
-
-	const char pared_bmp[] = "Sprites/pared_grande_tramo1.bmp",
+	const char 
+		pared_tramo1n1_bmp[] = "Sprites/pared_tramo1n1.bmp",
+		pared_tramo2n1_bmp[] = "Sprites/pared_tramo2n1.bmp",
+		pared_tramo3n1_bmp[] = "Sprites/pared_tramo3n1.bmp",		
 		ventana_sana_bmp[] = "Sprites/ventana_sana.bmp",
 		ventana_rota1_bmp[] = "Sprites/ventana_rota1.bmp",
 		ventana_rota2_bmp[] = "Sprites/ventana_rota2.bmp",
@@ -144,7 +160,9 @@ int main(int argc, char *argv[]) {
 		roca2_bmp[] = "Sprites/roca2.bmp",
 		torta_bmp[] = "Sprites/torta.bmp";
 
-	pared = SDL_LoadBMP(pared_bmp);
+	pared_tramo1n1 = SDL_LoadBMP(pared_tramo1n1_bmp);	
+	pared_tramo2n1 = SDL_LoadBMP(pared_tramo2n1_bmp);
+	pared_tramo3n1 = SDL_LoadBMP(pared_tramo3n1_bmp);
 	ventana_sana = SDL_LoadBMP(ventana_sana_bmp);
 	ventana_rota1 = SDL_LoadBMP(ventana_rota1_bmp);
 	ventana_rota2 = SDL_LoadBMP(ventana_rota2_bmp);
@@ -179,12 +197,12 @@ int main(int argc, char *argv[]) {
 
 	cout << "Intentando conectarme" << endl;
 
-	socket = new CommunicationSocket(5556, "127.0.0.1");
+//	socket = new CommunicationSocket(5556, "127.0.0.1");
 
 	//socket->ReceiveBloq(buffer, sizeof(buffer));
 	cout << "Conectado" << endl;
-	pthread_create(&tpid_teclas, NULL, EscuchaServidor, &socket->ID);
-	pthread_create(&tpid_envia, NULL, EnvioServidor, &socket->ID);
+//	pthread_create(&tpid_teclas, NULL, EscuchaServidor, &socket->ID);
+//	pthread_create(&tpid_envia, NULL, EnvioServidor, &socket->ID);
 
 //Inicio modo video
 	SDL_Init(SDL_INIT_VIDEO);
@@ -208,50 +226,13 @@ int main(int argc, char *argv[]) {
 	pantalla_texto.x = 10;
 	pantalla_texto.y = 10;
 
-	pantalla_puntos.x = 10;
-	pantalla_puntos.y = 30;
-
-	pantalla_vidas.x = 10;
-	pantalla_vidas.y = 50;
-
-//Para escribir el nombre.
+//Pantalla para escribir el nombre.
 // ---
-		while(salir == 'N' && SDL_WaitEvent(&evento)){
-		if(evento.type == SDL_KEYDOWN){
-			if(evento.key.keysym.sym != SDLK_SPACE){
-				pantalla_juego.x = 0;
-				pantalla_juego.y = 0;
-				pantalla_juego.w = ANCHO_PANTALLA;
-				pantalla_juego.h = ALTO_PANTALLA;
-				SDL_FillRect(superficie, &pantalla_juego,
-				SDL_MapRGB(superficie->format, 0, 0, 0));
-			
-				if(evento.key.keysym.sym>=97 && evento.key.keysym.sym<=122 && caracter<=9)
-	nombre[caracter++] = evento.key.keysym.sym;
-				else if (evento.key.keysym.sym == SDLK_BACKSPACE && caracter >=0) 
-					nombre[caracter--] = ' '; 
-			
-				nombre[caracter]='\0';
-				//Texto del texto
-				texto = TTF_RenderText_Solid(fuente, nombre, color_texto);
-				SDL_BlitSurface(texto,NULL, superficie, &pantalla_texto);	
-				SDL_Flip(superficie);		
 
-			}
-			else
-				if(caracter >= 0)
-					salir = 'S';
-		}
-		SDL_Delay(30);
-	}
-
+	PantallaIntermedia('0');
 	salir = 'N';
 
 //Empiezo a tirar Thread.
-
-// 1. Para escuchar teclas. - echo
-// 2. Para escuchar al servidor. - comentado.
-// 3. Para enviarle cosas al servidor. - no ta.
 
 //Lanzo el thread que va a estar a la escucha de las teclas que se presionan.
 	pthread_create(&tpid_teclas, NULL, EscuchaTeclas, NULL);
@@ -268,19 +249,45 @@ int main(int argc, char *argv[]) {
 		SDL_FillRect(superficie, &pantalla_juego,
 				SDL_MapRGB(superficie->format, 0, 0, 0));
 //Dibujo la pared.
+		switch(tramo){
+			case 1:	pared = pared_tramo1n1; break;
+			case 2: pared = pared_tramo2n1; break;
+			default: pared = pared_tramo3n1; break;
+		}
 		Dibujar(PARED_X, PARED_Y, pared, superficie);
-
+		
 //Dibujo los puntos.
-		sprintf(felix1_cartel_puntos, "Puntos %d", felix1_puntos);  
-		puntos = TTF_RenderText_Solid(fuente, felix1_cartel_puntos, color_texto);
+		pantalla_puntos.x = 10;
+		pantalla_puntos.y = 30;
+		sprintf(felix_cartel_puntos, "Puntos %d", felix1_puntos);  
+		puntos = TTF_RenderText_Solid(fuente, felix_cartel_puntos, color_texto);
 		SDL_BlitSurface(puntos,NULL, superficie, &pantalla_puntos);
 
+		pantalla_puntos.x = 520;
+		sprintf(felix_cartel_puntos, "Puntos %d", felix2_puntos);  
+		puntos = TTF_RenderText_Solid(fuente, felix_cartel_puntos, color_texto);
+		SDL_BlitSurface(puntos,NULL, superficie, &pantalla_puntos);
+		
 //Dibujo las vidas.
-		sprintf(felix1_cartel_vidas, "Vidas %d", felix1_vidas);
-		vidas = TTF_RenderText_Solid(fuente, felix1_cartel_vidas, color_texto);
+		pantalla_vidas.x = 10;
+		pantalla_vidas.y = 50;
+		sprintf(felix_cartel_vidas, "Vidas %d", felix1_vidas);
+		vidas = TTF_RenderText_Solid(fuente, felix_cartel_vidas, color_texto);
+		SDL_BlitSurface(vidas,NULL, superficie, &pantalla_vidas);
+
+		pantalla_vidas.x = 520;
+		sprintf(felix_cartel_vidas, "Vidas %d", felix2_vidas);
+		vidas = TTF_RenderText_Solid(fuente, felix_cartel_vidas, color_texto);
 		SDL_BlitSurface(vidas,NULL, superficie, &pantalla_vidas);
 
 //Dibujo el texto.
+		pantalla_texto.x = 10;
+		pantalla_texto.y = 10;
+		texto = TTF_RenderText_Solid(fuente, felix1_nombre, color_texto);
+		SDL_BlitSurface(texto, NULL, superficie, &pantalla_texto);
+
+		pantalla_texto.x = 520;
+		texto = TTF_RenderText_Solid(fuente, felix2_nombre, color_texto);
 		SDL_BlitSurface(texto, NULL, superficie, &pantalla_texto);
 
 // cargar las ventanas del tramo 1 -- fila 0 es la de mas abajo.
@@ -301,6 +308,7 @@ int main(int argc, char *argv[]) {
 		DibujarVentanas(ventanas_tramo1, 3, superficie);
 
 //Dibujo la puerta
+	if(tramo == 1)
 		Dibujar(ventanas_tramo1[0][1].x + 65, 383, puerta, superficie);
 
 //Dibujo la torta
@@ -410,8 +418,10 @@ int main(int argc, char *argv[]) {
 				felix1 = felix_r51;
 			else if(felix1 == felix_r51){
 				felix1 = felix_d1;
-				if(ventana_reparada(&felix1_posicion) == 'S')
+				if(ventana_reparada(&felix1_posicion) == 'S'){
 					felix1_puntos++;
+					ventanas_reparadas++;
+				}
 				felix1_reparar = 'N';
 			}
 			Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
@@ -436,13 +446,29 @@ int main(int argc, char *argv[]) {
 				}
 			}
 		}
-		SDL_Flip(superficie);
 //Ojo, hay que poner el delay porque sino el proceso no tiene tiempos muertos y 
 // el uso del procesador se me va al chori.
-		SDL_Delay(300);
+		if(ventanas_reparadas == 11){	
+			ventanas_reparadas = 10;
+			ventanas_cargadas = 'N';
+			if(tramo == 3){
+				PantallaIntermedia('2');
+				tramo = 1; 
+				nivel++;
+			}
+			else{
+				PantallaIntermedia('1');
+				tramo++;
+			}
+			salir = 'N';	
+		}
+		else{
+			SDL_Flip(superficie);
+			SDL_Delay(300);
+		}
 	}
 
-	delete (socket);
+//	delete (socket);
 	SDL_Quit();
 	TTF_CloseFont(fuente);
 	TTF_Quit();
@@ -534,7 +560,7 @@ void* EscuchaServidor(void *arg) {
 						cola_pajaro.push(aux_buffer);
 						break;
 					case '2':
-						cola_torta.push(aux_buffer);			
+//						cola_torta.push(aux_buffer);			
 						break;
 					case '3':
 						break;
@@ -693,6 +719,93 @@ void handler(int senial) {
 	}
 
 }
+
+void PantallaIntermedia(char cod){
+
+	while(salir == 'N'){
+		switch(cod){
+			case '0': salir = IngresaNombre(); break;
+			case '1': salir = CambiaTramo(); break;
+			case '2': salir = CambiaNivel(); break;
+		}
+		SDL_Delay(30);
+	}
+}
+
+char CambiaTramo(){
+
+	pantalla_juego.x = 0;
+	pantalla_juego.y = 0;
+	pantalla_juego.w = ANCHO_PANTALLA;
+	pantalla_juego.h = ALTO_PANTALLA;
+	SDL_FillRect(superficie, &pantalla_juego, SDL_MapRGB(superficie->format, 0, 0, 0));
+
+	pantalla_texto.x = 10;
+	pantalla_texto.y = 10;
+	texto = TTF_RenderText_Solid(fuente, "Cambio de tramo, puto!", color_texto);
+	SDL_BlitSurface(texto,NULL, superficie, &pantalla_texto);	
+	SDL_Flip(superficie);		
+
+	SDL_WaitEvent(&evento);
+
+	return 'S';
+}
+
+char CambiaNivel(){
+
+	pantalla_juego.x = 0;
+	pantalla_juego.y = 0;
+	pantalla_juego.w = ANCHO_PANTALLA;
+	pantalla_juego.h = ALTO_PANTALLA;
+	SDL_FillRect(superficie, &pantalla_juego,
+	SDL_MapRGB(superficie->format, 0, 0, 0));
+
+	pantalla_texto.x = 10;
+	pantalla_texto.y = 10;
+	texto = TTF_RenderText_Solid(fuente, "Cambio de nivel, gay", color_texto);
+	SDL_BlitSurface(texto,NULL, superficie, &pantalla_texto);	
+	SDL_Flip(superficie);		
+	
+	SDL_WaitEvent(&evento);
+
+	return 'S';
+}
+
+char IngresaNombre(){
+
+	char salir = 'N';
+	short int caracter;
+	caracter = strlen(felix1_nombre);
+
+	SDL_WaitEvent(&evento);
+
+	if(evento.type == SDL_KEYDOWN)
+		if(evento.key.keysym.sym != SDLK_SPACE){
+			pantalla_juego.x = 0;
+			pantalla_juego.y = 0;
+			pantalla_juego.w = ANCHO_PANTALLA;
+			pantalla_juego.h = ALTO_PANTALLA;
+			SDL_FillRect(superficie, &pantalla_juego,
+			SDL_MapRGB(superficie->format, 0, 0, 0));
+			
+			if(evento.key.keysym.sym>=97 && evento.key.keysym.sym<=122 && caracter<=9)
+				felix1_nombre[caracter++] = evento.key.keysym.sym;
+			else if (evento.key.keysym.sym == SDLK_BACKSPACE && caracter >=0) 
+				felix1_nombre[caracter--] = ' '; 
+			
+			felix1_nombre[caracter]='\0';
+			//Texto del texto
+			texto = TTF_RenderText_Solid(fuente, felix1_nombre, color_texto);
+			SDL_BlitSurface(texto,NULL, superficie, &pantalla_texto);	
+			SDL_Flip(superficie);		
+
+		}
+		else
+			if(caracter >= 0)
+				salir = 'S';
+	return salir;	
+}
+
 
 string fillMessage(string message) {
 	string content;
