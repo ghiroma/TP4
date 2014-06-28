@@ -15,15 +15,15 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
 #include <list>
-
 #include "Clases/Semaforo.h"
 
 using namespace std;
 
 extern pthread_mutex_t mutex_partidasActivas;
 extern pthread_mutex_t mutex_todasLasPartidasFinalizadas;
+extern pthread_mutex_t mutex_timeIsUp;
 extern bool todasLasPartidasFinalizadas;
-
+extern list<datosPartida> partidasActivas;
 pthread_mutex_t mutex_listJugadores = PTHREAD_MUTEX_INITIALIZER;
 map<int,
 Jugador*> listJugadores;
@@ -44,15 +44,16 @@ int main(int argc, char * argv[]) {
 	int resultThEstablecerPartidas;
 	pthread_t thAceptarJugadores;
 	int resultThAceptarJugadores;
-	pthread_t thActualizarListaJugadores;
-	int resultThActualizarListaJugadores;
+	pthread_t thkeepAliveJugadores;
+	int resultThkeepAliveJugadores;
 	pthread_t thModoGrafico;
 	int resultThModoGrafico;
 	thModoGrafico_data modoGraficoData;
 	pthread_t thKeepAlive;
 	int resultThKeepAlive;
 
-	signal(SIGINT, SIGINT_Handler);
+	signal(SIGINT, SIG_Handler);
+	signal(SIGTERM, SIG_Handler);
 
 	//Obtener configuracion
 	getConfiguration(&puertoTorneo, &ip, &duracionTorneo, &tiempoInmunidad, &cantVidas);
@@ -71,9 +72,9 @@ int main(int argc, char * argv[]) {
 	}
 
 	//Lanzar THREAD actualizar lista de jugadores (KEEPALIVE)
-	resultThActualizarListaJugadores = pthread_create(&thActualizarListaJugadores, NULL, actualizarListaJugadores, (void*) NULL);
-	if (resultThActualizarListaJugadores) {
-		cout << "Error no se pudo crear el thread de Actualizar Lista de Jugadores" << endl;
+	resultThkeepAliveJugadores = pthread_create(&thkeepAliveJugadores, NULL, keepAliveJugadores, (void*) NULL);
+	if (resultThkeepAliveJugadores) {
+		cout << "Error no se pudo crear el thread keepAliveJugadores" << endl;
 		return 1;
 	}
 
@@ -91,13 +92,13 @@ int main(int argc, char * argv[]) {
 		cout << "Error no se pudo crear el thread de Aceptar Jugadores" << endl;
 		return 1;
 	}
-
-	//Lanzar THREAD KEEPALIVE (partidas)
-	resultThKeepAlive = pthread_create(&thKeepAlive, NULL, keepAlive, (void *) NULL);
-	if (resultThKeepAlive) {
-		cout << "Error no se pudo crear el thread de KeepAlive" << endl;
-		return 1;
-	}
+	/*
+	 //Lanzar THREAD KEEPALIVE (partidas)
+	 resultThKeepAlive = pthread_create(&thKeepAlive, NULL, keepAlive, (void *) NULL);
+	 if (resultThKeepAlive) {
+	 cout << "Error no se pudo crear el thread de KeepAlive" << endl;
+	 return 1;
+	 }*/
 
 	//Lanzar THREAD temporizador del torneo
 	temporizacion.duracion = duracionTorneo;
@@ -109,29 +110,12 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 
-	
-	pthread_join(thEstablecerPartidas, NULL);
 
-	//esperar que todas las partidas finalicen
-	int cantPartidasActivas;
-	while(true){
-		cout << "mutex partidasActivas" << endl;
-		pthread_mutex_lock(&mutex_partidasActivas);
-		cantPartidasActivas = partidasActivas.size();
-		pthread_mutex_unlock(&mutex_partidasActivas);
-		cout << "unmutex partidasActivas" << endl;
 
-		if (cantPartidasActivas == 0) {
-			break;
-		}	
-		usleep(1000000);
-	}
-	pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
-	cout << "mutex main todasLasPartidasFinalizadas" << endl;
-	todasLasPartidasFinalizadas = true;
-	pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);
-	cout << "unmutex main todasLasPartidasFinalizadas" << endl;
-				
+	//pthread_join(thTemporizadorTorneo, NULL);//no hace falta
+	//pthread_join(thEstablecerPartidas, NULL);//no hace falta
+	pthread_join(thModoGrafico, NULL);
+	pthread_join(thkeepAliveJugadores, NULL);
 
 	///////////////////
 	//ver si hace falta??????????
@@ -144,26 +128,31 @@ int main(int argc, char * argv[]) {
 	 }
 	 pthread_mutex_unlock(&mutex_listJugadores);*/
 
-	//mandar a cada cliente su puntaje y ranking
-	pthread_mutex_lock(&mutex_listJugadores);
-	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
-		string message(CD_FIN_TORNEO);
-		message.append(fillMessage("1"));
-		it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
-	}
-	pthread_mutex_unlock(&mutex_listJugadores);
+	/*
+	 //mandar a cada cliente su puntaje y ranking
+	 pthread_mutex_lock(&mutex_listJugadores);
+	 for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
+	 string message(CD_FIN_TORNEO);
+	 message.append(fillMessage("1"));
+	 it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
+	 }
+	 pthread_mutex_unlock(&mutex_listJugadores);
+	 */
+
+	//bloqueo en espera de que ingrese una tecla para cerrar la pantalla
+	cout << "Ingrese una tecla para finalizar: ";
+	getchar();
 
 	//hacer destroy de los pthread_mutex, semaforos, etc sockets
 	///
+	//  HACER FUNCION QUE CIERRE TODO ASI LA LLAMO DESDE EL SIG_HANDLER TAMBIEN
 	//
-	pthread_cancel(thKeepAlive);
-	pthread_mutex_destroy(&mutex_listJugadores);
-	pthread_mutex_destroy(&mutex_puertoPartida);
-	pthread_mutex_destroy(&mutex_timeIsUp);
-	
-	pthread_exit(NULL);
-	//bloqueo en espera de que ingrese una tecla para cerrar la pantalla
-	getchar();
+	//
+	pthread_mutex_lock(&mutex_listJugadores);
+	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
+		delete (it->second->SocketAsociado);
+	}
+	pthread_mutex_unlock(&mutex_listJugadores);
+	//pthread_mutex_destroy(&mutex_timeIsUp);
 	cout << "Fin proceso Servidor Torneo" << endl;
 }
-

@@ -15,6 +15,7 @@
 #include <iostream>
 
 #define MAX_PENDING_CONNECTIONS 20
+using namespace std;
 
 ServerSocket::ServerSocket(unsigned int port, char * ip) {
 	this->ID = socket(AF_INET, SOCK_STREAM, 0);
@@ -63,5 +64,7 @@ CommunicationSocket* ServerSocket::Accept() {
 
 ServerSocket::~ServerSocket() {
 	// TODO Auto-generated destructor stub
+
+	cout<<"---------------------EJECUTO EL DESTRUCTOR DE ServerSocket "<<endl;
 	close(this->ID);
 }

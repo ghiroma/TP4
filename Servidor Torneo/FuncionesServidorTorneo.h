@@ -5,6 +5,7 @@
 #include "Jugador.h"
 #include <pthread.h>
 #include <list>
+#include <semaphore.h>
 
 struct thTemporizador_data {
 	int duracion;
@@ -16,16 +17,22 @@ struct thModoGrafico_data {
 	int duracion;
 };
 
+struct datosPartida {
+	int idShm;
+	sem_t* semaforo_pointerSem_t;
+	const char * semaforoShmName;
+	int lecturasFallidas;
+};
+
 void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* tiempoInmunidad, int* cantVidas);
-void SIGINT_Handler(int inum);
+void SIG_Handler(int inum);
 void agregarJugador(Jugador* nuevoJugador);
 void quitarJugador(int id);
-unsigned int getNewPort();
 bool torneoFinalizado();
 void asociarSegmento(int* idShm, int* variable);
 //THREADS
 void* temporizadorTorneo(void* data);
-void* actualizarListaJugadores(void*);
+void* keepAliveJugadores(void*);
 void* modoGrafico(void*);
 void* aceptarJugadores(void* data);
 void* establecerPartidas(void* data);
