@@ -22,6 +22,9 @@
 
 using namespace std;
 
+bool msjPuertoRecibido = false;
+pthread_mutex_t mutex_msjPuertoRecibido = PTHREAD_MUTEX_INITIALIZER;
+
 struct ventana {
 
 	short int x;
@@ -50,6 +53,7 @@ queue<string> cola_grafico;
 queue<string> cola_ralph;
 queue<string> cola_pajaro;
 queue<string> cola_torta;
+queue<string> cola_mensajes_enviar;
 
 void handler(int);
 void ConfigRect(SDL_Rect *, int, int, int, int);
@@ -59,6 +63,7 @@ void CargarVentanasDelTramo(struct ventana*, unsigned short int, unsigned short 
 void *EscuchaTeclas(void *);
 void *EnvioServidor(void *);
 void *EscuchaServidor(void *);
+void *EscuchaTorneo(void *);
 char IngresaNombre();
 char CambiaTramo();
 char CambiaNivel();
@@ -67,19 +72,15 @@ string fillMessage(string);
 void PantallaIntermedia(char);
 /* 
 
-0 - Pantalla intermedia para ingresar el nombre.
-1 - Pantalla intermedia de cambio de tramo.
-2 - Pantalla intermedia a la espera de partidas.
+ 0 - Pantalla intermedia para ingresar el nombre.
+ 1 - Pantalla intermedia de cambio de tramo.
+ 2 - Pantalla intermedia a la espera de partidas.
 
-*/
+ */
 
-SDL_Surface *superficie, *pared_tramo1n1, *pared_tramo2n1, *pared_tramo3n1, 
-		*pared, *ventana_sana, *ventana_rota1, *ventana_rota2,
-		*ventana_rota3, *ventana_rota4, *ventana, *puerta, *felix_d1, *felix_i1,
-		*felix_r11, *felix_r21, *felix_r31, *felix_r41, *felix_r51,
-		*felix_d2, *felix_i2, *felix1, *felix2, *ralph_1, *ralph_2, *ralph_3,
-		*ralph_4, *ralph_5, *ralph_6, *ralph, *roca1, *roca2, *roca, *pajaro_1,
-		*pajaro_2, *pajaro, *texto, *puntos, *vidas, *torta;
+SDL_Surface *superficie,
+*pared_tramo1n1, *pared_tramo2n1, *pared_tramo3n1, *pared, *ventana_sana, *ventana_rota1, *ventana_rota2, *ventana_rota3, *ventana_rota4, *ventana, *puerta, *felix_d1, *felix_i1, *felix_r11, *felix_r21, *felix_r31, *felix_r41, *felix_r51, *felix_d2, *felix_i2, *felix1, *felix2, *ralph_1, *ralph_2,
+		*ralph_3, *ralph_4, *ralph_5, *ralph_6, *ralph, *roca1, *roca2, *roca, *pajaro_1, *pajaro_2, *pajaro, *texto, *puntos, *vidas, *torta;
 
 struct ventana ventanas_tramo1[3][5];
 /* ALMACENO FILA y COLUMNA -- pienso el edificio como una matriz */
@@ -95,9 +96,10 @@ unsigned short int rahlp_y = PARED_Y;
 short int roca_siguiente = 0;
 short int cant_rocas = 0;
 short int ralph_destino = 0;
+int puertoServidorPartida = 0;
 unsigned short int tramo = 1;
 unsigned short int nivel = 1;
-pthread_t tpid_teclas, tpid_escuchar, tpid_envia;
+pthread_t tpid_teclas, tpid_escuchar, tpid_envia, tpid_escuchar_torneo;
 char salir = 'N';
 char ralph_moverse = 'N';
 char pajaro_moverse = 'N';
@@ -105,8 +107,8 @@ char ralph_sentido;
 char felix1_reparar = 'N';
 char ventanas_cargadas = 'N';
 char torta_aparece = 'N';
-char felix_cartel_puntos[10]={0};
-char felix_cartel_vidas[10]={0};
+char felix_cartel_puntos[10] = { 0 };
+char felix_cartel_vidas[10] = { 0 };
 char felix1_nombre[10] = { ' ' };
 char felix2_nombre[10] = { "Player 2" };
 short int felix1_puntos = 0;
@@ -117,50 +119,22 @@ short int ventanas_reparadas = 10;
 SDL_Event evento;
 SDL_keysym keysym;
 
-SDL_Rect pantalla_juego, 
-	pantalla_texto,
- 	pantalla_puntos,
-	pantalla_vidas;
+SDL_Rect pantalla_juego, pantalla_texto, pantalla_puntos, pantalla_vidas;
 
 SDL_Color color_texto;
 TTF_Font *fuente;
 
-
 int main(int argc, char *argv[]) {
-	CommunicationSocket * socket;
+	CommunicationSocket * socketTorneo;
+	CommunicationSocket * socketPartida;
 
-	const char 
-		pared_tramo1n1_bmp[] = "Sprites/pared_tramo1n1.bmp",
-		pared_tramo2n1_bmp[] = "Sprites/pared_tramo2n1.bmp",
-		pared_tramo3n1_bmp[] = "Sprites/pared_tramo3n1.bmp",		
-		ventana_sana_bmp[] = "Sprites/ventana_sana.bmp",
-		ventana_rota1_bmp[] = "Sprites/ventana_rota1.bmp",
-		ventana_rota2_bmp[] = "Sprites/ventana_rota2.bmp",
-		ventana_rota3_bmp[] = "Sprites/ventana_rota3.bmp",
-		ventana_rota4_bmp[] = "Sprites/ventana_rota4.bmp", 
-		puerta_bmp[] = "Sprites/puerta_grande.bmp", 
-		felixd1_bmp[] = "Sprites/felix_d1.bmp", 
-		felixi1_bmp[] = "Sprites/felix_i1.bmp",
-		felixr11_bmp[] = "Sprites/felix_r11.bmp",
-		felixr21_bmp[] = "Sprites/felix_r21.bmp",
-		felixr31_bmp[] = "Sprites/felix_r31.bmp",
-		felixr41_bmp[] = "Sprites/felix_r41.bmp",
-		felixr51_bmp[] = "Sprites/felix_r51.bmp", 
-		felixd2_bmp[] = "Sprites/felix_d2.bmp", 
-		felixi2_bmp[] = "Sprites/felix_i2.bmp",
-		ralph1_bmp[] = "Sprites/rahlp_1.bmp", 
-		ralph2_bmp[] = "Sprites/rahlp_2.bmp", 
-		ralph3_bmp[] = "Sprites/rahlp_3.bmp",
-		ralph4_bmp[] = "Sprites/rahlp_4.bmp", 
-		ralph5_bmp[] = "Sprites/rahlp_5.bmp", 
-		ralph6_bmp[] = "Sprites/rahlp_6.bmp",
-		pajaro1_bmp[] = "Sprites/pajaro_1.bmp", 
-		pajaro2_bmp[] = "Sprites/pajaro_2.bmp", 
-		roca1_bmp[] = "Sprites/roca1.bmp",
-		roca2_bmp[] = "Sprites/roca2.bmp",
-		torta_bmp[] = "Sprites/torta.bmp";
+	const char pared_tramo1n1_bmp[] = "Sprites/pared_tramo1n1.bmp", pared_tramo2n1_bmp[] = "Sprites/pared_tramo2n1.bmp", pared_tramo3n1_bmp[] = "Sprites/pared_tramo3n1.bmp", ventana_sana_bmp[] = "Sprites/ventana_sana.bmp", ventana_rota1_bmp[] = "Sprites/ventana_rota1.bmp", ventana_rota2_bmp[] =
+			"Sprites/ventana_rota2.bmp", ventana_rota3_bmp[] = "Sprites/ventana_rota3.bmp", ventana_rota4_bmp[] = "Sprites/ventana_rota4.bmp", puerta_bmp[] = "Sprites/puerta_grande.bmp", felixd1_bmp[] = "Sprites/felix_d1.bmp", felixi1_bmp[] = "Sprites/felix_i1.bmp", felixr11_bmp[] =
+			"Sprites/felix_r11.bmp", felixr21_bmp[] = "Sprites/felix_r21.bmp", felixr31_bmp[] = "Sprites/felix_r31.bmp", felixr41_bmp[] = "Sprites/felix_r41.bmp", felixr51_bmp[] = "Sprites/felix_r51.bmp", felixd2_bmp[] = "Sprites/felix_d2.bmp", felixi2_bmp[] = "Sprites/felix_i2.bmp", ralph1_bmp[] =
+			"Sprites/rahlp_1.bmp", ralph2_bmp[] = "Sprites/rahlp_2.bmp", ralph3_bmp[] = "Sprites/rahlp_3.bmp", ralph4_bmp[] = "Sprites/rahlp_4.bmp", ralph5_bmp[] = "Sprites/rahlp_5.bmp", ralph6_bmp[] = "Sprites/rahlp_6.bmp", pajaro1_bmp[] = "Sprites/pajaro_1.bmp", pajaro2_bmp[] =
+			"Sprites/pajaro_2.bmp", roca1_bmp[] = "Sprites/roca1.bmp", roca2_bmp[] = "Sprites/roca2.bmp", torta_bmp[] = "Sprites/torta.bmp";
 
-	pared_tramo1n1 = SDL_LoadBMP(pared_tramo1n1_bmp);	
+	pared_tramo1n1 = SDL_LoadBMP(pared_tramo1n1_bmp);
 	pared_tramo2n1 = SDL_LoadBMP(pared_tramo2n1_bmp);
 	pared_tramo3n1 = SDL_LoadBMP(pared_tramo3n1_bmp);
 	ventana_sana = SDL_LoadBMP(ventana_sana_bmp);
@@ -195,15 +169,6 @@ int main(int argc, char *argv[]) {
 		rocas_desplazamiento[i].y = 0;
 	}
 
-	cout << "Intentando conectarme" << endl;
-
-//	socket = new CommunicationSocket(5556, "127.0.0.1");
-
-	//socket->ReceiveBloq(buffer, sizeof(buffer));
-	cout << "Conectado" << endl;
-//	pthread_create(&tpid_teclas, NULL, EscuchaServidor, &socket->ID);
-//	pthread_create(&tpid_envia, NULL, EnvioServidor, &socket->ID);
-
 //Inicio modo video
 	SDL_Init(SDL_INIT_VIDEO);
 //Inicio modo texto grafico
@@ -215,7 +180,7 @@ int main(int argc, char *argv[]) {
 //Seteo el titulo de la pantalla
 	SDL_WM_SetCaption("Rahlp Tournament", NULL);
 //Cargo la fuente
-	fuente = TTF_OpenFont("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf",24);
+	fuente = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24);
 //Color del texto
 	color_texto.r = color_texto.g = color_texto.b = 245;
 
@@ -232,7 +197,58 @@ int main(int argc, char *argv[]) {
 	PantallaIntermedia('0');
 	salir = 'N';
 
-//Empiezo a tirar Thread.
+//Conexion con el servidor de torneo.
+
+/////Ventana esperando servidor////
+
+	cout << "Intentando conectarme al torneo" << endl;
+	bool error = true;
+	do {
+		cout << "Esperando servidor" << endl;
+		try {
+			socketTorneo = new CommunicationSocket(5555, "127.0.0.1");
+			error = false;
+		} catch (const char *err) {
+			cout << "mensaje : " << err << endl;
+			cout << "No se puedo conectar al torneo" << endl;
+			error = true;
+			usleep(1000000);
+		}
+	} while (error == true);
+
+	cout << "Conectado" << endl;
+
+	socketTorneo->SendNoBloq(felix1_nombre, sizeof(felix1_nombre));
+	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
+	bzero(buffer, sizeof(buffer));
+	socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
+	string aux_buffer(buffer);
+	string mi_id = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO);
+	cout << "Mi id: " << mi_id << endl;
+
+//Thread para escuchar al servidor de Torneo.
+	pthread_create(&tpid_escuchar_torneo, NULL, EscuchaTorneo, &socketTorneo->ID);
+
+	//Espero que el servidor de Torneo me envie el puerto para conectarme al servidor de partida.
+	bool msjPuerto = false;
+	while (true) {
+		pthread_mutex_lock (&mutex_msjPuertoRecibido);
+		msjPuerto = msjPuertoRecibido;
+		pthread_mutex_unlock(&mutex_msjPuertoRecibido);
+
+		if (msjPuerto == true) {
+			break;
+		}
+		usleep(1000000);
+	}
+
+//Me conecto al servidor de partida.
+	cout<<"Antes de inicializar el socketPartida "<<puertoServidorPartida<<endl;
+	socketPartida = new CommunicationSocket(puertoServidorPartida, "127.0.0.11");
+
+//Empiezo a tirar Thread para comunicarme con el servidor de partida.
+	pthread_create(&tpid_teclas, NULL, EscuchaServidor, &socketPartida->ID);
+	pthread_create(&tpid_envia, NULL, EnvioServidor, &socketPartida->ID);
 
 //Lanzo el thread que va a estar a la escucha de las teclas que se presionan.
 	pthread_create(&tpid_teclas, NULL, EscuchaTeclas, NULL);
@@ -246,39 +262,44 @@ int main(int argc, char *argv[]) {
 		pantalla_juego.w = ANCHO_PANTALLA;
 		pantalla_juego.h = ALTO_PANTALLA;
 
-		SDL_FillRect(superficie, &pantalla_juego,
-				SDL_MapRGB(superficie->format, 0, 0, 0));
+		SDL_FillRect(superficie, &pantalla_juego, SDL_MapRGB(superficie->format, 0, 0, 0));
 //Dibujo la pared.
-		switch(tramo){
-			case 1:	pared = pared_tramo1n1; break;
-			case 2: pared = pared_tramo2n1; break;
-			default: pared = pared_tramo3n1; break;
+		switch (tramo) {
+		case 1:
+			pared = pared_tramo1n1;
+			break;
+		case 2:
+			pared = pared_tramo2n1;
+			break;
+		default:
+			pared = pared_tramo3n1;
+			break;
 		}
 		Dibujar(PARED_X, PARED_Y, pared, superficie);
-		
+
 //Dibujo los puntos.
 		pantalla_puntos.x = 10;
 		pantalla_puntos.y = 30;
-		sprintf(felix_cartel_puntos, "Puntos %d", felix1_puntos);  
+		sprintf(felix_cartel_puntos, "Puntos %d", felix1_puntos);
 		puntos = TTF_RenderText_Solid(fuente, felix_cartel_puntos, color_texto);
-		SDL_BlitSurface(puntos,NULL, superficie, &pantalla_puntos);
+		SDL_BlitSurface(puntos, NULL, superficie, &pantalla_puntos);
 
 		pantalla_puntos.x = 520;
-		sprintf(felix_cartel_puntos, "Puntos %d", felix2_puntos);  
+		sprintf(felix_cartel_puntos, "Puntos %d", felix2_puntos);
 		puntos = TTF_RenderText_Solid(fuente, felix_cartel_puntos, color_texto);
-		SDL_BlitSurface(puntos,NULL, superficie, &pantalla_puntos);
-		
+		SDL_BlitSurface(puntos, NULL, superficie, &pantalla_puntos);
+
 //Dibujo las vidas.
 		pantalla_vidas.x = 10;
 		pantalla_vidas.y = 50;
 		sprintf(felix_cartel_vidas, "Vidas %d", felix1_vidas);
 		vidas = TTF_RenderText_Solid(fuente, felix_cartel_vidas, color_texto);
-		SDL_BlitSurface(vidas,NULL, superficie, &pantalla_vidas);
+		SDL_BlitSurface(vidas, NULL, superficie, &pantalla_vidas);
 
 		pantalla_vidas.x = 520;
 		sprintf(felix_cartel_vidas, "Vidas %d", felix2_vidas);
 		vidas = TTF_RenderText_Solid(fuente, felix_cartel_vidas, color_texto);
-		SDL_BlitSurface(vidas,NULL, superficie, &pantalla_vidas);
+		SDL_BlitSurface(vidas, NULL, superficie, &pantalla_vidas);
 
 //Dibujo el texto.
 		pantalla_texto.x = 10;
@@ -291,11 +312,11 @@ int main(int argc, char *argv[]) {
 		SDL_BlitSurface(texto, NULL, superficie, &pantalla_texto);
 
 // cargar las ventanas del tramo 1 -- fila 0 es la de mas abajo.
-		if(ventanas_cargadas == 'N'){
+		if (ventanas_cargadas == 'N') {
 			ventana_x = PARED_X + 45, ventana_y = PARED_Y + 25;
 			for (fila = 3; fila > 0; fila--) {
 				for (columna = 0; columna < 5; columna++) {
-					ventanas_tramo1[fila - 1][columna].tipo_ventana = rand()%5;
+					ventanas_tramo1[fila - 1][columna].tipo_ventana = rand() % 5;
 					CargarVentanasDelTramo(&ventanas_tramo1[fila - 1][columna], ventana_x, ventana_y, columna + (fila - 1) * 5, 'N', fila - 1, columna);
 					ventana_x += 80;
 				}
@@ -308,20 +329,19 @@ int main(int argc, char *argv[]) {
 		DibujarVentanas(ventanas_tramo1, 3, superficie);
 
 //Dibujo la puerta
-	if(tramo == 1)
-		Dibujar(ventanas_tramo1[0][1].x + 65, 383, puerta, superficie);
+		if (tramo == 1)
+			Dibujar(ventanas_tramo1[0][1].x + 65, 383, puerta, superficie);
 
 //Dibujo la torta
-		if(torta_aparece == 'S'){
+		if (torta_aparece == 'S') {
 			Dibujar(ventanas_tramo1[torta_posicion.fila][torta_posicion.columna].x, ventanas_tramo1[torta_posicion.fila][torta_posicion.columna].y, torta, superficie);
-		}
-		else{ 
-			if(!cola_torta.empty()){
-				torta_posicion.fila = atoi(cola_torta.front().substr(5,1).c_str());
-				torta_posicion.columna = atoi(cola_torta.front().substr(6,1).c_str());
+		} else {
+			if (!cola_torta.empty()) {
+				torta_posicion.fila = atoi(cola_torta.front().substr(5, 1).c_str());
+				torta_posicion.columna = atoi(cola_torta.front().substr(6, 1).c_str());
 				cola_torta.pop();
-				torta_aparece = 'S';					
-			}		
+				torta_aparece = 'S';
+			}
 		}
 //Dibujo a Ralph
 		if (ralph == ralph_1)
@@ -337,88 +357,80 @@ int main(int argc, char *argv[]) {
 		else
 			ralph = ralph_1;
 
-		if(ralph_moverse == 'S'){
-			if(ralph_posicion.columna != ralph_destino){			
-				if(ralph_sentido == 'D'){
-					ralph_posicion.columna+=1;	
+		if (ralph_moverse == 'S') {
+			if (ralph_posicion.columna != ralph_destino) {
+				if (ralph_sentido == 'D') {
+					ralph_posicion.columna += 1;
+				} else {
+					ralph_posicion.columna -= 1;
 				}
-				else{
-					ralph_posicion.columna-=1;
-				}
-			}
-			else{
+			} else {
 				ralph_moverse = 'N';
 				if (cant_rocas < 20) {
-					rocas_desplazamiento[roca_siguiente].x =
-						ventanas_tramo1[2][ralph_posicion.columna].x + 10;
-					((roca_siguiente + 1) == 20) ?
-						roca_siguiente = 0 : roca_siguiente++;
+					rocas_desplazamiento[roca_siguiente].x = ventanas_tramo1[2][ralph_posicion.columna].x + 10;
+					((roca_siguiente + 1) == 20) ? roca_siguiente = 0 : roca_siguiente++;
 					cant_rocas++;
 				}
 			}
-		}
-		else{
-			if(!cola_ralph.empty()){
+		} else {
+			if (!cola_ralph.empty()) {
 // Me llegan numeradas del 1 al 5. Le resto 1 porque yo las tengo del 0 al 4.
-				ralph_destino = atoi(cola_ralph.front().substr(6,1).c_str());
+				ralph_destino = atoi(cola_ralph.front().substr(6, 1).c_str());
 				cola_ralph.pop();
-				cout<<"Columna destino "<<ralph_destino<<endl;				
-				if(ralph_destino > ralph_posicion.columna)
+				cout << "Columna destino " << ralph_destino << endl;
+				if (ralph_destino > ralph_posicion.columna)
 					ralph_sentido = 'D';
 				else
 					ralph_sentido = 'I';
-			ralph_moverse = 'S';				
+				ralph_moverse = 'S';
 			}
 		}
 		Dibujar(ventanas_tramo1[2][ralph_posicion.columna].x, PARED_Y - 100, ralph, superficie);
 
 //Dibujo la pajaro
-		
+
 		if (pajaro == pajaro_1)
 			pajaro = pajaro_2;
 		else
 			pajaro = pajaro_1;
-		if(pajaro_moverse == 'S'){	
-			pajaro_desplazamiento.x+=10;
+		if (pajaro_moverse == 'S') {
+			pajaro_desplazamiento.x += 10;
 			Dibujar(pajaro_desplazamiento.x, pajaro_desplazamiento.y, pajaro, superficie);
-			if(pajaro_desplazamiento.x > 630)
+			if (pajaro_desplazamiento.x > 630)
 				pajaro_moverse = 'N';
-		}
-		else{
-			if(!cola_pajaro.empty()){
-				short int pajaro_fila = atoi(cola_pajaro.front().substr(6,1).c_str());
+		} else {
+			if (!cola_pajaro.empty()) {
+				short int pajaro_fila = atoi(cola_pajaro.front().substr(6, 1).c_str());
 				cola_pajaro.pop();
-				cout<<"Fila comienzo: "<<pajaro_fila<<endl;				
+				cout << "Fila comienzo: " << pajaro_fila << endl;
 				pajaro_desplazamiento.x = 10;
 				pajaro_desplazamiento.y = ventanas_tramo1[pajaro_fila][0].y;
 				pajaro_moverse = 'S';
 			}
 		}
 //Dibujo a Felix
-		if(felix1_reparar == 'N'){
+		if (felix1_reparar == 'N') {
 			if (felix1 == NULL)
 				felix1 = felix_d1;
 			if (felix1_posicion.fila == 99)
 				Dibujar(110, 405, felix1, superficie);
 			else {
-				Dibujar( ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y,
-						felix1, superficie);
+				Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
 			}
-		}
-		else{
-			if(felix1 == felix_d1 || felix1 == felix_i1)
+		} else {
+			if (felix1 == felix_d1 || felix1 == felix_i1)
 				felix1 = felix_r11;
-			else if(felix1 == felix_r11)
+			else if (felix1 == felix_r11)
 				felix1 = felix_r21;
-			else if(felix1 == felix_r21)
+			else if (felix1 == felix_r21)
 				felix1 = felix_r31;
-			else if(felix1 == felix_r31)
+			else if (felix1 == felix_r31)
 				felix1 = felix_r41;
-			else if(felix1 == felix_r41)
+			else if (felix1 == felix_r41)
 				felix1 = felix_r51;
-			else if(felix1 == felix_r51){
+			else if (felix1 == felix_r51) {
 				felix1 = felix_d1;
-				if(ventana_reparada(&felix1_posicion) == 'S'){
+				if (ventana_reparada(&felix1_posicion) == 'S') {
 					felix1_puntos++;
 					ventanas_reparadas++;
 				}
@@ -426,7 +438,6 @@ int main(int argc, char *argv[]) {
 			}
 			Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
 		}
-
 
 		if (felix2 == NULL)
 			felix2 = felix_d2;
@@ -436,8 +447,7 @@ int main(int argc, char *argv[]) {
 		for (int i = 0; i < cant_rocas; i++) {
 			if (rocas_desplazamiento[i].x != 0) {
 				if (rocas_desplazamiento[i].y < 405) {
-					Dibujar(rocas_desplazamiento[i].x,
-							rocas_desplazamiento[i].y, roca, superficie);
+					Dibujar(rocas_desplazamiento[i].x, rocas_desplazamiento[i].y, roca, superficie);
 					rocas_desplazamiento[i].y += 5;
 				} else {
 					rocas_desplazamiento[i].x = 0;
@@ -448,21 +458,19 @@ int main(int argc, char *argv[]) {
 		}
 //Ojo, hay que poner el delay porque sino el proceso no tiene tiempos muertos y 
 // el uso del procesador se me va al chori.
-		if(ventanas_reparadas == 11){	
+		if (ventanas_reparadas == 11) {
 			ventanas_reparadas = 10;
 			ventanas_cargadas = 'N';
-			if(tramo == 3){
+			if (tramo == 3) {
 				PantallaIntermedia('2');
-				tramo = 1; 
+				tramo = 1;
 				nivel++;
-			}
-			else{
+			} else {
 				PantallaIntermedia('1');
 				tramo++;
 			}
-			salir = 'N';	
-		}
-		else{
+			salir = 'N';
+		} else {
 			SDL_Flip(superficie);
 			SDL_Delay(300);
 		}
@@ -475,9 +483,7 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-void CargarVentanasDelTramo(struct ventana *ventana, unsigned short int x,
-		unsigned short int y, unsigned short int nro, char N_S,
-		unsigned short int f, unsigned short int c) {
+void CargarVentanasDelTramo(struct ventana *ventana, unsigned short int x, unsigned short int y, unsigned short int nro, char N_S, unsigned short int f, unsigned short int c) {
 	ventana->x = x;
 	ventana->y = y;
 	ventana->fila = f;
@@ -513,32 +519,30 @@ void DibujarVentanas(struct ventana ventanas[][5], unsigned short int cant_filas
 
 	for (fila = cant_filas; fila > 0; fila--) {
 		for (columna = 0; columna < 5; columna++) {
-			if ((fila - 1) != 0 || columna != 2){
-				switch(ventanas[fila - 1][columna].tipo_ventana){
-				case 0: 
-					ventana = ventana_sana; 
-					ventanas[fila - 1][columna].sana = 3;					
+			if ((fila - 1) != 0 || columna != 2) {
+				switch (ventanas[fila - 1][columna].tipo_ventana) {
+				case 0:
+					ventana = ventana_sana;
+					ventanas[fila - 1][columna].sana = 3;
 					break;
-				case 1: 
-					ventana = ventana_rota1; 					
+				case 1:
+					ventana = ventana_rota1;
 					break;
-				case 2: 
-					ventana = ventana_rota2;					 
+				case 2:
+					ventana = ventana_rota2;
 					break;
-				case 3: 
-					ventana = ventana_rota3; 					
+				case 3:
+					ventana = ventana_rota3;
 					break;
-				case 4: 
-					ventana = ventana_rota4; 					
+				case 4:
+					ventana = ventana_rota4;
 					break;
-				}				
-				Dibujar(ventanas[fila - 1][columna].x, ventanas[fila - 1][columna].y, ventana,
-						superficie);
+				}
+				Dibujar(ventanas[fila - 1][columna].x, ventanas[fila - 1][columna].y, ventana, superficie);
 			}
 		}
 	}
 }
-
 
 void* EscuchaServidor(void *arg) {
 	int fd = *(int *) arg;
@@ -546,30 +550,30 @@ void* EscuchaServidor(void *arg) {
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
 	while (salir == 'N') {
-		cout << "Espero msj del servidor ... " << endl;
+		cout << "Espero msj del servidor de partida ... " << endl;
 		cSocket.ReceiveBloq(buffer, sizeof(buffer));
 		if (strlen(buffer) > 0) {
 			string aux_buffer(buffer);
 			cout << "Recibi: " << buffer << endl;
-			if(buffer[0] == '0'){
-				switch(buffer[1]){
-					case '0':
-						cola_ralph.push(aux_buffer);
-						break;
-					case '1':
-						cola_pajaro.push(aux_buffer);
-						break;
-					case '2':
+			if (buffer[0] == '0') {
+				switch (buffer[1]) {
+				case '0':
+					cola_ralph.push(aux_buffer);
+					break;
+				case '1':
+					cola_pajaro.push(aux_buffer);
+					break;
+				case '2':
 //						cola_torta.push(aux_buffer);			
-						break;
-					case '3':
-						break;
-					case '4':
-						break;
-					case '5':
-						break;
+					break;
+				case '3':
+					break;
+				case '4':
+					break;
+				case '5':
+					break;
 				}
-			}			
+			}
 		}
 		sleep(1);
 		//usleep(10000);
@@ -583,16 +587,51 @@ void * EnvioServidor(void * arg) {
 		if (!cola_grafico.empty()) {
 			string mensaje = cola_grafico.front();
 			cola_grafico.pop();
-			cout << "Mensaje a enviar: " << mensaje.c_str()<< " tamanio: "<<mensaje.length() << " caracteres" << endl;
+			cout << "Mensaje a enviar: " << mensaje.c_str() << " tamanio: " << mensaje.length() << " caracteres" << endl;
 			cSocket.SendBloq(mensaje.c_str(), mensaje.length());
 		}
 		sleep(1);
 	}
 }
 
+void* EscuchaTorneo(void *arg) {
+	int fd = *(int *) arg;
+	cout<<"FD: "<<fd<<endl;
+	CommunicationSocket cSocket(fd);
+	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
+	bzero(buffer, sizeof(buffer));
+	while (salir == 'N') {
+		cout << "Espero msj del servidor de Torneo ... " << endl;
+		cSocket.ReceiveBloq(buffer, sizeof(buffer));
+		if (strlen(buffer) > 0) {
+			string aux_buffer(buffer);
+			cout << "Recibi: " << buffer << endl;
+			int codigo = atoi((aux_buffer.substr(0, LONGITUD_CODIGO).c_str()));
+			switch (codigo) {
+			//case CD_ID_JUGADOR_I:
+			//	break;
+			case CD_PUERTO_PARTIDA_I:
+				pthread_mutex_lock(&mutex_msjPuertoRecibido);
+				puertoServidorPartida = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
+				cout<<"Puerto: "<<puertoServidorPartida<<endl;
+				msjPuertoRecibido = true;
+				pthread_mutex_unlock(&mutex_msjPuertoRecibido);
+				break;
+			case CD_ACK_I:
+				string message(CD_ACK);
+				string content;
+				message.append(fillMessage(content));
+				cSocket.SendNoBloq(message.c_str(), LONGITUD_CODIGO);
+				break;
+			}
+		}
+		usleep(500000);
+	}
+}
+
 void* EscuchaTeclas(void *arg) {
 
-	SDL_Event evento;//Con esta variable reconozco si se apreto una tecla o se apreto el mouse.
+	SDL_Event evento; //Con esta variable reconozco si se apreto una tecla o se apreto el mouse.
 	SDL_keysym keysym; //Con esta variable reconzco el codigo de la tecla que se apreto.
 
 //Lupeo escuchando el teclado.
@@ -616,7 +655,7 @@ void* EscuchaTeclas(void *arg) {
 				string aux(ss1.str() + ss2.str());
 				string message(CD_MOVIMIENTO_FELIX);
 				message.append(fillMessage(aux));
-				cout<<"MENSAJE: "<<message<<endl;
+				cout << "MENSAJE: " << message << endl;
 				cola_grafico.push(message);
 
 			} else if (evento.key.keysym.sym == SDLK_UP) {
@@ -625,7 +664,7 @@ void* EscuchaTeclas(void *arg) {
 					felix1_posicion.columna = 0;
 				} else if ((felix1_posicion.fila + 1) < 3)
 					felix1_posicion.fila += 1;
-				felix1_reparar = 'N';	
+				felix1_reparar = 'N';
 
 				ostringstream ss1;
 				ostringstream ss2;
@@ -634,7 +673,7 @@ void* EscuchaTeclas(void *arg) {
 				string aux(ss1.str() + ss2.str());
 				string message(CD_MOVIMIENTO_FELIX);
 				message.append(fillMessage(aux));
-				cout<<"MENSAJE: "<<message<<endl;
+				cout << "MENSAJE: " << message << endl;
 				cola_grafico.push(message);
 
 			} else if (evento.key.keysym.sym == SDLK_RIGHT) {
@@ -656,7 +695,7 @@ void* EscuchaTeclas(void *arg) {
 				string aux(ss1.str() + ss2.str());
 				string message(CD_MOVIMIENTO_FELIX);
 				message.append(fillMessage(aux));
-				cout<<"MENSAJE: "<<message<<endl;
+				cout << "MENSAJE: " << message << endl;
 				cola_grafico.push(message);
 
 			} else if (evento.key.keysym.sym == SDLK_LEFT) {
@@ -675,7 +714,7 @@ void* EscuchaTeclas(void *arg) {
 				string aux(ss1.str() + ss2.str());
 				string message(CD_MOVIMIENTO_FELIX);
 				message.append(fillMessage(aux));
-				cout<<"MENSAJE: "<<message<<endl;
+				cout << "MENSAJE: " << message << endl;
 				cola_grafico.push(message);
 
 			} else if (evento.key.keysym.sym == SDLK_SPACE) {
@@ -693,20 +732,20 @@ void* EscuchaTeclas(void *arg) {
 	return NULL;
 }
 
-char ventana_reparada(struct posicion *felix_posicion){
-	
-cout<<"Ventana Sana valor "<<ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana<<endl;
-	if(ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].tipo_ventana!= 0){
-		if(ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana < 3){
+char ventana_reparada(struct posicion *felix_posicion) {
+
+	cout << "Ventana Sana valor " << ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana << endl;
+	if (ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].tipo_ventana != 0) {
+		if (ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana < 3) {
 			ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana++;
-			if(ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana == 3){			
+			if (ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana == 3) {
 				ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].tipo_ventana = 0;
-				cout<<"Ventana reparada "<<felix_posicion->fila<<":"<<felix_posicion->columna<<endl;
+				cout << "Ventana reparada " << felix_posicion->fila << ":" << felix_posicion->columna << endl;
 				return 'S';
-			}
-			else return 'N';
-		}
-		else return 'N';
+			} else
+				return 'N';
+		} else
+			return 'N';
 	}
 }
 
@@ -720,19 +759,25 @@ void handler(int senial) {
 
 }
 
-void PantallaIntermedia(char cod){
+void PantallaIntermedia(char cod) {
 
-	while(salir == 'N'){
-		switch(cod){
-			case '0': salir = IngresaNombre(); break;
-			case '1': salir = CambiaTramo(); break;
-			case '2': salir = CambiaNivel(); break;
+	while (salir == 'N') {
+		switch (cod) {
+		case '0':
+			salir = IngresaNombre();
+			break;
+		case '1':
+			salir = CambiaTramo();
+			break;
+		case '2':
+			salir = CambiaNivel();
+			break;
 		}
 		SDL_Delay(30);
 	}
 }
 
-char CambiaTramo(){
+char CambiaTramo() {
 
 	pantalla_juego.x = 0;
 	pantalla_juego.y = 0;
@@ -743,35 +788,34 @@ char CambiaTramo(){
 	pantalla_texto.x = 10;
 	pantalla_texto.y = 10;
 	texto = TTF_RenderText_Solid(fuente, "Cambio de tramo, puto!", color_texto);
-	SDL_BlitSurface(texto,NULL, superficie, &pantalla_texto);	
-	SDL_Flip(superficie);		
+	SDL_BlitSurface(texto, NULL, superficie, &pantalla_texto);
+	SDL_Flip(superficie);
 
 	SDL_WaitEvent(&evento);
 
 	return 'S';
 }
 
-char CambiaNivel(){
+char CambiaNivel() {
 
 	pantalla_juego.x = 0;
 	pantalla_juego.y = 0;
 	pantalla_juego.w = ANCHO_PANTALLA;
 	pantalla_juego.h = ALTO_PANTALLA;
-	SDL_FillRect(superficie, &pantalla_juego,
-	SDL_MapRGB(superficie->format, 0, 0, 0));
+	SDL_FillRect(superficie, &pantalla_juego, SDL_MapRGB(superficie->format, 0, 0, 0));
 
 	pantalla_texto.x = 10;
 	pantalla_texto.y = 10;
 	texto = TTF_RenderText_Solid(fuente, "Cambio de nivel, gay", color_texto);
-	SDL_BlitSurface(texto,NULL, superficie, &pantalla_texto);	
-	SDL_Flip(superficie);		
-	
+	SDL_BlitSurface(texto, NULL, superficie, &pantalla_texto);
+	SDL_Flip(superficie);
+
 	SDL_WaitEvent(&evento);
 
 	return 'S';
 }
 
-char IngresaNombre(){
+char IngresaNombre() {
 
 	char salir = 'N';
 	short int caracter;
@@ -779,33 +823,29 @@ char IngresaNombre(){
 
 	SDL_WaitEvent(&evento);
 
-	if(evento.type == SDL_KEYDOWN)
-		if(evento.key.keysym.sym != SDLK_SPACE){
+	if (evento.type == SDL_KEYDOWN)
+		if (evento.key.keysym.sym != SDLK_SPACE) {
 			pantalla_juego.x = 0;
 			pantalla_juego.y = 0;
 			pantalla_juego.w = ANCHO_PANTALLA;
 			pantalla_juego.h = ALTO_PANTALLA;
-			SDL_FillRect(superficie, &pantalla_juego,
-			SDL_MapRGB(superficie->format, 0, 0, 0));
-			
-			if(evento.key.keysym.sym>=97 && evento.key.keysym.sym<=122 && caracter<=9)
+			SDL_FillRect(superficie, &pantalla_juego, SDL_MapRGB(superficie->format, 0, 0, 0));
+
+			if (evento.key.keysym.sym >= 97 && evento.key.keysym.sym <= 122 && caracter <= 9)
 				felix1_nombre[caracter++] = evento.key.keysym.sym;
-			else if (evento.key.keysym.sym == SDLK_BACKSPACE && caracter >=0) 
-				felix1_nombre[caracter--] = ' '; 
-			
-			felix1_nombre[caracter]='\0';
+			else if (evento.key.keysym.sym == SDLK_BACKSPACE && caracter >= 0)
+				felix1_nombre[caracter--] = ' ';
+
+			felix1_nombre[caracter] = '\0';
 			//Texto del texto
 			texto = TTF_RenderText_Solid(fuente, felix1_nombre, color_texto);
-			SDL_BlitSurface(texto,NULL, superficie, &pantalla_texto);	
-			SDL_Flip(superficie);		
+			SDL_BlitSurface(texto, NULL, superficie, &pantalla_texto);
+			SDL_Flip(superficie);
 
-		}
-		else
-			if(caracter >= 0)
-				salir = 'S';
-	return salir;	
+		} else if (caracter >= 0)
+			salir = 'S';
+	return salir;
 }
-
 
 string fillMessage(string message) {
 	string content;

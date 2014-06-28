@@ -21,6 +21,7 @@ const int INTERVALOS_PERSIANA = 35;
 const int LONGITUD_CODIGO = 2;
 const int LONGITUD_CONTENIDO = 5;
 
+static const int CD_ACK_I = 99;
 //CD viene de codigo mensaje.
 const char* CD_MOVIMIENTO_RALPH = "00";
 const char* CD_PALOMA = "01";
@@ -29,5 +30,12 @@ const char* CD_PERSIANA = "03";
 const char* CD_MOVIMIENTO_FELIX = "04";
 const char* CD_PERDIDA_VIDA = "05";
 const char* CD_ACK = "99";
+
+//CODIGOS SERVIDOR TORNEO
+static const char* CD_ID_JUGADOR = "06";
+static const char* CD_PUERTO_PARTIDA = "07";
+
+static const int CD_ID_JUGADOR_I = 6;
+static const int CD_PUERTO_PARTIDA_I = 7;
 
 #endif /* CONSTANTES_H_ */

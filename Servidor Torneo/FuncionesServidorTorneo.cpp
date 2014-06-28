@@ -517,10 +517,12 @@ void* keepAliveJugadores(void*) {
 		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 
 			it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
-			readDataCode = it->second->SocketAsociado->ReceiveNoBloq(buffer, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
+			readDataCode = it->second->SocketAsociado->ReceiveBloq(buffer, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
 
+			cout<<"0000000000000-----  readDataCode: "<<readDataCode<<endl;
 			if (readDataCode == 0) {
 				//el jugador se desconecto
+				cout<<"0000000000000-----  Voy a eliminar a: "<<it->first<<endl;
 				quitarJugador(it->first);
 			} else {
 
@@ -528,7 +530,7 @@ void* keepAliveJugadores(void*) {
 		}
 		pthread_mutex_unlock(&mutex_listJugadores);
 		cout << "unmutex keepAliveJugadores" << endl;
-		usleep(500000);
+		usleep(1000000);
 		pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
 		cout << "mutex keepAliveJugadores todasLasPartidasFinalizadas" << endl;
 		partidasTerminadas = todasLasPartidasFinalizadas;
@@ -557,7 +559,7 @@ void* aceptarJugadores(void* data) {
 		cout << "va a bloquearse esperando mensaje" << endl;
 		cout << "_____________________" << endl;
 		cout << "_____________________" << endl;
-		cSocket->ReceiveNoBloq(nombreJugador, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
+		cSocket->ReceiveBloq(nombreJugador, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
 		clientId++;
 		agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
 		cout << "se agrega el jugador" << endl;
@@ -631,12 +633,15 @@ void* establecerPartidas(void* data) {
 				 pthread_mutex_unlock(&mutex_partidasActivas);
 				 cout << "unmutex establecerPartidas partidasActivas" << endl;
 				 */
+
+				puertoPartida++;
 				//Le mando a los jugadores el nro de Puerto en el que comenzara la partida
-				char auxPuertoNuevaPartida[10];
-				sprintf(auxPuertoNuevaPartida, "%d", puertoPartida++);
+				char auxPuertoNuevaPartida[LONGITUD_CONTENIDO];
+				sprintf(auxPuertoNuevaPartida, "%d", puertoPartida);
 				string message(CD_PUERTO_PARTIDA);
 				message.append(fillMessage(auxPuertoNuevaPartida));
 
+				cout<<"Puerto para partida "<<message<<endl;
 				listJugadores[idJugador]->SocketAsociado->SendNoBloq(message.c_str(), message.length());
 				listJugadores[idOponente]->SocketAsociado->SendNoBloq(message.c_str(), message.length());
 
@@ -647,7 +652,7 @@ void* establecerPartidas(void* data) {
 					char auxCantVidas[2];
 					sprintf(auxCantVidas, "%d", cantVidas);
 
-					char *argumentos[] = { auxPuertoNuevaPartida, auxCantVidas };
+					char *argumentos[] = { auxPuertoNuevaPartida, auxCantVidas, NULL };
 					execv("/Servidor Partida/Servidor Partida", argumentos);
 					cout << "ERROR al ejecutar execv Nueva Partida" << endl;
 					exit(1);
