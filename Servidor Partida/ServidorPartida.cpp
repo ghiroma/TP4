@@ -99,14 +99,14 @@ int main(int argc, char * argv[]) {
 		strcat(ids.semNameTorneo, "_");
 		strcat(ids.semNameTorneo, "Torneo");
 
-		cout<<"semNameTorneo: "<<ids.semNameTorneo<<endl;
+		cout << "semNameTorneo: " << ids.semNameTorneo << endl;
 
 		strcpy(ids.semNamePartida, "/");
 		strcat(ids.semNamePartida, aux);
 		strcat(ids.semNamePartida, "_");
 		strcat(ids.semNamePartida, "Partida");
 
-		cout<<"semNamePartida: "<<ids.semNamePartida<<endl;
+		cout << "semNamePartida: " << ids.semNamePartida << endl;
 
 	} else {
 		//TODO Error y cerrar servidor partida porque faltan datos.

@@ -304,7 +304,7 @@ void* sharedMemory_thread(void * arguments) {
 	puntaje = (struct puntajes *) shmat(shmId, NULL, 0);
 
 	while (stop == false && (cliente1_conectado || cliente2_conectado)) {
-		if (semPartida.timedWait(700000) == 0) {
+		if (semTorneo.timedWait(700000) == 0) {
 
 			reintentos = 0;
 			cout<<"Entro por el timedwait"<<endl;
@@ -336,7 +336,8 @@ void* sharedMemory_thread(void * arguments) {
 				puntaje = &aux;
 				stop = true;
 			}
-			semTorneo.V();
+			semPartida.V();
+			cout<<"V de semaforo Torneo."<<endl;
 		} else {
 			if (errno == ETIMEDOUT) {
 
