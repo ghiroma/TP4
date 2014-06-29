@@ -86,111 +86,116 @@ int main(int argc, char * argv[]) {
 		cantVidas = 3;
 	}
 
-		cout<<"Parametros seteados"<<endl;
+	cout << "Parametros seteados" << endl;
 //TODO Temporalmente hago que el servidor de partida sea un servidor de torneo.
-		ServerSocket sSocket(puerto);
-		cout<<"Puerto servidor creado"<<endl;
-		cSocket1 = NULL;
-		cSocket2 = NULL;
-		timeout.tv_sec = SERVERSOCKET_TIMEOUT;
-		timeout.tv_usec = 0;
-		FD_ZERO(&fds);
-		FD_SET(sSocket.ID, &fds);
-		while (true) {
-			//TODO Hacer algo si estoy mucho tiempo en el accept y no se conecta nadie.
-			do {
-				cout<<"Esperando IDS"<<endl;
-				if (int response = select(sSocket.ID + 1, &fds, NULL, NULL,
-								&timeout) > 0) {
-					if (cSocket1 == NULL) {
-						cSocket1 = sSocket.Accept();
-						cout << "Conexion recibida 1" << endl;
-					} else {
-						cSocket2 = sSocket.Accept();
-						cout << "Conexion recibida 2" << endl;
-					}
-					cantClientes++;
-				} else if (response == 0) {
-					//Timeout
-					cout
+	ServerSocket sSocket(puerto);
+	cout << "Puerto servidor creado" << endl;
+	cSocket1 = NULL;
+	cSocket2 = NULL;
+	timeout.tv_sec = SERVERSOCKET_TIMEOUT;
+	timeout.tv_usec = 0;
+	FD_ZERO(&fds);
+	FD_SET(sSocket.ID, &fds);
+
+	//TODO Hacer algo si estoy mucho tiempo en el accept y no se conecta nadie.
+	do {
+		cout << "Esperando IDS" << endl;
+		if (int response = select(sSocket.ID + 1, &fds, NULL, NULL, &timeout)
+				> 0) {
+			if (cSocket1 == NULL) {
+				cSocket1 = sSocket.Accept();
+				cout << "Conexion recibida 1" << endl;
+			} else {
+				cSocket2 = sSocket.Accept();
+				cout << "Conexion recibida 2" << endl;
+			}
+			cantClientes++;
+		} else if (response == 0) {
+			//Timeout
+			cout
 					<< "El cliente no se ha conectado,no se pudo iniciar la partida."
 					<< endl;
-					if (cSocket1 != NULL) {
-						delete (cSocket1);
-					}
-					//TODO Enviar mensaje al cliente de que su oponente no se conecto.
-					exit(1);
-				}
-			}while (cantClientes < 2);
-
-			//TODO dependiendo del nivel abria que ver lo del edificio.
-			//TODO Recibir los ids de los jugadores
-			ufds[0].fd = cSocket1->ID;
-			ufds[0].events = POLLIN;
-			ufds[1].fd = cSocket2->ID;
-			ufds[1].events = POLLIN;
-
-			//Solo mandarme el codigo, nada mas.
-			char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
-
-			while (felix1 == NULL && felix2 == NULL) {
-				if (int result = poll(ufds, 2, CLIENT_ID_TIMEOUT) > 0) {
-					if (ufds[0].revents & POLLIN) {
-						cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
-						string message(buffer);
-						cout<<"SERVIDOR PARTIDA: id1 "<<buffer<<endl;
-						if(message.substr(0,LONGITUD_CODIGO)==CD_ID_JUGADOR)
-						felix1 = new Felix(cantClientes, atoi(message.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str()));
-					} else if (ufds[1].revents & POLLIN) {
-						cSocket2->ReceiveNoBloq(buffer, sizeof(buffer));
-						string message(buffer);
-						cout<<"SERVIDOR PARTIDA: id2 "<<buffer<<endl;
-						if(message.substr(0,LONGITUD_CODIGO)==CD_ID_JUGADOR)
-						felix2 = new Felix(cantClientes, atoi(message.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str()));
-					}
-				} else if (result == 0)		//timeout
-				{
-					//TODO Cerrar todo.
-					cout << "No se ha recibido los ids del cliente" << endl;
-					//Enviar mensaje al cliente de que se desconecte y vuelva al torneo.
-					delete (cSocket1);
-					delete (cSocket2);
-					if (felix1 != NULL)
-					delete (felix1);
-					if (felix2 != NULL)
-					delete (felix2);
-					exit(1);
-				}
+			if (cSocket1 != NULL) {
+				delete (cSocket1);
 			}
+			//TODO Enviar mensaje al cliente de que su oponente no se conecto.
+			exit(1);
+		}
+	} while (cantClientes < 2);
 
-		edificio = new Edificio(EDIFICIO_FILAS_1, EDIFICIO_COLUMNAS, 0);
+	//TODO dependiendo del nivel abria que ver lo del edificio.
+	//TODO Recibir los ids de los jugadores
+	ufds[0].fd = cSocket1->ID;
+	ufds[0].events = POLLIN;
+	ufds[1].fd = cSocket2->ID;
+	ufds[1].events = POLLIN;
 
-		//Creo los 4 thread.
-		pthread_create(&thread_timer, NULL, timer_thread, NULL);
-		pthread_create(&thread_receiver1, NULL, receiver1_thread, NULL);
-		pthread_create(&thread_receiver2, NULL, receiver2_thread, NULL);
-		pthread_create(&thread_sender1, NULL, sender1_thread, NULL);
-		pthread_create(&thread_sender2, NULL, sender2_thread, NULL);
-		pthread_create(&thread_validator, NULL, validator_thread, NULL);
-		//pthread_create(&thread_sharedMemory,NULL,sharedMemory_thread,(void *)&ids);
+	//Solo mandarme el codigo, nada mas.
+	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 
-		pthread_join(thread_timer, NULL);
-		pthread_join(thread_receiver1, NULL);
-		pthread_join(thread_receiver2, NULL);
-		pthread_join(thread_sender1, NULL);
-		pthread_join(thread_sender2, NULL);
-		pthread_join(thread_validator, NULL);
-		//pthread_join(thread_sharedMemory,NULL);
-
-		//TODO finalizada la partida, enviar los puntajes actualizados.
-
-		pthread_mutex_destroy(&mutex_receiver1);
-		pthread_mutex_destroy(&mutex_receiver2);
-		pthread_mutex_destroy(&mutex_sender1);
-		pthread_mutex_destroy(&mutex_sender2);
+	while (felix1 == NULL && felix2 == NULL) {
+		if (int result = poll(ufds, 2, CLIENT_ID_TIMEOUT) > 0) {
+			if (ufds[0].revents & POLLIN) {
+				cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
+				string message(buffer);
+				cout << "SERVIDOR PARTIDA: id1 " << buffer << endl;
+				if (message.substr(0, LONGITUD_CODIGO) == CD_ID_JUGADOR)
+					felix1 = new Felix(cantClientes,
+							atoi(
+									message.substr(LONGITUD_CODIGO,
+											LONGITUD_CONTENIDO).c_str()));
+			} else if (ufds[1].revents & POLLIN) {
+				cSocket2->ReceiveNoBloq(buffer, sizeof(buffer));
+				string message(buffer);
+				cout << "SERVIDOR PARTIDA: id2 " << buffer << endl;
+				if (message.substr(0, LONGITUD_CODIGO) == CD_ID_JUGADOR)
+					felix2 = new Felix(cantClientes,
+							atoi(
+									message.substr(LONGITUD_CODIGO,
+											LONGITUD_CONTENIDO).c_str()));
+			}
+		} else if (result == 0)		//timeout
+				{
+			//TODO Cerrar todo.
+			cout << "No se ha recibido los ids del cliente" << endl;
+			//Enviar mensaje al cliente de que se desconecte y vuelva al torneo.
+			delete (cSocket1);
+			delete (cSocket2);
+			if (felix1 != NULL)
+				delete (felix1);
+			if (felix2 != NULL)
+				delete (felix2);
+			exit(1);
+		}
 	}
 
-	cout<<"Se finalizara la partida"<<endl;
+	edificio = new Edificio(EDIFICIO_FILAS_1, EDIFICIO_COLUMNAS, 0);
+
+	//Creo los 4 thread.
+	pthread_create(&thread_timer, NULL, timer_thread, NULL);
+	pthread_create(&thread_receiver1, NULL, receiver1_thread, NULL);
+	pthread_create(&thread_receiver2, NULL, receiver2_thread, NULL);
+	pthread_create(&thread_sender1, NULL, sender1_thread, NULL);
+	pthread_create(&thread_sender2, NULL, sender2_thread, NULL);
+	pthread_create(&thread_validator, NULL, validator_thread, NULL);
+	//pthread_create(&thread_sharedMemory,NULL,sharedMemory_thread,(void *)&ids);
+
+	pthread_join(thread_timer, NULL);
+	pthread_join(thread_receiver1, NULL);
+	pthread_join(thread_receiver2, NULL);
+	pthread_join(thread_sender1, NULL);
+	pthread_join(thread_sender2, NULL);
+	pthread_join(thread_validator, NULL);
+	//pthread_join(thread_sharedMemory,NULL);
+
+	//TODO finalizada la partida, enviar los puntajes actualizados.
+
+	pthread_mutex_destroy(&mutex_receiver1);
+	pthread_mutex_destroy(&mutex_receiver2);
+	pthread_mutex_destroy(&mutex_sender1);
+	pthread_mutex_destroy(&mutex_sender2);
+
+	cout << "Se finalizara la partida" << endl;
 
 	delete (cSocket1);
 	delete (cSocket2);
