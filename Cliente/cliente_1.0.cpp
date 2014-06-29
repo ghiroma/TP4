@@ -829,7 +829,7 @@ char IngresaNombre() {
 	SDL_WaitEvent(&evento);
 
 	if (evento.type == SDL_KEYDOWN)
-		if (evento.key.keysym.sym != SDLK_SPACE) {
+		if (evento.key.keysym.sym != SDLK_RETURN && evento.key.keysym.sym != SDLK_KP_ENTER) {
 			pantalla_juego.x = 0;
 			pantalla_juego.y = 0;
 			pantalla_juego.w = ANCHO_PANTALLA;

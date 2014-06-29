@@ -19,14 +19,7 @@
 
 using namespace std;
 
-extern pthread_mutex_t mutex_partidasActivas;
-extern pthread_mutex_t mutex_todasLasPartidasFinalizadas;
-extern pthread_mutex_t mutex_timeIsUp;
-extern bool todasLasPartidasFinalizadas;
-extern list<datosPartida> partidasActivas;
-pthread_mutex_t mutex_listJugadores = PTHREAD_MUTEX_INITIALIZER;
-map<int,
-Jugador*> listJugadores;
+map<int, Jugador*> listJugadores;
 unsigned int puertoTorneo;
 unsigned int puertoPartida;
 int cantVidas = 0;
@@ -128,31 +121,14 @@ int main(int argc, char * argv[]) {
 	 }
 	 pthread_mutex_unlock(&mutex_listJugadores);*/
 
-	/*
-	 //mandar a cada cliente su puntaje y ranking
-	 pthread_mutex_lock(&mutex_listJugadores);
-	 for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
-	 string message(CD_FIN_TORNEO);
-	 message.append(fillMessage("1"));
-	 it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
-	 }
-	 pthread_mutex_unlock(&mutex_listJugadores);
-	 */
+
+	//mandar a cada cliente su puntaje y ranking
+	mandarPuntajes();
 
 	//bloqueo en espera de que ingrese una tecla para cerrar la pantalla
 	cout << "Ingrese una tecla para finalizar: ";
 	getchar();
-
-	//hacer destroy de los pthread_mutex, semaforos, etc sockets
-	///
-	//  HACER FUNCION QUE CIERRE TODO ASI LA LLAMO DESDE EL SIG_HANDLER TAMBIEN
-	//
-	//
-	pthread_mutex_lock(&mutex_listJugadores);
-	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
-		delete (it->second->SocketAsociado);
-	}
-	pthread_mutex_unlock(&mutex_listJugadores);
-	//pthread_mutex_destroy(&mutex_timeIsUp);
+	liberarRecursos();
 	cout << "Fin proceso Servidor Torneo" << endl;
+	//exit(0);
 }

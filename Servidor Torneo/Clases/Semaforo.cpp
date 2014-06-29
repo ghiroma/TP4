@@ -27,6 +27,12 @@ Semaforo::Semaforo(const char* nombre) {
     this->pid = getpid();
 }
 
+int Semaforo::timedWait(long int uSegundos) {
+	struct timespec tiempoMaximoDeEspera;
+	tiempoMaximoDeEspera.tv_nsec = (long int)uSegundos*100;
+
+	return sem_timedwait(this->sem, &tiempoMaximoDeEspera);
+}
 void Semaforo::getName() {
     cout << "Nombre: " << this->nombre << endl;
 }

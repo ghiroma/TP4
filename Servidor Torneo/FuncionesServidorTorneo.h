@@ -17,19 +17,14 @@ struct thModoGrafico_data {
 	int duracion;
 };
 
-struct datosPartida {
-	int idShm;
-	sem_t* semaforo_pointerSem_t;
-	const char * semaforoShmName;
-	int lecturasFallidas;
-};
 
 void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* tiempoInmunidad, int* cantVidas);
 void SIG_Handler(int inum);
 void agregarJugador(Jugador* nuevoJugador);
 void quitarJugador(int id);
 bool torneoFinalizado();
-void asociarSegmento(int* idShm, int* variable);
+void mandarPuntajes();
+void liberarRecursos();
 //THREADS
 void* temporizadorTorneo(void* data);
 void* keepAliveJugadores(void*);

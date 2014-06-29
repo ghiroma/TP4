@@ -26,10 +26,12 @@ static const char* CD_PERDIDA_VIDA = "05";
 static const char* CD_ID_JUGADOR = "06";
 static const char* CD_PUERTO_PARTIDA = "07";
 //static const char* CD_FIN_TORNEO = "08";
+static const char* CD_RANKING = "80";
 static const char* CD_ACK = "99";
 
 static const int CD_ID_JUGADOR_I = 6;
 static const int CD_PUERTO_PARTIDA_I = 7;
+static const int CD_RANKING_I = 80;
 static const int CD_ACK_I = 99;
 
 static const int MAX_JUGADORES_SOPORTADOS = 100;
@@ -38,9 +40,11 @@ static const int PERMISOS_SHM = 0777;
 static const int CLAVE_MEMORIA_COMPARTIDA = 1322;
 static const int INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES = 1000000;
 
+//SDL
 static const int ANCHO_PANTALLA_SERVIDOR = 700;
 static const int ALTO_PANTALLA_SERVIDOR = 500;
 static const int BPP_SERVIDOR = 16;
+static const int MAX_LENGT_TXT_INFO_JUGADOR = 50;
 
 
 #endif /* CONSTANTESSERVIDORTORNEO_H_ */
