@@ -70,14 +70,14 @@ timer_thread(void* arg) {
 	time_t startingTimeTorta = time(0);
 
 	//TODO Agregar variacion segun el nivel.
-	while (stop == false) {
+	while (stop == false && (cliente1_conectado || cliente2_conectado)) {
 		if (TimeDifference(INTERVALOS_KEEPALIVE, startingTimeKeepAlive)
 				== true) {
 			string message(CD_ACK);
 			string content;
 			message.append(Helper::fillMessage(content));
-			//Helper::encolar(&message,&sender1_queue,&mutex_sender1);
-			//Helper::encolar(&message,&sender2_queue,&mutex_sender2);
+			Helper::encolar(&message,&sender1_queue,&mutex_sender1);
+			Helper::encolar(&message,&sender2_queue,&mutex_sender2);
 			startingTimeKeepAlive = time(0);
 		}
 
@@ -87,7 +87,7 @@ timer_thread(void* arg) {
 			sprintf(aux, "%d", randomRalphMovement());
 			message.append(Helper::fillMessage(aux));
 			Helper::encolar(&message, &sender1_queue, &mutex_sender1);
-			//Helper::encolar(&message, &sender2_queue, &mutex_sender2);
+			Helper::encolar(&message, &sender2_queue, &mutex_sender2);
 			startingTimeRalph = time(0);
 		}
 
@@ -97,7 +97,7 @@ timer_thread(void* arg) {
 			sprintf(aux, "%d", randomPaloma(0));
 			message.append(Helper::fillMessage(aux));
 			Helper::encolar(&message, &sender1_queue, &mutex_sender1);
-			//Helper::encolar(&message,&sender2_queue,&mutex_sender2);
+			Helper::encolar(&message,&sender2_queue,&mutex_sender2);
 			startingTimePaloma = time(0);
 		}
 
@@ -171,7 +171,6 @@ receiver1_thread(void * fd) {
 
 	while (stop == false && cliente1_conectado) {
 		readDataCode = cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
-		//readDataCode = cSocket1->ReceiveNoBloq(buffer, sizeof(256));
 		if (readDataCode > 0) {
 			string aux(buffer);
 			cout << "Recibi mensaje: " << buffer << endl;
@@ -199,6 +198,7 @@ receiver2_thread(void * fd) {
 			string mensaje(buffer);
 			Helper::encolar(&mensaje, &receiver2_queue, &mutex_receiver2);
 		} else if (readDataCode == 0) {
+			cout << "Se desconecto el cliente nro 2" << endl;
 			cliente2_conectado = false;
 		}
 
@@ -214,7 +214,7 @@ validator_thread(void * argument) {
 
 	struct puntajes puntaje;
 
-	while (stop == false) {
+	while (stop == false && (cliente1_conectado || cliente2_conectado)) {
 		if (!receiver1_queue.empty()) {
 			string message = receiver1_queue.front();
 			receiver1_queue.pop();
@@ -303,7 +303,7 @@ void* sharedMemory_thread(void * arguments) {
 
 	puntaje = (struct puntajes *) shmat(shmId, NULL, 0);
 
-	while (stop == false) {
+	while (stop == false && (cliente1_conectado || cliente2_conectado)) {
 		if (sem_timedwait(sem, &ts) == 0) {
 			if ((cliente1_jugando || cliente2_jugando) && (cliente1_conectado || cliente2_conectado)) {
 				struct puntajes aux;
@@ -345,14 +345,14 @@ void* sharedMemory_thread(void * arguments) {
 }
 
 int randomRalphMovement() {
-	return rand() % (EDIFICIO_COLUMNAS + 1);
+	return rand() % (EDIFICIO_COLUMNAS);
 }
 
 int randomPaloma(int nivel) {
 	if (nivel == 0)
-		return rand() % (EDIFICIO_FILAS_1 + 1);
+		return rand() % (EDIFICIO_FILAS_1);
 	else if (nivel == 1)
-		return rand() % (EDIFICIO_FILAS_2 + 1);
+		return rand() % (EDIFICIO_FILAS_2);
 	return 0;
 }
 

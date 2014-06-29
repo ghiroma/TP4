@@ -11,7 +11,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <iostream>
-#include <strings.h>
+#include <string.h>
+#include <netdb.h>
 
 CommunicationSocket::CommunicationSocket (unsigned short int port, char * ip)
 {
@@ -22,7 +23,15 @@ CommunicationSocket::CommunicationSocket (unsigned short int port, char * ip)
 	struct sockaddr_in caddress;
 	caddress.sin_family = AF_INET;
 	caddress.sin_port = htons(port);
-	caddress.sin_addr.s_addr = inet_addr(ip);
+	if(inet_addr(ip)==0)//Pruebo por hostname
+	{
+		struct hostent * ent = gethostbyname(ip);
+		memcpy(&caddress.sin_addr.s_addr,ent->h_addr_list[0],ent->h_length);
+	}
+	else
+	{
+		caddress.sin_addr.s_addr = inet_addr(ip);
+	}
 
 	if(connect(this->ID,(struct sockaddr*)&caddress,sizeof(sockaddr))!=0) // Error al conectarse
 	  {

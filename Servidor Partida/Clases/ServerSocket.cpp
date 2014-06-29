@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <netdb.h>
 
 #define MAX_PENDING_CONNECTIONS 20
 
@@ -73,6 +74,15 @@ CommunicationSocket* ServerSocket::Accept()
   unsigned int clientDataLen = sizeof(clientData);
   int csSocket = accept(this->ID,(struct sockaddr*) &clientData, &clientDataLen);
   return new CommunicationSocket(csSocket,&clientData);
+}
+
+char * ServerSocket::ShowHostName()
+{
+	char aux [1024];
+	if(int result = gethostname(aux,sizeof(aux))==0)
+		return aux;
+	else
+		throw "Error al obtener el hostname.";
 }
 
 ServerSocket::~ServerSocket ()
