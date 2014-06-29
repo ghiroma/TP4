@@ -187,7 +187,7 @@ void* temporizadorTorneo(void* data) {
 }
 
 /**
- * THREAD -> KeepAlive partidas y torneo
+ * THREAD -> KeepAlive partidas y torneo (tambien lee los puntajes de los juagadores)
  */
 void* keepAlive(void* data) {
 	puntajesPartida* resumenPartida;
@@ -196,7 +196,8 @@ void* keepAlive(void* data) {
 	sem_t * auxSemSHMToreno_Sem_t = auxSemSHMTorneo.getSem_t();
 	Semaforo auxSemSHMPartida("/auxPartida");
 	sem_t * auxSemSHMPartida_Sem_t = auxSemSHMPartida.getSem_t();
-	while (true) {
+	bool allMatchsFinished = false;
+	while (!allMatchsFinished) {
 		cout << "mutex keepAlive partidasActivas" << endl;
 		pthread_mutex_lock(&mutex_partidasActivas);
 		for (list<datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
@@ -301,6 +302,12 @@ void* keepAlive(void* data) {
 			pthread_mutex_unlock(&mutex_partidasActivas);
 			cout << "unmutex keepAlive partidasActivas" << endl;
 		}
+
+		pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
+		cout << "keepalive torneos y partidas mutex  todasLasPartidasFinalizadas" << endl;
+		allMatchsFinished = todasLasPartidasFinalizadas;
+		pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);
+		cout << "keepalive torneos y partidas unmutex todasLasPartidasFinalizadas" << endl;
 	}
 
 	auxSemSHMPartida.setSem_t(auxSemSHMPartida_Sem_t);
@@ -422,7 +429,7 @@ void* modoGrafico(void* data) {
 		}
 
 		//actualizar ranking
-		cout << "mutex modoGrafico" << endl;
+		cout << "mutex modoGrafico ListJugadores" << endl;
 		pthread_mutex_lock(&mutex_listJugadores);
 		cantPlayersConectados = listJugadores.size();
 
@@ -451,7 +458,7 @@ void* modoGrafico(void* data) {
 			posDestino.y += 30;
 		}
 		pthread_mutex_unlock(&mutex_listJugadores);
-		cout << "unmutex modoGrafico" << endl;
+		cout << "unmutex modoGrafico listJugadores" << endl;
 
 		//actualizar cantidad de jugadores conectados
 		sprintf(txtPlayers, "Players: %d", cantPlayersConectados);
@@ -471,11 +478,11 @@ void* modoGrafico(void* data) {
 	//esperar que todas las partidas finalicen
 	int cantPartidasActivas;
 	while (true) {
-		cout << "mutex partidasActivas" << endl;
+		cout << "mutex modoGrafico partidasActivas" << endl;
 		pthread_mutex_lock(&mutex_partidasActivas);
 		cantPartidasActivas = partidasActivas.size();
 		pthread_mutex_unlock(&mutex_partidasActivas);
-		cout << "unmutex partidasActivas" << endl;
+		cout << "unmutex modoGrafico partidasActivas" << endl;
 
 		if (cantPartidasActivas == 0) {
 			break;
@@ -483,17 +490,17 @@ void* modoGrafico(void* data) {
 		usleep(1000000);
 	}
 	pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
-	cout << "mutex  todasLasPartidasFinalizadas" << endl;
+	cout << "mutex  modoGrafico todasLasPartidasFinalizadas" << endl;
 	todasLasPartidasFinalizadas = true;
 	pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);
-	cout << "unmutex todasLasPartidasFinalizadas" << endl;
+	cout << "unmutex modoGrafico todasLasPartidasFinalizadas" << endl;
 
 	//mostrar pantalla final
 	background = SDL_LoadBMP("Img/background.bmp");
 	strcpy(txtTiempo, "Tournament finished");
 	tiempo = TTF_RenderText_Solid(font, txtTiempo, colorBlanco);
 	SDL_BlitSurface(tiempo, NULL, background, &posTiempo);
-	cout << "mutex2 modoGrafico" << endl;
+	cout << "mutex2 modoGrafico listJugadores" << endl;
 	pthread_mutex_lock(&mutex_listJugadores);
 	cantPlayersConectados = listJugadores.size();
 
@@ -522,7 +529,7 @@ void* modoGrafico(void* data) {
 		posDestino.y += 30;
 	}
 	pthread_mutex_unlock(&mutex_listJugadores);
-	cout << "unmutex2 modoGrafico" << endl;
+	cout << "unmutex2 modoGrafico listJugadores" << endl;
 
 	SDL_BlitSurface(background, NULL, screen, &posBackground);
 	SDL_Flip(screen);
@@ -650,7 +657,7 @@ void* establecerPartidas(void* data) {
 					cout << "Error al obtener memoria compartida" << endl;
 					break;
 				}
-				cout << "Partida: " << puertoPartida << "  ID SHM: " << idShm << endl;
+				cout << "SERV TORNEO Partida: " << puertoPartida << "  ID SHM: " << idShm << endl;
 
 				//inicializo el BLOQUE DE SHM
 				puntajesPartida* resumenPartida = (struct puntajesPartida *) shmat(idShm, (char *) 0, 0);
