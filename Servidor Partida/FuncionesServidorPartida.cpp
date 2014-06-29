@@ -23,6 +23,7 @@
 #include <sys/shm.h>
 #include <semaphore.h>
 #include <errno.h>
+#include <fcntl.h>
 
 using namespace std;
 
@@ -295,25 +296,54 @@ validator_thread(void * argument) {
 void* sharedMemory_thread(void * arguments) {
 	//TODO usar la clase de semaforo.
 	struct idsSharedResources * shmIds = (struct idsSharedResources *) arguments;
-	//int shmId = shmget(shmIds->shmId, 1024, 0660);
-	Semaforo semTorneo(shmIds->semNameTorneo);
-	Semaforo semPartida(shmIds->semNamePartida);
-	cout<<"SERV PARTIDA --> Sem_t * semaforo Torneo: "<<semTorneo.getSem_t()<<endl;
-	cout<<"SERV PARTIDA --> Sem_t * semaforo Partida: "<<semPartida.getSem_t()<<endl;
+	int shmId = shmget(shmIds->shmId, sizeof(struct puntajes), PERMISOS_SHM);
+	//int shmId = shmget(23091991, sizeof(struct puntajes), 0666);
+	if(shmId<0)
+	{
+		cout<<"SRV Partida error en shmget"<<endl;
+	}
+	sem_t * semPartida,*semTorneo;
+	semPartida = sem_open(shmIds->semNamePartida,O_CREAT);
+	semTorneo = sem_open(shmIds->semNameTorneo,O_CREAT);
+
+	//Semaforo semTorneo(shmIds->semNameTorneo);
+	//Semaforo semPartida(shmIds->semNamePartida);
+	//cout<<"SERV PARTIDA --> Sem_t * semaforo Torneo: "<<semTorneo.getSem_t()<<endl;
+	//cout<<"SERV PARTIDA --> Sem_t * semaforo Partida: "<<semPartida.getSem_t()<<endl;
 	struct puntajes * puntaje;
 	int reintentos = 0;
 
-	puntaje = (struct puntajes *) shmat(shmIds->shmId,  (char *) 0, 0);
+	puntaje = (struct puntajes *) shmat(shmId,(void *) 0, 0);
+
+	cout<<"Direccion de memoria compartida: "<<puntaje<<endl;
+
+	if((int)puntaje==-1)
+	{
+		cout<<"Error al mapear la memoria compartida"<<endl;
+		if(errno==EACCES)
+		{
+			cout<<"No se tienen permisos"<<endl;
+		}
+		if(errno==EINVAL)
+		{
+			cout<<"Invalid shared memory id"<<endl;
+		}
+	}
+
+	struct timespec ts;
+	ts.tv_sec=1;
 
 	while (stop == false && (cliente1_conectado || cliente2_conectado)) {
 		cout << "Espererando en el timedwait"<<endl;
-		if (semTorneo.timedWait(700000) == 0) {
+		if(sem_timedwait(semTorneo,&ts)){
+		//if (semTorneo.timedWait(700000) == 0) {
 
 			reintentos = 0;
 			cout << "Entro por el timedwait" << endl;
 
 			if ((cliente1_jugando || cliente2_jugando)
 					&& (cliente1_conectado || cliente2_conectado)) {
+
 				struct puntajes aux;
 				aux.idJugador1 = felix1->id;
 				aux.idJugador2 = felix2->id;
@@ -329,6 +359,8 @@ void* sharedMemory_thread(void * arguments) {
 				cout << "Escribi en la memoria compartida" << endl;
 			} else //Murieron los dos jugadores.
 			{
+				cout<<"Jugadores desconectados dentro del semaforo"<<endl;
+
 				struct puntajes aux;
 				aux.idJugador1 = felix1->id;
 				aux.idJugador2 = felix2->id;
@@ -339,7 +371,8 @@ void* sharedMemory_thread(void * arguments) {
 				puntaje = &aux;
 				stop = true;
 			}
-			semPartida.V();
+			//semPartida.V();
+			sem_post(semPartida);
 			cout << "V de semaforo Torneo." << endl;
 		} else {
 			if (errno == ETIMEDOUT) {
