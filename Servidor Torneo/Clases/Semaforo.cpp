@@ -33,8 +33,8 @@ int Semaforo::timedWait(long int uSegundos) {
 
 	return sem_timedwait(this->sem, &tiempoMaximoDeEspera);
 }
-void Semaforo::getName() {
-    cout << "Nombre: " << this->nombre << endl;
+const char* Semaforo::getName() {
+    return this->nombre;
 }
 
 int Semaforo::getValue() {

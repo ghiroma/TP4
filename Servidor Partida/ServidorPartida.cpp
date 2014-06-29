@@ -68,19 +68,30 @@ int main(int argc, char * argv[]) {
 		cout << "Numero de puerto " << puerto << endl;
 		cout << "Cantidad de vidas " << cantVidas << endl;
 		ids.shmId = ftok("/bin/ls", puerto);
-		char * aux;
+		cout<<"SRV PARTIDA CREO SHMID: "<<ids.shmId<<endl;
+
+		string nombreSemaforoPartida = "/" + intToString(puerto)+"_Partida";
+		string nombreSemaforoTorneo = "/" + intToString(puerto)+"_Torneo";
+		strcpy(ids.semNamePartida, nombreSemaforoPartida.c_str());
+		strcpy(ids.semNameTorneo, nombreSemaforoTorneo.c_str());
+
+		cout<<"SERVIDOR PARTIDA --> sem name partida"<<ids.semNamePartida<<endl;
+		cout<<"SERVIDOR PARTIDA --> sem name torneo"<<ids.semNameTorneo<<endl;
+
+		/*char * aux;
 
 		sprintf(aux, "%d", puerto);
 		strcpy(ids.semNameTorneo, "/");
 		strcat(ids.semNameTorneo, aux);
 		strcat(ids.semNameTorneo, "_");
 		strcat(ids.semNameTorneo, "Torneo");
+		cout<<"SERV PARTIDA nombre SEM Torneo"<<ids.semNameTorneo<<endl;
 
 		strcpy(ids.semNamePartida, "/");
 		strcat(ids.semNamePartida, aux);
 		strcat(ids.semNamePartida, "_");
 		strcat(ids.semNamePartida, "Partida");
-		//cout << "ID de memoria compartida: " << ids.shmId << endl;
+		cout<<"SERV PARTIDA nombre SEM Partida"<<ids.semNamePartida<<endl;*/
 
 	} else if (argc == 3) {
 		cout << "Recibi la cantidad de parametros correcta" << endl;
@@ -91,23 +102,14 @@ int main(int argc, char * argv[]) {
 		cout << "Numero de puerto " << puerto << endl;
 		cout << "Cantidad de vidas " << cantVidas << endl;
 		ids.shmId = ftok("/bin/ls", puerto);
-		char * aux;
 
-		sprintf(aux, "%d", puerto);
-		strcpy(ids.semNameTorneo, "/");
-		strcat(ids.semNameTorneo, aux);
-		strcat(ids.semNameTorneo, "_");
-		strcat(ids.semNameTorneo, "Torneo");
+		/*string nombreSemaforoPartida = "/" + intToString(puerto)+"_Partida";
+		string nombreSemaforoTorneo = "/" + intToString(puerto)+"_Torneo";
+		strcpy(ids.semNamePartida, nombreSemaforoPartida.c_str());
+		strcpy(ids.semNameTorneo, nombreSemaforoTorneo.c_str());
 
-		cout << "semNameTorneo: " << ids.semNameTorneo << endl;
-
-		strcpy(ids.semNamePartida, "/");
-		strcat(ids.semNamePartida, aux);
-		strcat(ids.semNamePartida, "_");
-		strcat(ids.semNamePartida, "Partida");
-
-		cout << "semNamePartida: " << ids.semNamePartida << endl;
-
+		cout<<"SERVIDOR PARTIDA --> sem name partida"<<ids.semNamePartida<<endl;
+		cout<<"SERVIDOR PARTIDA --> sem name torneo"<<ids.semNameTorneo<<endl;*/
 	} else {
 		//TODO Error y cerrar servidor partida porque faltan datos.
 		cout << "No recibi cant correcta datos" << endl;
@@ -207,7 +209,7 @@ int main(int argc, char * argv[]) {
 	pthread_create(&thread_sender1, NULL, sender1_thread, NULL);
 	pthread_create(&thread_sender2, NULL, sender2_thread, NULL);
 	pthread_create(&thread_validator, NULL, validator_thread, NULL);
-	//pthread_create(&thread_sharedMemory,NULL,sharedMemory_thread,(void *)&ids);
+	pthread_create(&thread_sharedMemory,NULL,sharedMemory_thread,(void *)&ids);
 
 	pthread_join(thread_timer, NULL);
 	pthread_join(thread_receiver1, NULL);
@@ -215,7 +217,7 @@ int main(int argc, char * argv[]) {
 	pthread_join(thread_sender1, NULL);
 	pthread_join(thread_sender2, NULL);
 	pthread_join(thread_validator, NULL);
-	//pthread_join(thread_sharedMemory,NULL);
+	pthread_join(thread_sharedMemory,NULL);
 
 	//TODO finalizada la partida, enviar los puntajes actualizados.
 

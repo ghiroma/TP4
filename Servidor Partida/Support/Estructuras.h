@@ -23,7 +23,7 @@ struct puntajes
 
 struct idsSharedResources
 {
-	int shmId;
+	key_t shmId;
 	char semNamePartida[100];
 	char semNameTorneo[100];
 };

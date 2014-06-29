@@ -36,7 +36,6 @@ extern int cantVidas;
 SDL_Surface *screen, *background, *tiempo, *jugadores, *infoJugador_part1, *infoJugador_part2;
 TTF_Font *font;
 
-
 struct puntajesPartida {
 	int idJugador1;
 	int idJugador2;
@@ -52,7 +51,6 @@ struct datosPartida {
 	sem_t* semaforo_pointerSem_t_Torneo;
 	sem_t* semaforo_pointerSem_t_Partida;
 	const char * semaforoShmName;
-	int lecturasFallidasSHM_Torneo;
 	int lecturasFallidasSHM_Partida;
 };
 
@@ -194,9 +192,6 @@ void* temporizadorTorneo(void* data) {
 void* keepAlive(void* data) {
 	puntajesPartida* resumenPartida;
 
-	//Semaforo auxSemKeepAliveTorneo("/aux", 1);
-	//sem_t * auxSemKeepAliveTorneo_Sem_t = auxSemKeepAliveTorneo.getSem_t();
-
 	Semaforo auxSemSHMTorneo("/auxTorneo");
 	sem_t * auxSemSHMToreno_Sem_t = auxSemSHMTorneo.getSem_t();
 	Semaforo auxSemSHMPartida("/auxPartida");
@@ -205,90 +200,113 @@ void* keepAlive(void* data) {
 		cout << "mutex keepAlive partidasActivas" << endl;
 		pthread_mutex_lock(&mutex_partidasActivas);
 		for (list<datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
-			//le sumo al semaforo que utiliza el ServidorPartida para que sepa que el Torneo sigue vivo
-			//auxSemKeepAliveTorneo.V();
 
 			auxSemSHMPartida.setSem_t(it->semaforo_pointerSem_t_Partida);
-			auxSemSHMPartida.P();
-			resumenPartida = (puntajesPartida *) shmat(it->idShm, (char *) 0, 0);
-			if (it->lecturasFallidasSHM_Partida >= 5) {
+			cout << "TIME WAIT IN" << endl;
+			if (auxSemSHMPartida.timedWait(400000) == 0) {
+				//Pudo acceder a la SHM
+				cout << "Accedio por el Sem SHM" << endl;
 
-				//verificar si la partida murio o termino
-				cout << "mutex keepAlive listJugadores" << endl;
-				pthread_mutex_lock(&mutex_listJugadores);
-				if (resumenPartida->jugando == false) {
-					//SERVIDOR PARTIDA termino OK
-					//verificar y sumar pts y cant partidas jugadas
+				resumenPartida = (struct puntajesPartida *) shmat(it->idShm, (char *) 0, 0);
+				resumenPartida->keepAliveTorneo = true;
 
-					//si el jugador No se desconecto le sumo su puntaje y cantPartidasJugadas
-					if (listJugadores.count(resumenPartida->idJugador1) == 1) {
-						listJugadores[resumenPartida->idJugador1]->Puntaje += resumenPartida->puntajeJugador1;
-						listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas++;
-
-						//si el otro jugador se desconecto asumo que este gano porque el otro avandono
-						if (listJugadores.count(resumenPartida->idJugador2) == 0) {
-							listJugadores[resumenPartida->idJugador1]->PartidasGanadas++;
-						}
-					}
-					//si el jugador No se desconecto le sumo su puntaje y cantPartidasJugadas
-					if (listJugadores.count(resumenPartida->idJugador2) == 1) {
-						listJugadores[resumenPartida->idJugador2]->Puntaje += resumenPartida->puntajeJugador2;
-						listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas++;
-
-						//si el otro jugador se desconecto asumo que este gano porque el otro avandono
-						if (listJugadores.count(resumenPartida->idJugador1) == 0) {
-							listJugadores[resumenPartida->idJugador2]->PartidasGanadas++;
-						}
-					}
-
-					//si los dos estan vivos veo quien gano
-					if (listJugadores.count(resumenPartida->idJugador1) == 1 && listJugadores.count(resumenPartida->idJugador2) == 1) {
-						if ((listJugadores[resumenPartida->idJugador1]->Puntaje / listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas) > (listJugadores[resumenPartida->idJugador2]->Puntaje / listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas)) {
-							//J1 Gana
-							listJugadores[resumenPartida->idJugador1]->PartidasGanadas++;
-							listJugadores[resumenPartida->idJugador2]->PartidasPerdidas++;
-						} else {
-							//J2 Gana
-							listJugadores[resumenPartida->idJugador2]->PartidasGanadas++;
-							listJugadores[resumenPartida->idJugador1]->PartidasPerdidas++;
-						}
-					}
-				} else {
-					//SERVIDOR PARTIDA MURIO
-					//actualizo los jugadores porque ya no estan jugando mas y asi les van a asignar una nueva partida
-					listJugadores[resumenPartida->idJugador1]->Jugando = false;
-					listJugadores[resumenPartida->idJugador2]->Jugando = false;
-				}
-				pthread_mutex_unlock(&mutex_listJugadores);
-				cout << "unmutex keepAlive listJugadores" << endl;
-				//quitar partida el de la lista
-				partidasActivas.erase(it);
-				//limpiar memoria compartida
-				auxSemSHMPartida.close();
-				shmdt((struct datosPartida *) resumenPartida);
-				shmctl(it->idShm, IPC_RMID, (struct shmid_ds *) NULL);
-			} else {
-				if (resumenPartida->keepAlivePartida == false) {
-					it->lecturasFallidasSHM_Partida++;
-				} else {
+				if (resumenPartida->keepAlivePartida == true) {
 					it->lecturasFallidasSHM_Partida = 0;
 					resumenPartida->keepAlivePartida = false;
+				} else {
+					it->lecturasFallidasSHM_Partida++;
 				}
+
+				if (it->lecturasFallidasSHM_Partida >= 5) {
+					cout << "+5 Fallas -> entra por el Semaforo que lo habilito" << endl;
+					cout << "mutex keepAlive listJugadores" << endl;
+					pthread_mutex_lock(&mutex_listJugadores);
+					if (resumenPartida->jugando == false) {
+						//SERVIDOR PARTIDA termino OK
+						cout << "SERVIDOR PARTIDA termino OK" << endl;
+						//verificar y sumar pts y cant partidas jugadas
+
+						//si el jugador No se desconecto le sumo su puntaje y cantPartidasJugadas
+						if (listJugadores.count(resumenPartida->idJugador1) == 1) {
+							listJugadores[resumenPartida->idJugador1]->Puntaje += resumenPartida->puntajeJugador1;
+							listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas++;
+
+							//si el otro jugador se desconecto asumo que este gano porque el otro avandono
+							if (listJugadores.count(resumenPartida->idJugador2) == 0) {
+								listJugadores[resumenPartida->idJugador1]->PartidasGanadas++;
+							}
+						}
+						//si el jugador No se desconecto le sumo su puntaje y cantPartidasJugadas
+						if (listJugadores.count(resumenPartida->idJugador2) == 1) {
+							listJugadores[resumenPartida->idJugador2]->Puntaje += resumenPartida->puntajeJugador2;
+							listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas++;
+
+							//si el otro jugador se desconecto asumo que este gano porque el otro avandono
+							if (listJugadores.count(resumenPartida->idJugador1) == 0) {
+								listJugadores[resumenPartida->idJugador2]->PartidasGanadas++;
+							}
+						}
+
+						//si los dos estan vivos veo quien gano
+						if (listJugadores.count(resumenPartida->idJugador1) == 1 && listJugadores.count(resumenPartida->idJugador2) == 1) {
+							if ((listJugadores[resumenPartida->idJugador1]->Puntaje / listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas) > (listJugadores[resumenPartida->idJugador2]->Puntaje / listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas)) {
+								//J1 Gana
+								listJugadores[resumenPartida->idJugador1]->PartidasGanadas++;
+								listJugadores[resumenPartida->idJugador2]->PartidasPerdidas++;
+							} else {
+								//J2 Gana
+								listJugadores[resumenPartida->idJugador2]->PartidasGanadas++;
+								listJugadores[resumenPartida->idJugador1]->PartidasPerdidas++;
+							}
+						}
+					} else {
+						//SERVIDOR PARTIDA MURIO
+						cout << "SERVIDOR PARTIDA MURIO" << endl;
+						//actualizo los jugadores porque ya no estan jugando mas y asi les van a asignar una nueva partida
+						listJugadores[resumenPartida->idJugador1]->Jugando = false;
+						listJugadores[resumenPartida->idJugador2]->Jugando = false;
+					}
+					pthread_mutex_unlock(&mutex_listJugadores);
+					cout << "unmutex keepAlive listJugadores" << endl;
+				}
+
+				auxSemSHMTorneo.setSem_t(it->semaforo_pointerSem_t_Torneo);
+				auxSemSHMTorneo.V();
+				usleep(400000);
+			} else {
+				//No pudo acceder a la SHM por el Semaforo
+				cout << "No pudo acceder a SHM por el semaforo" << endl;
+				if (it->lecturasFallidasSHM_Partida >= 5) {
+
+					cout << "No accedio al semaforo y hay +5 fallas" << endl;
+
+					//quitar partida el de la lista
+					partidasActivas.erase(it);
+
+					//cerrar SEMAFOROS
+					auxSemSHMPartida.close();
+					auxSemSHMTorneo.close();
+
+					//limpiar memoria compartida
+					shmdt((struct datosPartida *) resumenPartida);
+					shmctl(it->idShm, IPC_RMID, (struct shmid_ds *) NULL);
+				}
+
+				it->lecturasFallidasSHM_Partida++;
 			}
-			auxSemSHMPartida.V();
-			usleep(400000);
+
+			if (partidasActivas.size() == 0) {
+				usleep(400000);
+			}
+			pthread_mutex_unlock(&mutex_partidasActivas);
+			cout << "unmutex keepAlive partidasActivas" << endl;
 		}
-		if (partidasActivas.size() == 0) {
-			usleep(400000);
-		}
-		pthread_mutex_unlock(&mutex_partidasActivas);
-		cout << "unmutex keepAlive partidasActivas" << endl;
 	}
 
 	auxSemSHMPartida.setSem_t(auxSemSHMPartida_Sem_t);
 	auxSemSHMPartida.close();
-	auxSemKeepAliveTorneo.setSem_t(auxSemKeepAliveTorneo_Sem_t);
-	auxSemKeepAliveTorneo.close();
+	auxSemSHMTorneo.setSem_t(auxSemSHMToreno_Sem_t);
+	auxSemSHMTorneo.close();
 
 	//hacer en algun lado o aca mismo el DELETE(semaforo)
 	pthread_exit(NULL);
@@ -618,38 +636,55 @@ void* establecerPartidas(void* data) {
 					cout << "Se crea la primer partida y doy permiso a iniciar el temporizador" << endl;
 					sem_inicializarTemporizador.V();
 				}
-				nroPartida++;
-
-				/*key_t key = ftok("/bin/ls", puertoNuevaPartida);
-				 if (key == -1) {
-				 cout << "Error al generar clave de memoria compartida" << endl;
-				 break;
-				 }
-				 int idShm = shmget(key, sizeof(int) * 1, IPC_CREAT | PERMISOS_SHM);
-				 if (idShm == -1) {
-				 cout << "Error al obtener memoria compartida" << endl;
-				 break;
-				 }
-
-
-				 //genero y cargo los datos de la partida en una lista
-				 datosPartida structuraDatosPartida;
-				 structuraDatosPartida.idShm = idShm;
-				 structuraDatosPartida.lecturasFallidas = 0;
-				 //creo el semaforo para acceder a la memoria compartida
-				 nombreSemaforo = "/sem"+intToString(puertoNuevaPartida);
-				 Semaforo semaforo(nombreSemaforo.c_str(),1);
-				 structuraDatosPartida.semaforoShmName = nombreSemaforo.c_str();
-				 structuraDatosPartida.semaforo_pointerSem_t = semaforo.getSem_t();
-
-				 cout << "mutex establecerPartidas partidasActivas" << endl;
-				 pthread_mutex_lock(&mutex_partidasActivas);
-				 partidasActivas.push_back(structuraDatosPartida);
-				 pthread_mutex_unlock(&mutex_partidasActivas);
-				 cout << "unmutex establecerPartidas partidasActivas" << endl;
-				 */
+				nroPartida++;	//auxiliar para mostrar mensajes. borrar
 
 				puertoPartida++;
+
+				key_t key = ftok("/bin/ls", puertoPartida);
+				if (key == -1) {
+					cout << "Error al generar clave de memoria compartida" << endl;
+					break;
+				}
+				int idShm = shmget(key, sizeof(struct puntajesPartida) * 1, IPC_CREAT | PERMISOS_SHM);
+				if (idShm == -1) {
+					cout << "Error al obtener memoria compartida" << endl;
+					break;
+				}
+				cout << "Partida: " << puertoPartida << "  ID SHM: " << idShm << endl;
+
+				//inicializo el BLOQUE DE SHM
+				puntajesPartida* resumenPartida = (struct puntajesPartida *) shmat(idShm, (char *) 0, 0);
+				resumenPartida->idJugador1 = idJugador;
+				resumenPartida->idJugador2 = idOponente;
+				resumenPartida->jugando = true;
+				resumenPartida->keepAlivePartida = true;
+				resumenPartida->keepAliveTorneo = true;
+				resumenPartida->puntajeJugador1 = 0;
+				resumenPartida->puntajeJugador2 = 0;
+
+				//genero y cargo los datos de la partida en una lista
+				datosPartida structuraDatosPartida;
+				structuraDatosPartida.idShm = idShm;
+				structuraDatosPartida.lecturasFallidasSHM_Partida = 0;
+
+				string nombreSemaforoPartida = "/" + intToString(puertoPartida)+"_Partida";
+				string nombreSemaforoTorneo = "/" + intToString(puertoPartida)+"_Torneo";
+				Semaforo* semaforoPartida = new Semaforo(nombreSemaforoPartida.c_str(), 1);
+				Semaforo* semaforoTorneo = new Semaforo(nombreSemaforoTorneo.c_str(), 0);
+				structuraDatosPartida.semaforo_pointerSem_t_Partida = semaforoPartida->getSem_t();
+				structuraDatosPartida.semaforo_pointerSem_t_Torneo= semaforoTorneo->getSem_t();
+
+				cout<<"SERV TORNEO nombre SEM Torneo"<<semaforoTorneo->getName()<<endl;
+				cout<<"SERV TORNEO nombre SEM Partida"<<semaforoPartida->getName()<<endl;
+				cout<<"SERV TORNEO Sem_t * semaforo Torneo: "<<semaforoTorneo->getSem_t()<<endl;
+				cout<<"SERV TORNEO Sem_t * semaforo Partida: "<<semaforoPartida->getSem_t()<<endl;
+
+				cout << "mutex establecerPartidas partidasActivas" << endl;
+				pthread_mutex_lock(&mutex_partidasActivas);
+				partidasActivas.push_back(structuraDatosPartida);
+				pthread_mutex_unlock(&mutex_partidasActivas);
+				cout << "unmutex establecerPartidas partidasActivas" << endl;
+
 				//Le mando a los jugadores el nro de Puerto en el que comenzara la partida
 				char auxPuertoNuevaPartida[LONGITUD_CONTENIDO];
 				sprintf(auxPuertoNuevaPartida, "%d", puertoPartida);

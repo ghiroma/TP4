@@ -295,13 +295,15 @@ validator_thread(void * argument) {
 void* sharedMemory_thread(void * arguments) {
 	//TODO usar la clase de semaforo.
 	struct idsSharedResources * shmIds = (struct idsSharedResources *) arguments;
-	int shmId = shmget(shmIds->shmId, 1024, 0660);
+	//int shmId = shmget(shmIds->shmId, 1024, 0660);
 	Semaforo semTorneo(shmIds->semNameTorneo);
 	Semaforo semPartida(shmIds->semNamePartida);
+	cout<<"SERV PARTIDA --> Sem_t * semaforo Torneo: "<<semTorneo.getSem_t()<<endl;
+	cout<<"SERV PARTIDA --> Sem_t * semaforo Partida: "<<semPartida.getSem_t()<<endl;
 	struct puntajes * puntaje;
-	int reintentos;
+	int reintentos = 0;
 
-	puntaje = (struct puntajes *) shmat(shmId, NULL, 0);
+	puntaje = (struct puntajes *) shmat(shmIds->shmId, NULL, 0);
 
 	while (stop == false && (cliente1_conectado || cliente2_conectado)) {
 		cout << "Espererando en el timedwait"<<endl;
@@ -345,11 +347,13 @@ void* sharedMemory_thread(void * arguments) {
 				cout << "timedout semaforo" << endl;
 				cout << "Reintentos: " << reintentos << endl;
 
+				sleep(2);
+
 				reintentos++;
 				if (reintentos == 5) {
 					cout << "Se cerro el servidor torneo" << endl;
 					shmdt(puntaje);
-					shmctl(shmId, IPC_RMID, 0);
+					//shmctl(shmId, IPC_RMID, 0);
 					stop = true;
 				}
 				//TODO Murio el servidor asi que tengo que cancelar todo y cerrar todo.
@@ -445,4 +449,13 @@ bool validateLives(Felix * felix) {
 
 void SIGINT_Handler(int inum) {
 	stop = true;
+}
+
+/**
+ * Convertir un numero de tipo int a String
+ */
+string intToString(int number) {
+	stringstream ss;
+	ss << number;
+	return ss.str();
 }

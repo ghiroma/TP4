@@ -56,5 +56,6 @@ bool validateMovement(Felix * felix,int fila, int columna, Edificio * edificio);
 bool validateWindowFix(Felix * felix,Edificio * edificio);
 bool validateLives(Felix * felix);
 void SIGINT_Handler(int inum);
+string intToString(int number);
 
 #endif /* FUNCIONESSERVIDORPARTIDA_H_ */

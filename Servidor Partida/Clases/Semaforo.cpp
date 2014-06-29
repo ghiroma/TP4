@@ -19,7 +19,7 @@ Semaforo::Semaforo(const char* nombre, int valor) {
 }
 
 Semaforo::Semaforo(const char* nombre) {
-    this->sem = sem_open(nombre, O_CREAT, PERMISOS);
+    this->sem = sem_open(nombre, O_CREAT);
     if (this->sem == (sem_t*) - 1) {
         cout << "Error creando el semaforo: " << nombre << endl;
     }

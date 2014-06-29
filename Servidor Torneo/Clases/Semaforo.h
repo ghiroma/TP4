@@ -13,7 +13,7 @@ private:
 public:
 	Semaforo(const char*, int); //Semaforo s1((char*)"/s1", 1);
 	Semaforo(const char*); //Semaforo s1((char*)"/s1");
-	void getName();
+	const char* getName();
 	int getValue();
 	sem_t * getSem_t();
 	void setSem_t(sem_t*);
