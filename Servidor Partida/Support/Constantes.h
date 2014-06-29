@@ -23,7 +23,7 @@ static const int LONGITUD_CODIGO = 2;
 static const int LONGITUD_CONTENIDO = 5;
 
 static const int POLLING_DEADTIME = 1000; //Nanosegundos
-static const int SEMAPHORE_TIMEOUT = 2; //Segundos
+static const int SEMAPHORE_TIMEOUT = 1; //Segundos
 static const int SERVERSOCKET_TIMEOUT = 8; //Segundos
 static const int CLIENT_ID_TIMEOUT = 5000; //Milisegundos.
 //CD viene de codigo mensaje.
