@@ -303,7 +303,7 @@ void* sharedMemory_thread(void * arguments) {
 	struct puntajes * puntaje;
 	int reintentos = 0;
 
-	puntaje = (struct puntajes *) shmat(shmIds->shmId, NULL, 0);
+	puntaje = (struct puntajes *) shmat(shmIds->shmId,  (char *) 0, 0);
 
 	while (stop == false && (cliente1_conectado || cliente2_conectado)) {
 		cout << "Espererando en el timedwait"<<endl;
