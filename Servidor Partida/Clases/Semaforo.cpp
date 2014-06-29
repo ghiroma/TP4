@@ -19,7 +19,7 @@ Semaforo::Semaforo(const char* nombre, int valor) {
 }
 
 Semaforo::Semaforo(const char* nombre) {
-    this->sem = sem_open(nombre, O_CREAT);
+    this->sem = sem_open(nombre, O_CREAT, PERMISOS);
     if (this->sem == (sem_t*) - 1) {
         cout << "Error creando el semaforo: " << nombre << endl;
     }
@@ -33,8 +33,8 @@ int Semaforo::timedWait(long int uSegundos) {
 
 	return sem_timedwait(this->sem, &tiempoMaximoDeEspera);
 }
-void Semaforo::getName() {
-    cout << "Nombre: " << this->nombre << endl;
+const char* Semaforo::getName() {
+    return this->nombre;
 }
 
 int Semaforo::getValue() {

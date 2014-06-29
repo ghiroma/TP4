@@ -22,8 +22,8 @@ struct puntajes
 struct idsSharedResources
 {
 	key_t shmId;
-	char semNamePartida[100];
-	char semNameTorneo[100];
+	const char* semNamePartida;
+	const char* semNameTorneo;
 };
 
 #endif /* ESTRUCTURAS_H_ */

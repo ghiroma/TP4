@@ -72,8 +72,8 @@ int main(int argc, char * argv[]) {
 
 		string nombreSemaforoPartida = "/" + intToString(puerto)+"_Partida";
 		string nombreSemaforoTorneo = "/" + intToString(puerto)+"_Torneo";
-		strcpy(ids.semNamePartida, nombreSemaforoPartida.c_str());
-		strcpy(ids.semNameTorneo, nombreSemaforoTorneo.c_str());
+		ids.semNamePartida =nombreSemaforoPartida.c_str();
+		ids.semNameTorneo = nombreSemaforoTorneo.c_str();
 
 		cout<<"SERVIDOR PARTIDA --> sem name partida"<<ids.semNamePartida<<endl;
 		cout<<"SERVIDOR PARTIDA --> sem name torneo"<<ids.semNameTorneo<<endl;
