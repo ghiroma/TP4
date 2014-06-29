@@ -8,6 +8,7 @@
 #include "FuncionesServidorPartida.h"
 #include <iostream>
 #include "Support/Constantes.h"
+#include "Clases/Semaforo.h"
 #include <string.h>
 #include <string>
 #include <sstream>
@@ -76,8 +77,8 @@ timer_thread(void* arg) {
 			string message(CD_ACK);
 			string content;
 			message.append(Helper::fillMessage(content));
-			Helper::encolar(&message,&sender1_queue,&mutex_sender1);
-			Helper::encolar(&message,&sender2_queue,&mutex_sender2);
+			Helper::encolar(&message, &sender1_queue, &mutex_sender1);
+			Helper::encolar(&message, &sender2_queue, &mutex_sender2);
 			startingTimeKeepAlive = time(0);
 		}
 
@@ -97,7 +98,7 @@ timer_thread(void* arg) {
 			sprintf(aux, "%d", randomPaloma(0));
 			message.append(Helper::fillMessage(aux));
 			Helper::encolar(&message, &sender1_queue, &mutex_sender1);
-			Helper::encolar(&message,&sender2_queue,&mutex_sender2);
+			Helper::encolar(&message, &sender2_queue, &mutex_sender2);
 			startingTimePaloma = time(0);
 		}
 
@@ -293,50 +294,63 @@ validator_thread(void * argument) {
 
 void* sharedMemory_thread(void * arguments) {
 	//TODO usar la clase de semaforo.
-	struct shmIds * shmIds = (struct shmIds *) arguments;
+	struct idsSharedResources * shmIds = (struct idsSharedResources *) arguments;
 	int shmId = shmget(shmIds->shmId, 1024, 0660);
-	sem_t * sem = sem_open(shmIds->semName, 0);
+	Semaforo semTorneo(shmIds->semNameTorneo);
+	Semaforo semPartida(shmIds->semNamePartida);
 	struct puntajes * puntaje;
-	char * buffer;
-	struct timespec ts;
-	ts.tv_sec = SEMAPHORE_TIMEOUT;
+	int reintentos;
 
 	puntaje = (struct puntajes *) shmat(shmId, NULL, 0);
 
 	while (stop == false && (cliente1_conectado || cliente2_conectado)) {
-		if (sem_timedwait(sem, &ts) == 0) {
-			if ((cliente1_jugando || cliente2_jugando) && (cliente1_conectado || cliente2_conectado)) {
+		if (semPartida.timedWait(700000) == 0) {
+
+			reintentos = 0;
+			cout<<"Entro por el timedwait"<<endl;
+
+			if ((cliente1_jugando || cliente2_jugando)
+					&& (cliente1_conectado || cliente2_conectado)) {
 				struct puntajes aux;
 				aux.idJugador1 = felix1->id;
 				aux.idJugador2 = felix2->id;
 				aux.puntajeJugador1 = felix1->puntaje_parcial;
 				aux.puntajeJugador2 = felix2->puntaje_parcial;
-				aux.keepAlive = true;
+				aux.keepAlivePartida = true;
 				aux.jugando = true;
+				if (puntaje->keepAliveTorneo == false)
+					reintentos++;
+				aux.keepAliveTorneo = false;
 				puntaje = &aux;
-			}
-			else //Murieron los dos jugadores.
+
+				cout << "Escribi en la memoria compartida" << endl;
+			} else //Murieron los dos jugadores.
 			{
 				struct puntajes aux;
 				aux.idJugador1 = felix1->id;
 				aux.idJugador2 = felix2->id;
 				aux.puntajeJugador1 = felix1->puntaje_parcial;
 				aux.puntajeJugador2 = felix2->puntaje_parcial;
-				aux.keepAlive = true;
+				aux.keepAlivePartida = true;
 				aux.jugando = false;
 				puntaje = &aux;
 				stop = true;
 			}
+			semTorneo.V();
 		} else {
 			if (errno == ETIMEDOUT) {
+
+				cout << "timedout semaforo" << endl;
+				cout << "Reintentos: " << reintentos << endl;
+
+				reintentos++;
+				if (reintentos == 5) {
+					cout << "Se cerro el servidor torneo" << endl;
+					shmdt(puntaje);
+					shmctl(shmId, IPC_RMID, 0);
+					stop = true;
+				}
 				//TODO Murio el servidor asi que tengo que cancelar todo y cerrar todo.
-				cout << "Se cerro el servidor torneo" << endl;
-				sem_close(sem);
-				sem_unlink(shmIds->semName);
-				shmdt(puntaje);
-				shmctl(shmId, IPC_RMID, 0);
-				shmdt(buffer);
-				stop = true;
 			}
 		}
 		usleep(POLLING_DEADTIME);
@@ -375,19 +389,19 @@ char * randomPersiana() {
 
 	//No hay persiana cerrada. Actualizo el edificio.
 	if (filaPreviaPersiana != 0 && columnaPreviaPersiana != 0) {
-		sprintf(aux,"%d",rand()%(EDIFICIO_FILAS_1));
-		strcpy(location,aux);
+		sprintf(aux, "%d", rand() % (EDIFICIO_FILAS_1));
+		strcpy(location, aux);
 		filaPreviaPersiana = atoi(aux);
-		sprintf(aux,"%d",rand()%(EDIFICIO_COLUMNAS));
-		strcat(location,aux);
+		sprintf(aux, "%d", rand() % (EDIFICIO_COLUMNAS));
+		strcat(location, aux);
 		columnaPreviaPersiana = atoi(aux);
 		return location;
 	} else //Hay persiana cerrada. Debo abrirla.
 	{
-		sprintf(aux,"%d",filaPreviaPersiana);
-		strcpy(location,aux);
-		sprintf(aux,"%d",columnaPreviaPersiana);
-		strcat(location,aux);
+		sprintf(aux, "%d", filaPreviaPersiana);
+		strcpy(location, aux);
+		sprintf(aux, "%d", columnaPreviaPersiana);
+		strcat(location, aux);
 		filaPreviaPersiana = 0;
 		columnaPreviaPersiana = 0;
 		return location;
@@ -414,8 +428,8 @@ bool validateMovement(Felix * felix, int fila, int columna,
 }
 
 bool validateWindowFix(Felix * felix, Edificio * edificio) {
-	if (edificio->ventanas[felix->posicion_x][felix->posicion_y].ventanaRota
-			> 0 && !edificio->ventanas[felix->posicion_x][felix->posicion_y].persiana) {
+	if (edificio->ventanas[felix->posicion_x][felix->posicion_y].ventanaRota > 0
+			&& !edificio->ventanas[felix->posicion_x][felix->posicion_y].persiana) {
 		felix->puntaje_parcial++;
 		edificio->ventanas[felix->posicion_x][felix->posicion_y].ventanaRota--;
 		return true;

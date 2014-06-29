@@ -14,15 +14,18 @@ struct puntajes
 	int idJugador2;
 	int puntajeJugador1;
 	int puntajeJugador2;
-	bool keepAlive;
+	bool jugador1Alive;
+	bool jugador2Alive;
 	bool jugando;
+	bool keepAlivePartida;
+	bool keepAliveTorneo;
 };
 
-struct shmIds
+struct idsSharedResources
 {
 	int shmId;
-	int shmKAId;
-	char * semName;
+	char semNamePartida[100];
+	char semNameTorneo[100];
 };
 
 #endif /* ESTRUCTURAS_H_ */

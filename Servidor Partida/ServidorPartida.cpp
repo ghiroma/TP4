@@ -38,14 +38,10 @@ int main(int argc, char * argv[]) {
 
 	int puerto;
 	int cantVidas;
-	int idSM;
-	int idSMKA;
 	int response = 0;
 	int cantClientes = 0;
 
-	char * semaphore;
-
-	struct shmIds ids;
+	struct idsSharedResources ids;
 	struct timeval timeout;
 	struct pollfd ufds[2];
 
@@ -71,13 +67,46 @@ int main(int argc, char * argv[]) {
 		cantVidas = atoi(argv[1]);
 		cout << "Numero de puerto " << puerto << endl;
 		cout << "Cantidad de vidas " << cantVidas << endl;
-		//ids.shmId = ftok("/bin/ls", puerto);
+		ids.shmId = ftok("/bin/ls", puerto);
 		char * aux;
-		//sprintf(aux, "%d", puerto);
-		//strcpy(ids.semName, "/sem");
-		//strcat(ids.semName, aux);
-		//cout << "Nombre de semaforo: " << ids.semName << endl;
+
+		sprintf(aux, "%d", puerto);
+		strcpy(ids.semNameTorneo, "/");
+		strcat(ids.semNameTorneo, aux);
+		strcat(ids.semNameTorneo, "_");
+		strcat(ids.semNameTorneo, "Torneo");
+
+		strcpy(ids.semNamePartida, "/");
+		strcat(ids.semNamePartida, aux);
+		strcat(ids.semNamePartida, "_");
+		strcat(ids.semNamePartida, "Partida");
 		//cout << "ID de memoria compartida: " << ids.shmId << endl;
+
+	} else if (argc == 3) {
+		cout << "Recibi la cantidad de parametros correcta" << endl;
+		cout << "Parametro 1 " << argv[1] << endl;
+		cout << "Parametro 2 " << argv[2] << endl;
+		puerto = atoi(argv[1]);
+		cantVidas = atoi(argv[2]);
+		cout << "Numero de puerto " << puerto << endl;
+		cout << "Cantidad de vidas " << cantVidas << endl;
+		ids.shmId = ftok("/bin/ls", puerto);
+		char * aux;
+
+		sprintf(aux, "%d", puerto);
+		strcpy(ids.semNameTorneo, "/");
+		strcat(ids.semNameTorneo, aux);
+		strcat(ids.semNameTorneo, "_");
+		strcat(ids.semNameTorneo, "Torneo");
+
+		cout<<"semNameTorneo: "<<ids.semNameTorneo<<endl;
+
+		strcpy(ids.semNamePartida, "/");
+		strcat(ids.semNamePartida, aux);
+		strcat(ids.semNamePartida, "_");
+		strcat(ids.semNamePartida, "Partida");
+
+		cout<<"semNamePartida: "<<ids.semNamePartida<<endl;
 
 	} else {
 		//TODO Error y cerrar servidor partida porque faltan datos.

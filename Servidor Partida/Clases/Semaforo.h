@@ -18,6 +18,7 @@ public:
 	sem_t * getSem_t();
 	void setSem_t(sem_t*);
 	int P();
+	int timedWait(long int uSegundos); // P() WAIT
 	int V();
 	void close();
 	virtual ~Semaforo();
