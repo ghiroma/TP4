@@ -42,8 +42,6 @@ struct puntajesPartida {
 	int idJugador2;
 	int puntajeJugador1;
 	int puntajeJugador2;
-	bool jugador1Alive;
-	bool jugador2Alive;
 	bool jugando;
 	bool keepAlivePartida;
 	bool keepAliveTorneo;
@@ -193,16 +191,17 @@ void* temporizadorTorneo(void* data) {
 /**
  * THREAD -> KeepAlive partidas y torneo
  */
-
 void* keepAlive(void* data) {
 	puntajesPartida* resumenPartida;
-	Semaforo auxSemKeepAliveTorneo("/aux", 1);
-	sem_t * auxSemKeepAliveTorneo_Sem_t = auxSemKeepAliveTorneo.getSem_t();
 
+	//Semaforo auxSemKeepAliveTorneo("/aux", 1);
+	//sem_t * auxSemKeepAliveTorneo_Sem_t = auxSemKeepAliveTorneo.getSem_t();
+
+	Semaforo auxSemSHMTorneo("/auxTorneo");
+	sem_t * auxSemSHMToreno_Sem_t = auxSemSHMTorneo.getSem_t();
 	Semaforo auxSemSHMPartida("/auxPartida");
 	sem_t * auxSemSHMPartida_Sem_t = auxSemSHMPartida.getSem_t();
 	while (true) {
-
 		cout << "mutex keepAlive partidasActivas" << endl;
 		pthread_mutex_lock(&mutex_partidasActivas);
 		for (list<datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
@@ -212,7 +211,7 @@ void* keepAlive(void* data) {
 			auxSemSHMPartida.setSem_t(it->semaforo_pointerSem_t_Partida);
 			auxSemSHMPartida.P();
 			resumenPartida = (puntajesPartida *) shmat(it->idShm, (char *) 0, 0);
-			if (it->lecturasFallidas >= 5) {
+			if (it->lecturasFallidasSHM_Partida >= 5) {
 
 				//verificar si la partida murio o termino
 				cout << "mutex keepAlive listJugadores" << endl;
@@ -221,27 +220,29 @@ void* keepAlive(void* data) {
 					//SERVIDOR PARTIDA termino OK
 					//verificar y sumar pts y cant partidas jugadas
 
-					if (resumenPartida->jugador1Alive == true) {
+					//si el jugador No se desconecto le sumo su puntaje y cantPartidasJugadas
+					if (listJugadores.count(resumenPartida->idJugador1) == 1) {
 						listJugadores[resumenPartida->idJugador1]->Puntaje += resumenPartida->puntajeJugador1;
 						listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas++;
 
 						//si el otro jugador se desconecto asumo que este gano porque el otro avandono
-						if (resumenPartida->jugador2Alive == false) {
+						if (listJugadores.count(resumenPartida->idJugador2) == 0) {
 							listJugadores[resumenPartida->idJugador1]->PartidasGanadas++;
 						}
 					}
-					if (resumenPartida->jugador2Alive == true) {
+					//si el jugador No se desconecto le sumo su puntaje y cantPartidasJugadas
+					if (listJugadores.count(resumenPartida->idJugador2) == 1) {
 						listJugadores[resumenPartida->idJugador2]->Puntaje += resumenPartida->puntajeJugador2;
 						listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas++;
 
 						//si el otro jugador se desconecto asumo que este gano porque el otro avandono
-						if (resumenPartida->jugador1Alive == false) {
+						if (listJugadores.count(resumenPartida->idJugador1) == 0) {
 							listJugadores[resumenPartida->idJugador2]->PartidasGanadas++;
 						}
 					}
 
 					//si los dos estan vivos veo quien gano
-					if (resumenPartida->jugador1Alive == true && resumenPartida->jugador2Alive == true) {
+					if (listJugadores.count(resumenPartida->idJugador1) == 1 && listJugadores.count(resumenPartida->idJugador2) == 1) {
 						if ((listJugadores[resumenPartida->idJugador1]->Puntaje / listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas) > (listJugadores[resumenPartida->idJugador2]->Puntaje / listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas)) {
 							//J1 Gana
 							listJugadores[resumenPartida->idJugador1]->PartidasGanadas++;
@@ -267,18 +268,18 @@ void* keepAlive(void* data) {
 				shmdt((struct datosPartida *) resumenPartida);
 				shmctl(it->idShm, IPC_RMID, (struct shmid_ds *) NULL);
 			} else {
-				if (resumenPartida->keepAlive == false) {
-					it->lecturasFallidas++;
+				if (resumenPartida->keepAlivePartida == false) {
+					it->lecturasFallidasSHM_Partida++;
 				} else {
-					it->lecturasFallidas = 0;
-					resumenPartida->keepAlive = false;
+					it->lecturasFallidasSHM_Partida = 0;
+					resumenPartida->keepAlivePartida = false;
 				}
 			}
 			auxSemSHMPartida.V();
-			usleep(600000);
+			usleep(400000);
 		}
 		if (partidasActivas.size() == 0) {
-			usleep(600000);
+			usleep(400000);
 		}
 		pthread_mutex_unlock(&mutex_partidasActivas);
 		cout << "unmutex keepAlive partidasActivas" << endl;
@@ -721,6 +722,9 @@ void liberarRecursos() {
 		//shmctl(it, IPC_RMID, (struct shmid_ds *) NULL);
 	}
 	pthread_mutex_unlock(&mutex_partidasActivas);
+
+	//Semaphores
+	// .close();
 
 	//Mutex
 	pthread_mutex_destroy(&mutex_timeIsUp);
