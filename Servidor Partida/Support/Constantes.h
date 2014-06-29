@@ -1,6 +1,8 @@
 #ifndef CONSTANTES_H_
 #define CONSTANTES_H_
 
+static const int PERMISOS_SHM = 0777;
+
 static const int ANCHO_PANTALLA = 640;
 static const int ALT0_PANTALLA = 480;
 static const int BPP = 8;
