@@ -379,13 +379,13 @@ sharedMemory_thread (void * arguments)
 
   while (stop == false && (cliente1_conectado || cliente2_conectado))
     {
-      cout << "Espererando en el timedwait" << endl;
+      //cout << "Espererando en el timedwait" << endl;
       if (sem_timedwait (semTorneo, &ts))
 	{
 	  //if (semTorneo.timedWait(700000) == 0) {
 
 	  reintentos = 0;
-	  cout << "Entro por el timedwait" << endl;
+	  //cout << "Entro por el timedwait" << endl;
 
 	  if ((cliente1_jugando || cliente2_jugando)
 	      && (cliente1_conectado || cliente2_conectado))
@@ -398,16 +398,16 @@ sharedMemory_thread (void * arguments)
 	      aux.puntajeJugador2 = felix2->puntaje_parcial;
 	      aux.keepAlivePartida = true;
 	      aux.jugando = true;
-	      if (puntaje->keepAliveTorneo == false)
-		reintentos++;
+	      //if (puntaje->keepAliveTorneo == false)
+		//reintentos++;
 	      aux.keepAliveTorneo = false;
 	      puntaje = &aux;
 
-	      cout << "Escribi en la memoria compartida" << endl;
+	      //cout << "Escribi en la memoria compartida" << endl;
 	    }
 	  else //Murieron los dos jugadores.
 	    {
-	      cout << "Jugadores desconectados dentro del semaforo" << endl;
+	      //cout << "Jugadores desconectados dentro del semaforo" << endl;
 
 	      struct puntajes aux;
 	      aux.idJugador1 = felix1->id;
@@ -421,7 +421,7 @@ sharedMemory_thread (void * arguments)
 	    }
 	  //semPartida.V();
 	  sem_post (semPartida);
-	  cout << "V de semaforo Torneo." << endl;
+	  //cout << "V de semaforo Torneo." << endl;
 	}
       else
 	{

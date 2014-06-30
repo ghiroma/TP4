@@ -204,7 +204,7 @@ void* keepAlive(void* data) {
 
 			auxSemSHMPartida.setSem_t(it->semaforo_pointerSem_t_Partida);
 			cout << "TIME WAIT IN" << endl;
-			if (auxSemSHMPartida.timedWait(400000000) == 0) {
+			if (auxSemSHMPartida.timedWait(400000) == 0) {
 				//Pudo acceder a la SHM
 				cout << "Accedio por el Sem SHM" << endl;
 
@@ -214,9 +214,9 @@ void* keepAlive(void* data) {
 				if (resumenPartida->keepAlivePartida == true) {
 					it->lecturasFallidasSHM_Partida = 0;
 					resumenPartida->keepAlivePartida = false;
-				} else {
-					it->lecturasFallidasSHM_Partida++;
-				}
+				}// else {
+				//	it->lecturasFallidasSHM_Partida++;
+				//}
 
 				if (it->lecturasFallidasSHM_Partida >= 5) {
 					cout << "+5 Fallas -> entra por el Semaforo que lo habilito" << endl;
