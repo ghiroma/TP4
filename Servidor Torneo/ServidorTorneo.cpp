@@ -115,7 +115,7 @@ int main(int argc, char * argv[]) {
 	//pthread_join(thEstablecerPartidas, NULL);    //no hace falta
 	pthread_join(thModoGrafico, NULL);
 	pthread_join(thkeepAliveJugadores, NULL);
-	//pthread_join(thKeepAlive, NULL);
+	pthread_join(thKeepAlive, NULL);
 
 	//    //    //    //    //    //    //    //    ///
 	//ver si hace falta??????????

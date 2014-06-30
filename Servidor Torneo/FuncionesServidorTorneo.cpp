@@ -299,9 +299,10 @@ void* keepAlive(void* data) {
 			if (partidasActivas.size() == 0) {
 				usleep(400000);
 			}
-			pthread_mutex_unlock(&mutex_partidasActivas);
-			cout << "unmutex keepAlive partidasActivas" << endl;
+
 		}
+		pthread_mutex_unlock(&mutex_partidasActivas);
+		cout << "unmutex keepAlive partidasActivas" << endl;
 
 		pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
 		cout << "keepalive torneos y partidas mutex  todasLasPartidasFinalizadas" << endl;
@@ -552,7 +553,7 @@ void* keepAliveJugadores(void*) {
 	bool partidasTerminadas = false;
 	while (!partidasTerminadas) {
 		//para cada jugador ver si me responden la señal de KEEPALIVE
-		cout << "mutex keepAliveJugadores" << endl;
+		cout << "mutex1 keepAliveJugadores listJugadores" << endl;
 		pthread_mutex_lock(&mutex_listJugadores);
 		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 
@@ -569,13 +570,13 @@ void* keepAliveJugadores(void*) {
 			}
 		}
 		pthread_mutex_unlock(&mutex_listJugadores);
-		cout << "unmutex keepAliveJugadores" << endl;
+		cout << "unmutex1 keepAliveJugadores listJugadores" << endl;
 		usleep(1000000);
 		pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
-		cout << "mutex keepAliveJugadores todasLasPartidasFinalizadas" << endl;
+		cout << "mutex2 keepAliveJugadores todasLasPartidasFinalizadas" << endl;
 		partidasTerminadas = todasLasPartidasFinalizadas;
 		pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);
-		cout << "unmutex keepAliveJugadores todasLasPartidasFinalizadas" << endl;
+		cout << "unmutex2 keepAliveJugadores todasLasPartidasFinalizadas" << endl;
 	}
 
 	pthread_exit(NULL);
@@ -594,17 +595,14 @@ void* aceptarJugadores(void* data) {
 	while (true) {
 		cout << "va a bloquearse esperando al JUGADOR" << endl;
 		cout << "_____________________" << endl;
-		cout << "_____________________" << endl;
 		CommunicationSocket * cSocket = sSocket.Accept();
 		cout << "va a bloquearse esperando mensaje" << endl;
-		cout << "_____________________" << endl;
 		cout << "_____________________" << endl;
 		cSocket->ReceiveBloq(nombreJugador, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
 		clientId++;
 		agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
-		cout << "se agrega el jugador" << endl;
-		cout << "_____________________" << endl;
-		cout << "_____________________" << endl;
+		cout << "Se agrega el jugador NRO:" << clientId << " NOMBRE: " << nombreJugador << endl;
+		cout << "______________________________________________________________________________" << endl;
 		//mandarle el ID al Jugador
 		char aux[LONGITUD_CONTENIDO];
 		string message(CD_ID_JUGADOR);
@@ -643,7 +641,7 @@ void* establecerPartidas(void* data) {
 					cout << "Se crea la primer partida y doy permiso a iniciar el temporizador" << endl;
 					sem_inicializarTemporizador.V();
 				}
-				nroPartida++;	//auxiliar para mostrar mensajes. borrar
+				nroPartida++;
 
 				puertoPartida++;
 
@@ -674,17 +672,17 @@ void* establecerPartidas(void* data) {
 				structuraDatosPartida.idShm = idShm;
 				structuraDatosPartida.lecturasFallidasSHM_Partida = 0;
 
-				string nombreSemaforoPartida = "/" + intToString(puertoPartida)+"_Partida";
-				string nombreSemaforoTorneo = "/" + intToString(puertoPartida)+"_Torneo";
+				string nombreSemaforoPartida = "/" + intToString(puertoPartida) + "_Partida";
+				string nombreSemaforoTorneo = "/" + intToString(puertoPartida) + "_Torneo";
 				Semaforo* semaforoPartida = new Semaforo(nombreSemaforoPartida.c_str(), 1);
 				Semaforo* semaforoTorneo = new Semaforo(nombreSemaforoTorneo.c_str(), 0);
 				structuraDatosPartida.semaforo_pointerSem_t_Partida = semaforoPartida->getSem_t();
-				structuraDatosPartida.semaforo_pointerSem_t_Torneo= semaforoTorneo->getSem_t();
+				structuraDatosPartida.semaforo_pointerSem_t_Torneo = semaforoTorneo->getSem_t();
 
-				cout<<"SERV TORNEO nombre SEM Torneo"<<semaforoTorneo->getName()<<endl;
-				cout<<"SERV TORNEO nombre SEM Partida"<<semaforoPartida->getName()<<endl;
-				cout<<"SERV TORNEO Sem_t * semaforo Torneo: "<<semaforoTorneo->getSem_t()<<endl;
-				cout<<"SERV TORNEO Sem_t * semaforo Partida: "<<semaforoPartida->getSem_t()<<endl;
+				cout << "SERV TORNEO nombre SEM Torneo" << semaforoTorneo->getName() << endl;
+				cout << "SERV TORNEO nombre SEM Partida" << semaforoPartida->getName() << endl;
+				cout << "SERV TORNEO Sem_t * semaforo Torneo: " << semaforoTorneo->getSem_t() << endl;
+				cout << "SERV TORNEO Sem_t * semaforo Partida: " << semaforoPartida->getSem_t() << endl;
 
 				cout << "mutex establecerPartidas partidasActivas" << endl;
 				pthread_mutex_lock(&mutex_partidasActivas);
