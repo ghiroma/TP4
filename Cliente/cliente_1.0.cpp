@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sstream>
+#include <fstream>
 #include <pthread.h>
 #include <time.h>
 #include <signal.h>
@@ -70,6 +71,7 @@ char CambiaNivel();
 char ventana_reparada(struct posicion *);
 string fillMessage(string);
 void PantallaIntermedia(char);
+void getConfiguration(unsigned short int* port, string* ip, int* arriba, int* derecha, int* abajo, int* izquierda, int* accion, int* salir);
 /* 
 
  0 - Pantalla intermedia para ingresar el nombre.
@@ -124,6 +126,16 @@ SDL_Rect pantalla_juego, pantalla_texto, pantalla_puntos, pantalla_vidas;
 SDL_Color color_texto;
 TTF_Font *fuente;
 
+//configuracion archivo configFile
+unsigned short int puertoTorneo;
+string ip = "";
+int key_arriba = -1;
+int key_derecha = -1;
+int key_abajo = -1;
+int key_izquierda = -1;
+int key_accion = -1;
+int key_salir = -1;
+
 int main(int argc, char *argv[]) {
 	CommunicationSocket * socketTorneo;
 	CommunicationSocket * socketPartida;
@@ -169,44 +181,51 @@ int main(int argc, char *argv[]) {
 		rocas_desplazamiento[i].y = 0;
 	}
 
-//Inicio modo video
+	//Inicio modo video
 	SDL_Init(SDL_INIT_VIDEO);
-//Inicio modo texto grafico
+	//Inicio modo texto grafico
 	TTF_Init();
 	signal(SIGINT, handler);
-//Defino las propiedades de la pantalla del juego
+	//Defino las propiedades de la pantalla del juego
 	superficie = SDL_SetVideoMode(ANCHO_PANTALLA, ALTO_PANTALLA, BPP,
 	SDL_HWSURFACE);
-//Seteo el titulo de la pantalla
+	//Seteo el titulo de la pantalla
 	SDL_WM_SetCaption("Rahlp Tournament", NULL);
-//Cargo la fuente
-	fuente = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24);
-//Color del texto
+	//Cargo la fuente
+	fuente = TTF_OpenFont("./Fuentes/DejaVuSans.ttf", 24);
+	//Color del texto
 	color_texto.r = color_texto.g = color_texto.b = 245;
 
-//Pantalla de inicio.
-//Acá se ingresa el nombre
+	//Pantalla de inicio.
+	//Acá se ingresa el nombre
 
-//Dimensiones rectangulo donde irá el texto
+	//Dimensiones rectangulo donde irá el texto
 	pantalla_texto.x = 10;
 	pantalla_texto.y = 10;
 
-//Pantalla para escribir el nombre.
-// ---
+	//Obtener configuracion inicial (ip, puerto, teclas)
+	getConfiguration(&puertoTorneo, &ip, &key_arriba, &key_derecha, &key_abajo, &key_izquierda, &key_accion, &key_salir);
+	if (puertoTorneo == 0 || ip.compare("") == 0) {
+		cout << "Error al obtener configuracion." << endl;
+		return 1;
+	}
+
+	//Pantalla para escribir el nombre.
+	// ---
 
 	PantallaIntermedia('0');
 	salir = 'N';
 
-//Conexion con el servidor de torneo.
+	//Conexion con el servidor de torneo.
 
-/////Ventana esperando servidor////
+	/////Ventana esperando servidor////
 
 	cout << "Intentando conectarme al torneo" << endl;
 	bool error = true;
 	do {
 		cout << "Esperando servidor" << endl;
 		try {
-			socketTorneo = new CommunicationSocket(5555, "127.0.0.1");
+			socketTorneo = new CommunicationSocket(puertoTorneo, (char*)ip.c_str());
 			error = false;
 		} catch (const char *err) {
 			cout << "mensaje : " << err << endl;
@@ -226,7 +245,7 @@ int main(int argc, char *argv[]) {
 	string mi_id = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO);
 	cout << "Mi id: " << mi_id << endl;
 
-//Thread para escuchar al servidor de Torneo.
+	//Thread para escuchar al servidor de Torneo.
 	pthread_create(&tpid_escuchar_torneo, NULL, EscuchaTorneo, &socketTorneo->ID);
 
 	//Espero que el servidor de Torneo me envie el puerto para conectarme al servidor de partida.
@@ -242,20 +261,20 @@ int main(int argc, char *argv[]) {
 		usleep(1000000);
 	}
 
-//Me conecto al servidor de partida.
+	//Me conecto al servidor de partida.
 	cout<<"Antes de inicializar el socketPartida "<<puertoServidorPartida<<endl;
-	socketPartida = new CommunicationSocket(puertoServidorPartida, "127.0.0.11");
+	socketPartida = new CommunicationSocket(puertoServidorPartida, (char*)ip.c_str());
 
 	string message(CD_ID_JUGADOR);
 	message.append(fillMessage(mi_id));
 
 	socketPartida->SendBloq(message.c_str(),message.length());
 
-//Empiezo a tirar Thread para comunicarme con el servidor de partida.
+	//Empiezo a tirar Thread para comunicarme con el servidor de partida.
 	pthread_create(&tpid_teclas, NULL, EscuchaServidor, &socketPartida->ID);
 	pthread_create(&tpid_envia, NULL, EnvioServidor, &socketPartida->ID);
 
-//Lanzo el thread que va a estar a la escucha de las teclas que se presionan.
+	//Lanzo el thread que va a estar a la escucha de las teclas que se presionan.
 	pthread_create(&tpid_teclas, NULL, EscuchaTeclas, NULL);
 
 	unsigned short int fila, columna;
@@ -268,7 +287,7 @@ int main(int argc, char *argv[]) {
 		pantalla_juego.h = ALTO_PANTALLA;
 
 		SDL_FillRect(superficie, &pantalla_juego, SDL_MapRGB(superficie->format, 0, 0, 0));
-//Dibujo la pared.
+	//Dibujo la pared.
 		switch (tramo) {
 		case 1:
 			pared = pared_tramo1n1;
@@ -282,7 +301,7 @@ int main(int argc, char *argv[]) {
 		}
 		Dibujar(PARED_X, PARED_Y, pared, superficie);
 
-//Dibujo los puntos.
+		//Dibujo los puntos.
 		pantalla_puntos.x = 10;
 		pantalla_puntos.y = 30;
 		sprintf(felix_cartel_puntos, "Puntos %d", felix1_puntos);
@@ -294,7 +313,7 @@ int main(int argc, char *argv[]) {
 		puntos = TTF_RenderText_Solid(fuente, felix_cartel_puntos, color_texto);
 		SDL_BlitSurface(puntos, NULL, superficie, &pantalla_puntos);
 
-//Dibujo las vidas.
+		//Dibujo las vidas.
 		pantalla_vidas.x = 10;
 		pantalla_vidas.y = 50;
 		sprintf(felix_cartel_vidas, "Vidas %d", felix1_vidas);
@@ -306,7 +325,7 @@ int main(int argc, char *argv[]) {
 		vidas = TTF_RenderText_Solid(fuente, felix_cartel_vidas, color_texto);
 		SDL_BlitSurface(vidas, NULL, superficie, &pantalla_vidas);
 
-//Dibujo el texto.
+		//Dibujo el texto.
 		pantalla_texto.x = 10;
 		pantalla_texto.y = 10;
 		texto = TTF_RenderText_Solid(fuente, felix1_nombre, color_texto);
@@ -316,7 +335,7 @@ int main(int argc, char *argv[]) {
 		texto = TTF_RenderText_Solid(fuente, felix2_nombre, color_texto);
 		SDL_BlitSurface(texto, NULL, superficie, &pantalla_texto);
 
-// cargar las ventanas del tramo 1 -- fila 0 es la de mas abajo.
+		// cargar las ventanas del tramo 1 -- fila 0 es la de mas abajo.
 		if (ventanas_cargadas == 'N') {
 			ventana_x = PARED_X + 45, ventana_y = PARED_Y + 25;
 			for (fila = 3; fila > 0; fila--) {
@@ -333,11 +352,11 @@ int main(int argc, char *argv[]) {
 
 		DibujarVentanas(ventanas_tramo1, 3, superficie);
 
-//Dibujo la puerta
+		//Dibujo la puerta
 		if (tramo == 1)
 			Dibujar(ventanas_tramo1[0][1].x + 65, 383, puerta, superficie);
 
-//Dibujo la torta
+		//Dibujo la torta
 		if (torta_aparece == 'S') {
 			Dibujar(ventanas_tramo1[torta_posicion.fila][torta_posicion.columna].x, ventanas_tramo1[torta_posicion.fila][torta_posicion.columna].y, torta, superficie);
 		} else {
@@ -348,7 +367,7 @@ int main(int argc, char *argv[]) {
 				torta_aparece = 'S';
 			}
 		}
-//Dibujo a Ralph
+		//Dibujo a Ralph
 		if (ralph == ralph_1)
 			ralph = ralph_2;
 		else if (ralph == ralph_2)
@@ -379,7 +398,7 @@ int main(int argc, char *argv[]) {
 			}
 		} else {
 			if (!cola_ralph.empty()) {
-// Me llegan numeradas del 1 al 5. Le resto 1 porque yo las tengo del 0 al 4.
+				// Me llegan numeradas del 1 al 5. Le resto 1 porque yo las tengo del 0 al 4.
 				ralph_destino = atoi(cola_ralph.front().substr(6, 1).c_str());
 				cola_ralph.pop();
 				cout << "Columna destino " << ralph_destino << endl;
@@ -392,7 +411,7 @@ int main(int argc, char *argv[]) {
 		}
 		Dibujar(ventanas_tramo1[2][ralph_posicion.columna].x, PARED_Y - 100, ralph, superficie);
 
-//Dibujo la pajaro
+		//Dibujo la pajaro
 
 		if (pajaro == pajaro_1)
 			pajaro = pajaro_2;
@@ -413,7 +432,7 @@ int main(int argc, char *argv[]) {
 				pajaro_moverse = 'S';
 			}
 		}
-//Dibujo a Felix
+		//Dibujo a Felix
 		if (felix1_reparar == 'N') {
 			if (felix1 == NULL)
 				felix1 = felix_d1;
@@ -447,7 +466,7 @@ int main(int argc, char *argv[]) {
 		if (felix2 == NULL)
 			felix2 = felix_d2;
 		Dibujar(120, 405, felix2, superficie);
-//Dibujo las rocas
+		//Dibujo las rocas
 		roca = roca1;
 		for (int i = 0; i < cant_rocas; i++) {
 			if (rocas_desplazamiento[i].x != 0) {
@@ -461,8 +480,8 @@ int main(int argc, char *argv[]) {
 				}
 			}
 		}
-//Ojo, hay que poner el delay porque sino el proceso no tiene tiempos muertos y 
-// el uso del procesador se me va al chori.
+		//Ojo, hay que poner el delay porque sino el proceso no tiene tiempos muertos y
+		// el uso del procesador se me va al chori.
 		if (ventanas_reparadas == 11) {
 			ventanas_reparadas = 10;
 			ventanas_cargadas = 'N';
@@ -481,7 +500,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-//	delete (socket);
+	//	delete (socket);
 	SDL_Quit();
 	TTF_CloseFont(fuente);
 	TTF_Quit();
@@ -639,13 +658,13 @@ void* EscuchaTeclas(void *arg) {
 	SDL_Event evento; //Con esta variable reconozco si se apreto una tecla o se apreto el mouse.
 	SDL_keysym keysym; //Con esta variable reconzco el codigo de la tecla que se apreto.
 
-//Lupeo escuchando el teclado.
+	//Lupeo escuchando el teclado.
 	while (SDL_WaitEvent(&evento) != 0) {
 
 		switch (evento.type) {
 
 		case SDL_KEYDOWN:
-			if (evento.key.keysym.sym == SDLK_DOWN) {
+			if (evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo ) {
 				if ((felix1_posicion.fila - 1) >= 0)
 					if ((felix1_posicion.fila - 1) != 0)
 						felix1_posicion.fila--;
@@ -663,7 +682,7 @@ void* EscuchaTeclas(void *arg) {
 				cout << "MENSAJE: " << message << endl;
 				cola_grafico.push(message);
 
-			} else if (evento.key.keysym.sym == SDLK_UP) {
+			} else if (evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba ) {
 				if (felix1_posicion.columna == 99) {
 					felix1_posicion.fila = 0;
 					felix1_posicion.columna = 0;
@@ -681,7 +700,7 @@ void* EscuchaTeclas(void *arg) {
 				cout << "MENSAJE: " << message << endl;
 				cola_grafico.push(message);
 
-			} else if (evento.key.keysym.sym == SDLK_RIGHT) {
+			} else if (evento.key.keysym.sym == SDLK_RIGHT || evento.key.keysym.sym == key_derecha) {
 				felix1 = felix_d1;
 				if (felix1_posicion.fila == 99) {
 					felix1_posicion.fila = 0;
@@ -703,7 +722,7 @@ void* EscuchaTeclas(void *arg) {
 				cout << "MENSAJE: " << message << endl;
 				cola_grafico.push(message);
 
-			} else if (evento.key.keysym.sym == SDLK_LEFT) {
+			} else if (evento.key.keysym.sym == SDLK_LEFT || evento.key.keysym.sym == key_izquierda) {
 				felix1 = felix_i1;
 				if ((felix1_posicion.columna - 1) >= 0)
 					if ((felix1_posicion.columna - 1) != 2)
@@ -722,9 +741,10 @@ void* EscuchaTeclas(void *arg) {
 				cout << "MENSAJE: " << message << endl;
 				cola_grafico.push(message);
 
-			} else if (evento.key.keysym.sym == SDLK_SPACE) {
+			} else if (evento.key.keysym.sym == SDLK_SPACE || evento.key.keysym.sym == key_accion) {
 				felix1_reparar = 'S';
-
+			} else if (evento.key.keysym.sym == key_salir) {
+				salir = 'S';
 			}
 			break;
 		case SDLK_ESCAPE:
@@ -857,4 +877,42 @@ string fillMessage(string message) {
 	int cantCeros = LONGITUD_CONTENIDO - message.length();
 	content.assign(cantCeros, '0');
 	return content.append(message);
+}
+
+/**
+ * Obtener la configuracion inicial del Cliente
+ */
+void getConfiguration(unsigned short int* port, string* ip, int* arriba, int* derecha, int* abajo, int* izquierda, int* accion, int* salir) {
+	string content;
+	string line;
+	fstream configFile("configFile", fstream::in | fstream::out);
+	while (getline(configFile, line)) {
+		if (line.find("IP") == 0) {
+			int pos = line.find(":");
+			string auxip = line.substr(pos + 1, line.length());
+			*ip = auxip.c_str();
+		} else if (line.find("Puerto") == 0) {
+			int pos = line.find(":");
+			string sport = line.substr(pos + 1, line.length());
+			*port = atoi(sport.c_str());
+		} else if (line.find("Arriba") == 0) {
+			int pos = line.find(":");
+			*arriba = (int)line.substr(pos + 1, line.length()).at(0);
+		} else if (line.find("Derecha") == 0) {
+			int pos = line.find(":");
+			*derecha = (int)line.substr(pos + 1, line.length()).at(0);
+		} else if (line.find("Abajo") == 0) {
+			int pos = line.find(":");
+			*abajo = (int)line.substr(pos + 1, line.length()).at(0);
+		} else if (line.find("Izquierda") == 0) {
+			int pos = line.find(":");
+			*izquierda = (int)line.substr(pos + 1, line.length()).at(0);
+		} else if (line.find("Accion") == 0) {
+			int pos = line.find(":");
+			*accion = (int)line.substr(pos + 1, line.length()).at(0);
+		} else if (line.find("Salir") == 0) {
+			int pos = line.find(":");
+			*salir= (int)line.substr(pos + 1, line.length()).at(0);
+		}
+	}
 }
