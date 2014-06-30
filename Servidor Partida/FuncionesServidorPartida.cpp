@@ -345,11 +345,23 @@ sharedMemory_thread (void * arguments)
 {
   //TODO usar la clase de semaforo.
   struct idsSharedResources * shmIds = (struct idsSharedResources *) arguments;
+  cout<<"key antes de utilizarse: "<<shmIds->shmId<<endl;
   int shmId = shmget (shmIds->shmId, sizeof(struct puntajes), PERMISOS_SHM);
-  //int shmId = shmget(23091991, sizeof(struct puntajes), 0666);
   if (shmId < 0)
     {
       cout << "SRV Partida error en shmget" << endl;
+      if(errno==ENOENT)
+	cout<<"No existe egmento de memoria para dicho key"<<endl;
+      if(errno==EACCES)
+	cout<<"No se tienen permisos"<<endl;
+      if(errno==EINVAL)
+	cout<<"No se puede crear porque ya existe."<<endl;
+
+    }
+  puntaje = (struct puntajes *) shmat (shmId, (void *) 0, 0);
+  if(puntaje==(void *)-1)
+    {
+      cout<<"Error en shmat"<<endl;
     }
   semPartida = sem_open (shmIds->semNamePartida, O_CREAT);
   semTorneo = sem_open (shmIds->semNameTorneo, O_CREAT);
@@ -359,8 +371,6 @@ sharedMemory_thread (void * arguments)
   //cout<<"SERV PARTIDA --> Sem_t * semaforo Torneo: "<<semTorneo.getSem_t()<<endl;
   //cout<<"SERV PARTIDA --> Sem_t * semaforo Partida: "<<semPartida.getSem_t()<<endl;
   int reintentos = 0;
-
-  puntaje = (struct puntajes *) shmat (shmId, (void *) 0, 0);
 
   cout << "Direccion de memoria compartida: " << puntaje << endl;
 

@@ -309,6 +309,8 @@ void* keepAlive(void* data) {
 		allMatchsFinished = todasLasPartidasFinalizadas;
 		pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);
 		cout << "keepalive torneos y partidas unmutex todasLasPartidasFinalizadas" << endl;
+
+		sleep(1);
 	}
 
 	auxSemSHMPartida.setSem_t(auxSemSHMPartida_Sem_t);
@@ -650,6 +652,7 @@ void* establecerPartidas(void* data) {
 					cout << "Error al generar clave de memoria compartida" << endl;
 					break;
 				}
+				cout<<"ftok key generada: "<<key<<endl;
 				int idShm = shmget(key, sizeof(struct puntajesPartida) * 1, IPC_CREAT | PERMISOS_SHM);
 				if (idShm == -1) {
 					cout << "Error al obtener memoria compartida" << endl;
