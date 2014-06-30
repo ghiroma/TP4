@@ -209,7 +209,8 @@ void* keepAlive(void* data) {
 			cout << "TIME WAIT IN: cant partACvtivas: " << partidasActivas.size() << endl;
 			cout<<"SHM Lecturas Fallidas: "<<it->lecturasFallidasSHM_Partida<<endl;
 			cout<<"SHM KeelAlivePartida: "<<resumenPartida->keepAlivePartida<<endl;
-			if (auxSemSHMPartida.timedWait(400000) == 0) {
+			//if (auxSemSHMPartida.timedWait(400000) == 0) {
+			if(sem_wait(auxSemSHMPartida.getSem_t())==0){
 				//Pudo acceder a la SHM
 				cout << "Accedio por el Sem SHM" << endl;
 
