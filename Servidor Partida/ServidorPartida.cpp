@@ -70,6 +70,8 @@ main (int argc, char * argv[])
 
   srand (time (NULL));
 
+  ppid = getppid();
+
   if (argc == 2)
     {
       puerto = atoi (argv[0]);

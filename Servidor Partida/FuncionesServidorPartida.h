@@ -18,6 +18,8 @@
 
 using namespace std;
 
+extern pid_t ppid;
+
 extern bool stop;
 extern bool cliente1_conectado;
 extern bool cliente2_conectado;
