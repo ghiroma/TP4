@@ -24,8 +24,11 @@
 #include <semaphore.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 
 using namespace std;
+
+pid_t ppid;
 
 int filaPreviaPersiana = 0;
 int columnaPreviaPersiana = 0;
@@ -379,6 +382,14 @@ sharedMemory_thread (void * arguments)
 
   while (stop == false && (cliente1_conectado || cliente2_conectado))
     {
+
+/*      cout<<"El pid del padre original era: "<<ppid<<endl;
+
+      if(kill(ppid,0)==-1)
+	{
+	  cout<<"Padre muerto"<<endl;
+	}*/
+
       //cout << "Espererando en el timedwait" << endl;
       if (sem_timedwait (semTorneo, &ts))
 	{
@@ -400,14 +411,14 @@ sharedMemory_thread (void * arguments)
 	      aux.jugando = true;
 	      //if (puntaje->keepAliveTorneo == false)
 		//reintentos++;
-	      aux.keepAliveTorneo = false;
+	      //aux.keepAliveTorneo = false;
 	      puntaje = &aux;
 
 	      //cout << "Escribi en la memoria compartida" << endl;
 	    }
 	  else //Murieron los dos jugadores.
 	    {
-	      //cout << "Jugadores desconectados dentro del semaforo" << endl;
+	      cout << "Jugadores desconectados dentro del semaforo" << endl;
 
 	      struct puntajes aux;
 	      aux.idJugador1 = felix1->id;
