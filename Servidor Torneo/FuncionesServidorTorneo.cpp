@@ -204,7 +204,7 @@ void* keepAlive(void* data) {
 
 			auxSemSHMPartida.setSem_t(it->semaforo_pointerSem_t_Partida);
 			cout << "TIME WAIT IN" << endl;
-			if (auxSemSHMPartida.timedWait(400000) == 0) {
+			if (auxSemSHMPartida.timedWait(400000000) == 0) {
 				//Pudo acceder a la SHM
 				cout << "Accedio por el Sem SHM" << endl;
 

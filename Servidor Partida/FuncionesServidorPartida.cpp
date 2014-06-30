@@ -431,8 +431,6 @@ sharedMemory_thread (void * arguments)
 	      cout << "timedout semaforo" << endl;
 	      cout << "Reintentos: " << reintentos << endl;
 
-	      sleep (2);
-
 	      reintentos++;
 	      if (reintentos == 5)
 		{
