@@ -40,12 +40,15 @@ static const char* CD_PUERTO_PARTIDA = "07";
 static const char* CD_VENTANA_ARREGLADA = "08";
 static const char* CD_ACK = "99";
 static const char* CD_PERDIO = "98";
+static const char* CD_TORNEO_CAIDO = "97";
+static const char* CD_RANKING = "80";
 //const char *
 //const char *
 //const char *
 //const char *
 //const char *
 
+static const int CD_RANKING_I = 80;
 static const int CD_MOVIMIENTO_FELIX_I = 4;
 static const int CD_PERDIDA_VIDA_I = 5;
 static const int CD_VENTANA_ARREGLADA_I = 8;
