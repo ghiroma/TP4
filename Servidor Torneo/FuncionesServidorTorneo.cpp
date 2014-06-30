@@ -758,6 +758,9 @@ void liberarRecursos() {
 		 * ver como borrar la SHM
 		 */
 
+		//shmdt ((char *)Memoria);
+		//shmctl (Id_Memoria, IPC_RMID, (struct shmid_ds *)NULL);
+
 		//shmdt((char *) it);
 		//shmctl(it, IPC_RMID, (struct shmid_ds *) NULL);
 	}
