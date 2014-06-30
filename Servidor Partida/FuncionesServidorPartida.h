@@ -14,6 +14,7 @@
 #include <time.h>
 #include <queue>
 #include <string>
+#include <semaphore.h>
 
 using namespace std;
 
@@ -40,6 +41,11 @@ extern pthread_mutex_t mutex_receiver1;
 extern pthread_mutex_t mutex_receiver2;
 extern pthread_mutex_t mutex_sender1;
 extern pthread_mutex_t mutex_sender2;
+
+extern sem_t * semPartida;
+extern sem_t* semTorneo;
+
+extern struct puntajes * puntaje;
 
 bool TimeDifference(int timeDifference, time_t startingTime);
 void* timer_thread(void* argument);

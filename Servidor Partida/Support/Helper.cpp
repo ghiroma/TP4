@@ -28,6 +28,7 @@ string Helper::fillMessage(string message) {
 
 void Helper::encolar(string *message, queue<string> *cola,pthread_mutex_t *mutex)
 {
+
 	pthread_mutex_lock(mutex);
 	cola->push(*message);
 	pthread_mutex_unlock(mutex);
