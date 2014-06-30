@@ -345,8 +345,8 @@ sharedMemory_thread (void * arguments)
 {
   //TODO usar la clase de semaforo.
   struct idsSharedResources * shmIds = (struct idsSharedResources *) arguments;
+  cout<<"key antes de utilizarse: "<<shmIds->shmId<<endl;
   int shmId = shmget (shmIds->shmId, sizeof(struct puntajes), PERMISOS_SHM);
-  //int shmId = shmget(23091991, sizeof(struct puntajes), 0666);
   if (shmId < 0)
     {
       cout << "SRV Partida error en shmget" << endl;

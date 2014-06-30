@@ -25,6 +25,7 @@
 #include <string.h>
 #include <poll.h>
 #include <sys/shm.h>
+#include <errno.h>
 
 
 using namespace std;
@@ -41,7 +42,7 @@ main (int argc, char * argv[])
 
   cout << "Servidor Partida iniciado" << endl;
 
-  int puerto;
+  unsigned int puerto;
   int cantVidas;
   int response = 0;
   int cantClientes = 0;
@@ -79,6 +80,11 @@ main (int argc, char * argv[])
       if (ids.shmId == -1)
 	{
 	  cout << "Error al generar el shmId el error es: " << endl;
+	  if(errno==EACCES)
+	    cout<<"Error de permisos"<<endl;
+	  if(errno==ENOENT)
+	    cout<<"Path inexistente"<<endl;
+
 	}
       cout << "SRV PARTIDA CREO SHMID: " << ids.shmId << endl;
 
