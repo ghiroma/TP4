@@ -90,6 +90,9 @@ void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* 
 	}
 }
 
+/**
+ * Manejador de señales
+ */
 void SIG_Handler(int inum) {
 	cout << "Señal Handler" << endl;
 	liberarRecursos();
@@ -203,7 +206,9 @@ void* keepAlive(void* data) {
 		for (list<datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
 
 			auxSemSHMPartida.setSem_t(it->semaforo_pointerSem_t_Partida);
-			cout << "TIME WAIT IN" << endl;
+			cout << "TIME WAIT IN: cant partACvtivas: " << partidasActivas.size() << endl;
+			cout<<"SHM Lecturas Fallidas: "<<it->lecturasFallidasSHM_Partida<<endl;
+			cout<<"SHM KeelAlivePartida: "<<resumenPartida->keepAlivePartida<<endl;
 			if (auxSemSHMPartida.timedWait(400000) == 0) {
 				//Pudo acceder a la SHM
 				cout << "Accedio por el Sem SHM" << endl;
@@ -214,9 +219,9 @@ void* keepAlive(void* data) {
 				if (resumenPartida->keepAlivePartida == true) {
 					it->lecturasFallidasSHM_Partida = 0;
 					resumenPartida->keepAlivePartida = false;
-				}// else {
-				//	it->lecturasFallidasSHM_Partida++;
-				//}
+				}	// else {
+					//	it->lecturasFallidasSHM_Partida++;
+					//}
 
 				if (it->lecturasFallidasSHM_Partida >= 5) {
 					cout << "+5 Fallas -> entra por el Semaforo que lo habilito" << endl;
@@ -267,6 +272,18 @@ void* keepAlive(void* data) {
 						listJugadores[resumenPartida->idJugador1]->Jugando = false;
 						listJugadores[resumenPartida->idJugador2]->Jugando = false;
 					}
+
+					//quitar partida el de la lista
+					partidasActivas.erase(it);
+
+					//cerrar SEMAFOROS
+					auxSemSHMPartida.close();
+					auxSemSHMTorneo.close();
+
+					//limpiar memoria compartida
+					shmdt((struct datosPartida *) resumenPartida);
+					shmctl(it->idShm, IPC_RMID, (struct shmid_ds *) NULL);
+
 					pthread_mutex_unlock(&mutex_listJugadores);
 					cout << "unmutex keepAlive listJugadores" << endl;
 				}
@@ -292,7 +309,7 @@ void* keepAlive(void* data) {
 					shmdt((struct datosPartida *) resumenPartida);
 					shmctl(it->idShm, IPC_RMID, (struct shmid_ds *) NULL);
 				}
-
+				cout<<"NO PUDO ACCEDER AL SEMAFORO WAIT PORQUE ESTA BLOQUEADO"<<endl;
 				it->lecturasFallidasSHM_Partida++;
 			}
 		}
@@ -324,8 +341,7 @@ void* keepAlive(void* data) {
 void* modoGrafico(void* data) {
 	struct thModoGrafico_data *torneo;
 	torneo = (struct thModoGrafico_data *) data;
-	//son globales ahora -> SDL_Surface *screen, *background, *tiempo, *jugadores, *infoJugador_part1, *infoJugador_part2;
-	//globales -> TTF_Font *font;
+
 	SDL_Rect posDestino, posBackground, posTiempo, posJugadores;
 	SDL_Color colorNegro, colorBlanco;
 
@@ -648,7 +664,7 @@ void* establecerPartidas(void* data) {
 					cout << "Error al generar clave de memoria compartida" << endl;
 					break;
 				}
-				cout<<"ftok key generada: "<<key<<endl;
+				cout << "ftok key generada: " << key << endl;
 				int idShm = shmget(key, sizeof(struct puntajesPartida) * 1, IPC_CREAT | PERMISOS_SHM);
 				if (idShm == -1) {
 					cout << "Error al obtener memoria compartida" << endl;
@@ -759,7 +775,6 @@ void liberarRecursos() {
 
 		//shmdt ((char *)Memoria);
 		//shmctl (Id_Memoria, IPC_RMID, (struct shmid_ds *)NULL);
-
 		//shmdt((char *) it);
 		//shmctl(it, IPC_RMID, (struct shmid_ds *) NULL);
 	}
