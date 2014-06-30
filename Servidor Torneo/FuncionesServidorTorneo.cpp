@@ -273,7 +273,7 @@ void* keepAlive(void* data) {
 
 				auxSemSHMTorneo.setSem_t(it->semaforo_pointerSem_t_Torneo);
 				auxSemSHMTorneo.V();
-				usleep(400000);
+
 			} else {
 				//No pudo acceder a la SHM por el Semaforo
 				cout << "No pudo acceder a SHM por el semaforo" << endl;
@@ -295,14 +295,11 @@ void* keepAlive(void* data) {
 
 				it->lecturasFallidasSHM_Partida++;
 			}
-
-			if (partidasActivas.size() == 0) {
-				usleep(400000);
-			}
-
 		}
 		pthread_mutex_unlock(&mutex_partidasActivas);
 		cout << "unmutex keepAlive partidasActivas" << endl;
+
+		usleep(400000);
 
 		pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
 		cout << "keepalive torneos y partidas mutex  todasLasPartidasFinalizadas" << endl;
@@ -310,7 +307,6 @@ void* keepAlive(void* data) {
 		pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);
 		cout << "keepalive torneos y partidas unmutex todasLasPartidasFinalizadas" << endl;
 
-		sleep(1);
 	}
 
 	auxSemSHMPartida.setSem_t(auxSemSHMPartida_Sem_t);
