@@ -44,8 +44,6 @@ extern pthread_mutex_t mutex_receiver2;
 extern pthread_mutex_t mutex_sender1;
 extern pthread_mutex_t mutex_sender2;
 
-extern sem_t * semPartida;
-extern sem_t* semTorneo;
 
 extern struct puntajes * puntaje;
 extern struct idsSharedResources shmIds;

@@ -14,9 +14,7 @@ struct puntajes
 	int idJugador2;
 	int puntajeJugador1;
 	int puntajeJugador2;
-	bool jugando;
-	bool keepAlivePartida;
-	bool keepAliveTorneo;
+	bool partidaFinalizadaOk;
 };
 
 struct idsSharedResources
