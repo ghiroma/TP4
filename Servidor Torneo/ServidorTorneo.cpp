@@ -25,7 +25,7 @@ unsigned int puertoPartida;
 int cantVidas = 0;
 
 int main(int argc, char * argv[]) {
-	Semaforo sem1("/timer",1);
+/*	Semaforo sem1("/timer",1);
 	sem1.close();
 	Semaforo sem2("/timer",1);
 	while( true ){
@@ -36,7 +36,7 @@ int main(int argc, char * argv[]) {
 			cout<<"semaforo MALL espero un tiempo y siguio dando bloqueado"<<endl;
 		}
 
-	}
+	}*/
 
 	cout << "Comienza servidor Torneo PID:" << getpid() << endl;
 	string ip = "";

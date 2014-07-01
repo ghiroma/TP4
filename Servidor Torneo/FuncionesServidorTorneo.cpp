@@ -104,9 +104,9 @@ void SIG_Handler(int inum) {
 }
 
 void SIG_CHLD(int inum) {
-	cout << "Señal Handler SIGCHLD - PID:" << getpid() << endl;
-	wait(NULL);
-	exit(1);
+	int childpid = wait(NULL);
+	cout << "Señal Handler SIGCHLD - PID:" << childpid << endl;
+	//exit(1);
 }
 
 /**
