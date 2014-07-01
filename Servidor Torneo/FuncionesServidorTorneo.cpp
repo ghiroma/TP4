@@ -108,7 +108,10 @@ void SIG_CHLD(int inum) {
 	//borro la partida de la lista de activas
 	pthread_mutex_lock(&mutex_partidasActivas);
 	for (list<datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
+		cout << "buscando idSHM" << endl;
+		cout << "pidPartida:" << endl;
 		if (it->pidPartida == childpid) {
+			cout << "encontro el idSHM:" << it->idShm;
 			idSHM = it->idShm;
 			partidasActivas.erase(it);
 			break;
@@ -116,6 +119,7 @@ void SIG_CHLD(int inum) {
 	}
 	pthread_mutex_unlock(&mutex_partidasActivas);
 
+	cout << "id SHM:" << idSHM << endl;
 	//pongo a los jugadores en no JUNGADO
 	puntajesPartida * resumenPartida;
 	resumenPartida = (struct puntajesPartida *) shmat(idSHM, (char *) 0, 0);
@@ -606,25 +610,6 @@ void* establecerPartidas(void* data) {
 				}
 				cout << "SERV TORNEO Partida: " << puertoPartida << "  ID SHM: " << idShm << endl;
 
-				//inicializo el BLOQUE DE SHM
-				puntajesPartida* resumenPartida = (struct puntajesPartida *) shmat(idShm, (char *) 0, 0);
-				resumenPartida->idJugador1 = -1;
-				resumenPartida->idJugador2 = -1;
-				resumenPartida->puntajeJugador1 = 0;
-				resumenPartida->puntajeJugador2 = 0;
-				resumenPartida->partidaFinalizadaOK = false;
-
-				//genero y cargo los datos de la partida en una lista
-				datosPartida structuraDatosPartida;
-				structuraDatosPartida.idShm = idShm;
-				structuraDatosPartida.pidPartida = getpid();
-
-				cout << "mutex establecerPartidas partidasActivas" << endl;
-				pthread_mutex_lock(&mutex_partidasActivas);
-				partidasActivas.push_back(structuraDatosPartida);
-				pthread_mutex_unlock(&mutex_partidasActivas);
-				cout << "unmutex establecerPartidas partidasActivas" << endl;
-
 				//Le mando a los jugadores el nro de Puerto en el que comenzara la partida
 				char auxPuertoNuevaPartida[LONGITUD_CONTENIDO];
 				sprintf(auxPuertoNuevaPartida, "%d", puertoPartida);
@@ -652,6 +637,24 @@ void* establecerPartidas(void* data) {
 					cout << "Error al forkear" << endl;
 				} else {
 					//Soy el padre.
+					//inicializo el BLOQUE DE SHM
+					puntajesPartida* resumenPartida = (struct puntajesPartida *) shmat(idShm, (char *) 0, 0);
+					resumenPartida->idJugador1 = -1;
+					resumenPartida->idJugador2 = -1;
+					resumenPartida->puntajeJugador1 = 0;
+					resumenPartida->puntajeJugador2 = 0;
+					resumenPartida->partidaFinalizadaOK = false;
+
+					//genero y cargo los datos de la partida en una lista
+					datosPartida structuraDatosPartida;
+					structuraDatosPartida.idShm = idShm;
+					structuraDatosPartida.pidPartida = pid;
+
+					cout << "mutex establecerPartidas partidasActivas" << endl;
+					pthread_mutex_lock(&mutex_partidasActivas);
+					partidasActivas.push_back(structuraDatosPartida);
+					pthread_mutex_unlock(&mutex_partidasActivas);
+					cout << "unmutex establecerPartidas partidasActivas" << endl;
 				}
 			} else {
 				//cout << "J" << idJugador << " No puede jugar" << endl;
