@@ -42,6 +42,8 @@ int main(int argc, char * argv[]) {
 	pthread_t thModoGrafico;
 	int resultThModoGrafico;
 	thModoGrafico_data modoGraficoData;
+	pthread_t thSDLEventos;
+	int resultThSDLEventos;
 
 	signal(SIGINT, SIG_Handler);
 	signal(SIGTERM, SIG_Handler);
@@ -55,6 +57,13 @@ int main(int argc, char * argv[]) {
 	}
 	puertoPartida = puertoTorneo;
 	cout << "puertoTorneo: " << puertoTorneo << endl;
+
+	//Lanzar THREAD SDL Eventos
+	resultThSDLEventos = pthread_create(&thSDLEventos, NULL, sdlEventos, NULL);
+	/*if (resultThSDLEventos) {
+		cout << "Error no se pudo crear el thread de SDL Eventos" << endl;
+		return 1;
+	}*/
 
 	//Lanzar THREAD establecer partidas
 	resultThEstablecerPartidas = pthread_create(&thEstablecerPartidas, NULL, establecerPartidas, NULL);
