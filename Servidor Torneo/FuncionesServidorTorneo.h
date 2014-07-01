@@ -32,7 +32,6 @@ void* keepAliveJugadores(void*);
 void* modoGrafico(void*);
 void* aceptarJugadores(void* data);
 void* establecerPartidas(void* data);
-void* keepAlive(void*);
 
 //AUXILIARES
 string fillMessage(string message);

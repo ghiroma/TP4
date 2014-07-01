@@ -25,19 +25,6 @@ unsigned int puertoPartida;
 int cantVidas = 0;
 
 int main(int argc, char * argv[]) {
-/*	Semaforo sem1("/timer",1);
-	sem1.close();
-	Semaforo sem2("/timer",1);
-	while( true ){
-
-		if(sem2.timedWait(1000000) == 0){
-			cout<<"semaforo OK entra por VERDADERO"<<endl;
-		}else{
-			cout<<"semaforo MALL espero un tiempo y siguio dando bloqueado"<<endl;
-		}
-
-	}*/
-
 	cout << "Comienza servidor Torneo PID:" << getpid() << endl;
 	string ip = "";
 	int duracionTorneo = 0;
@@ -55,8 +42,6 @@ int main(int argc, char * argv[]) {
 	pthread_t thModoGrafico;
 	int resultThModoGrafico;
 	thModoGrafico_data modoGraficoData;
-	pthread_t thKeepAlive;
-	int resultThKeepAlive;
 
 	signal(SIGINT, SIG_Handler);
 	signal(SIGTERM, SIG_Handler);
@@ -100,13 +85,6 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 
-	//Lanzar THREAD KEEPALIVE (partidas)
-	resultThKeepAlive = pthread_create(&thKeepAlive, NULL, keepAlive, (void *) NULL);
-	if (resultThKeepAlive) {
-		cout << "Error no se pudo crear el thread de KeepAlive" << endl;
-		return 1;
-	}
-
 	//Lanzar THREAD temporizador del torneo
 	temporizacion.duracion = duracionTorneo;
 	temporizacion.thAceptarJugadores = thAceptarJugadores;
@@ -117,11 +95,8 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 
-	//pthread_join(thTemporizadorTorneo, NULL);    //no hace falta
-	//pthread_join(thEstablecerPartidas, NULL);    //no hace falta
 	pthread_join(thModoGrafico, NULL);
 	pthread_join(thkeepAliveJugadores, NULL);
-	pthread_join(thKeepAlive, NULL);
 
 	//    //    //    //    //    //    //    //    ///
 	//ver si hace falta??????????
