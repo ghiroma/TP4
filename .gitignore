@@ -1,3 +1,5 @@
 *~
-
+*.o
+Cliente/Debug/*
+Servidor Torneo/Debug/*
 Servidor Partida/Debug/*
