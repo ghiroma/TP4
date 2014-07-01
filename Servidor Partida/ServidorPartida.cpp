@@ -87,10 +87,12 @@ main (int argc, char * argv[])
 
 	  exit (1);
 	}
+/*
       string nombreSemaforoPartida = "/" + intToString (puerto) + "_Partida";
       string nombreSemaforoTorneo = "/" + intToString (puerto) + "_Torneo";
       shmIds.semNamePartida = nombreSemaforoPartida.c_str ();
       shmIds.semNameTorneo = nombreSemaforoTorneo.c_str ();
+*/
 
       cout<<"Parametros seteados"<<endl;
     }
@@ -141,8 +143,6 @@ main (int argc, char * argv[])
   FD_ZERO(&fds);
   FD_SET(cSocket1->ID, &fds);
   FD_SET(cSocket2->ID, &fds);
-
-  int reintentos=0;
 
   while (felix1 == NULL && felix2 == NULL)
     {

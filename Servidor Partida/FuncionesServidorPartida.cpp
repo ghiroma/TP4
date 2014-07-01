@@ -53,12 +53,9 @@ Felix *felix2;
 Edificio *edificio;
 
 pthread_mutex_t mutex_receiver1 = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_t mutex_receiver2 = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_t mutex_sender1 = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_t mutex_sender2 = PTHREAD_MUTEX_INITIALIZER;
-
-    sem_t * semPartida,
-*semTorneo;
+pthread_mutex_t mutex_receiver2 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_sender1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_sender2 = PTHREAD_MUTEX_INITIALIZER;
 
 struct puntajes * puntaje;
 struct idsSharedResources shmIds;
@@ -267,9 +264,6 @@ validator_thread (void * argument)
 	  receiver1_queue.pop ();
 	  string scodigo = message.substr (0, LONGITUD_CODIGO);
 	  int codigo = atoi (scodigo.c_str ());
-	  //Dependiendo del codigo, voy a ver que valido.
-	  //TODO me van mandar el id, asi que yo tengo que crear los Felix de cada
-	  //Jugador.
 	  switch (codigo)
 	    {
 	    //Escribe en el sender_queue.
@@ -294,7 +288,7 @@ validator_thread (void * argument)
 	      break;
 	    case CD_PERDIDA_VIDA_I:
 	      cout << "Perdieron vida" << endl;
-	      if (validateLives (felix1))
+	      if (!validateLives (felix1))
 		{
 		  string message1 (CD_PERDIDA_VIDA);
 		  string message2 (CD_PERDIDA_VIDA);
@@ -328,15 +322,69 @@ validator_thread (void * argument)
 	    }
 
 	}
+
       if (!receiver2_queue.empty ())
 	{
 	  string message = receiver2_queue.front ();
 	  receiver2_queue.pop ();
+	  string scodigo = message.substr (0, LONGITUD_CODIGO);
+	  int codigo = atoi (scodigo.c_str ());
+	  switch (codigo)
+	    {
+	    case CD_MOVIMIENTO_FELIX_I:
+	      int fila;
+	      int columna;
+	      cout << "Entro a movimiento felix" << endl;
+	      fila = atoi (message.substr (5, 1).c_str ());
+	      columna = atoi (message.substr (6, 1).c_str ());
 
-	  //switch()
-	  //{
+	      if (validateMovement (felix2, fila, columna, edificio))
+		{
+		  string mensaje_movimiento1 = scodigo
+		      + Helper::fillMessage ("2" + message.substr (2, 2));
+		  string mensaje_movimiento2 = scodigo
+		      + Helper::fillMessage ("1" + message.substr (2, 2));
+		  Helper::encolar (&mensaje_movimiento1, &sender1_queue,
+				   &mutex_sender1);
+		  Helper::encolar (&mensaje_movimiento2, &sender2_queue,
+				   &mutex_sender2);
+		}
+	      break;
+	    case CD_PERDIDA_VIDA_I:
+	      cout << "Perdieron vida" << endl;
+	      if (!validateLives (felix2))
+		{
+		  string message1 (CD_PERDIDA_VIDA);
+		  string message2 (CD_PERDIDA_VIDA);
+		  message1.append (Helper::fillMessage ("2"));
+		  message2.append (Helper::fillMessage ("1"));
+		  Helper::encolar (&message1, &sender1_queue, &mutex_sender1);
+		  Helper::encolar (&message2, &sender2_queue, &mutex_sender2);
+		}
+	      else
+		{
+		  string message1 (CD_PERDIO);
+		  string message2 (CD_PERDIO);
+		  message1.append (Helper::fillMessage ("2"));
+		  message2.append (Helper::fillMessage ("1"));
+		  Helper::encolar (&message1, &sender1_queue, &mutex_sender1);
+		  Helper::encolar (&message2, &sender2_queue, &mutex_sender2);
+		  cliente2_jugando = false;
+		}
+	      break;
 
-	  //}
+	    case CD_VENTANA_ARREGLADA_I:
+	      if (validateWindowFix (felix2, edificio))
+		{
+		  string message1 (CD_VENTANA_ARREGLADA);
+		  string message2 (CD_VENTANA_ARREGLADA);
+		  message1.append (Helper::fillMessage ("2"));
+		  message2.append (Helper::fillMessage ("1"));
+		  Helper::encolar (&message1, &sender1_queue, &mutex_sender1);
+		  Helper::encolar (&message2, &sender2_queue, &mutex_sender2);
+		}
+	      break;
+	    }
 	}
 
       usleep (POLLING_DEADTIME);
@@ -348,9 +396,6 @@ validator_thread (void * argument)
 void*
 sharedMemory_thread (void * arguments)
 {
-  //TODO usar la clase de semaforo.
-  //struct idsSharedResources * shmIds = (struct idsSharedResources *) arguments;
-  //cout<<"key antes de utilizarse: "<<shmIds->shmId<<endl;
   int shmId = shmget (shmIds.shmId, sizeof(struct puntajes), PERMISOS_SHM);
   if (shmId < 0)
     {
@@ -368,90 +413,30 @@ sharedMemory_thread (void * arguments)
     {
       cout << "Error en shmat" << endl;
     }
-  semPartida = sem_open (shmIds.semNamePartida, O_CREAT);
-  semTorneo = sem_open (shmIds.semNameTorneo, O_CREAT);
 
-  //Semaforo semTorneo(shmIds->semNameTorneo);
-  //Semaforo semPartida(shmIds->semNamePartida);
-  //cout<<"SERV PARTIDA --> Sem_t * semaforo Torneo: "<<semTorneo.getSem_t()<<endl;
-  //cout<<"SERV PARTIDA --> Sem_t * semaforo Partida: "<<semPartida.getSem_t()<<endl;
-  int reintentos = 0;
-
-  // cout << "Direccion de memoria compartida: " << puntaje << endl;
-
-  struct timespec ts;
-  ts.tv_sec = 1;
-
-  while (stop == false && (cliente1_conectado || cliente2_conectado))
+  while (stop == false)
     {
+
       if (kill (ppid, 0) == -1)
 	{
 	  stop = true;
 	}
 
-      //cout << "Espererando en el timedwait" << endl;
-      if (sem_timedwait (semTorneo, &ts))
+      //Perdieron ambos, asi que finalmente cierro.
+      if (cliente1_jugando && cliente2_jugando)
 	{
-	  //if (semTorneo.timedWait(700000) == 0) {
+	  cout << "Murieron ambos jugadores" << endl;
+	  struct puntajes aux;
+	  aux.idJugador1 = felix1->id;
+	  aux.idJugador2 = felix2->id;
+	  aux.puntajeJugador1 = felix1->puntaje_parcial;
+	  aux.puntajeJugador2 = felix2->puntaje_parcial;
+	  aux.partidaFinalizadaOk = true;
+	  puntaje = &aux;
 
-	  reintentos = 0;
-
-	  if ((cliente1_jugando || cliente2_jugando)
-	      && (cliente1_conectado || cliente2_conectado))
-	    {
-
-	      struct puntajes aux;
-	      aux.idJugador1 = felix1->id;
-	      aux.idJugador2 = felix2->id;
-	      aux.puntajeJugador1 = felix1->puntaje_parcial;
-	      aux.puntajeJugador2 = felix2->puntaje_parcial;
-	      aux.keepAlivePartida = true;
-	      aux.jugando = true;
-	      //if (puntaje->keepAliveTorneo == false)
-	      //reintentos++;
-	      //aux.keepAliveTorneo = false;
-	      puntaje = &aux;
-
-	    }
-	  else //Murieron los dos jugadores.
-	    {
-	      cout << "Jugadores desconectados dentro del semaforo" << endl;
-
-	      struct puntajes aux;
-	      aux.idJugador1 = felix1->id;
-	      aux.idJugador2 = felix2->id;
-	      aux.puntajeJugador1 = felix1->puntaje_parcial;
-	      aux.puntajeJugador2 = felix2->puntaje_parcial;
-	      aux.keepAlivePartida = true;
-	      aux.jugando = false;
-	      puntaje = &aux;
-	      stop = true;
-	    }
-	  //semPartida.V();
-	  sem_post (semPartida);
-	  //cout << "V de semaforo Torneo." << endl;
+	  stop = true;
 	}
-      else
-	{
-	  if (errno == ETIMEDOUT)
-	    {
-
-	      cout << "timedout semaforo" << endl;
-	      cout << "Reintentos: " << reintentos << endl;
-
-	      reintentos++;
-	      if (reintentos == 5)
-		{
-		  cout << "Se cerro el servidor torneo" << endl;
-		  stop = true;
-
-		}
-	      //TODO Murio el servidor asi que tengo que cancelar todo y cerrar todo.
-	    }
-	}
-      usleep (POLLING_DEADTIME);
     }
-
 }
 
 int
@@ -575,11 +560,12 @@ liberarRecursos ()
 {
   if (puntaje != NULL)
     shmdt (puntaje);
-  shmctl (shmIds.shmId, IPC_RMID, 0);
-  sem_close (semPartida);
-  sem_unlink (shmIds.semNamePartida);
-  sem_close (semTorneo);
-  sem_unlink (shmIds.semNameTorneo);
+  if (shmctl (shmIds.shmId, IPC_RMID, 0) == -1)
+    cout << "No se pudo remover la memoria compartida" << endl;
+  /*sem_close (semPartida);
+   sem_unlink (shmIds.semNamePartida);
+   sem_close (semTorneo);
+   sem_unlink (shmIds.semNameTorneo);*/
   if (cSocket1 != NULL)
     delete (cSocket1);
   if (cSocket2 != NULL)
