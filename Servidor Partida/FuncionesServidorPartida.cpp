@@ -337,14 +337,19 @@ sharedMemory_thread (void * arguments)
 	}
 
       //Perdieron ambos, asi que finalmente cierro.
+      //if (!cliente1_jugando && !cliente2_jugando)
       if (cliente1_jugando && cliente2_jugando)
 	{
 	  cout << "Murieron ambos jugadores" << endl;
 	  struct puntajes aux;
+	  cout<<"felix1 id"<<felix1->id<<endl;
+	  cout<<"felix2 id"<<felix2->id<<endl;
 	  aux.idJugador1 = felix1->id;
 	  aux.idJugador2 = felix2->id;
-	  aux.puntajeJugador1 = felix1->puntaje_parcial;
-	  aux.puntajeJugador2 = felix2->puntaje_parcial;
+	  /*aux.puntajeJugador1 = felix1->puntaje_parcial;
+	   aux.puntajeJugador2 = felix2->puntaje_parcial;*/
+	  aux.puntajeJugador1 = 1500;
+	  aux.puntajeJugador2 = 2000;
 	  aux.partidaFinalizadaOk = true;
 	  puntaje = &aux;
 

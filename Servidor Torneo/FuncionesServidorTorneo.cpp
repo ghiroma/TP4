@@ -106,6 +106,7 @@ void SIG_CHLD(int inum) {
 
 	int idSHM;
 	//borro la partida de la lista de activas
+	pthread_mutex_lock(&mutex_partidasActivas);
 	for (list<datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
 		if (it->pidPartida == childpid) {
 			idSHM = it->idShm;
@@ -173,7 +174,6 @@ void SIG_CHLD(int inum) {
 	cout << "partidaFinalizadaOK:" << resumenPartida->partidaFinalizadaOK << endl;
 	cout << "puntajeJugador1:" << resumenPartida->puntajeJugador1 << endl;
 	cout << "puntajeJugador2:" << resumenPartida->puntajeJugador2 << endl;
-	pthread_mutex_lock(&mutex_partidasActivas);
 
 	//desasocio la memoria compartida
 	shmdt((struct datosPartida *) resumenPartida);
