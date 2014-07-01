@@ -27,7 +27,6 @@
 #include <sys/shm.h>
 #include <errno.h>
 
-
 using namespace std;
 
 struct args_struct
@@ -47,7 +46,6 @@ main (int argc, char * argv[])
   int response = 0;
   int cantClientes = 0;
 
-  struct idsSharedResources ids;
   struct timeval timeout;
 
   fd_set fds;
@@ -70,7 +68,7 @@ main (int argc, char * argv[])
 
   srand (time (NULL));
 
-  ppid = getppid();
+  ppid = getppid ();
 
   if (argc == 2)
     {
@@ -78,47 +76,37 @@ main (int argc, char * argv[])
       cantVidas = atoi (argv[1]);
       cout << "Numero de puerto " << puerto << endl;
       cout << "Cantidad de vidas " << cantVidas << endl;
-      ids.shmId = ftok ("/bin/ls", puerto);
-      if (ids.shmId == -1)
+      shmIds.shmId = ftok ("/bin/ls", puerto);
+      if (shmIds.shmId == -1)
 	{
 	  cout << "Error al generar el shmId el error es: " << endl;
-	  if(errno==EACCES)
-	    cout<<"Error de permisos"<<endl;
-	  if(errno==ENOENT)
-	    cout<<"Path inexistente"<<endl;
+	  if (errno == EACCES)
+	    cout << "Error de permisos" << endl;
+	  if (errno == ENOENT)
+	    cout << "Path inexistente" << endl;
 
+	  exit (1);
 	}
-      cout << "SRV PARTIDA CREO SHMID: " << ids.shmId << endl;
-
       string nombreSemaforoPartida = "/" + intToString (puerto) + "_Partida";
       string nombreSemaforoTorneo = "/" + intToString (puerto) + "_Torneo";
-      ids.semNamePartida = nombreSemaforoPartida.c_str ();
-      ids.semNameTorneo = nombreSemaforoTorneo.c_str ();
+      shmIds.semNamePartida = nombreSemaforoPartida.c_str ();
+      shmIds.semNameTorneo = nombreSemaforoTorneo.c_str ();
 
-      cout << "SERVIDOR PARTIDA --> sem name partida" << ids.semNamePartida
-	  << endl;
-      cout << "SERVIDOR PARTIDA --> sem name torneo" << ids.semNameTorneo
-	  << endl;
-
+      cout<<"Parametros seteados"<<endl;
     }
   else
     {
-      //TODO Error y cerrar servidor partida porque faltan datos.
-      cout << "No recibi cant correcta datos" << endl;
       exit (1);
     }
 
-  cout << "Parametros seteados" << endl;
-//TODO Temporalmente hago que el servidor de partida sea un servidor de torneo.
   ServerSocket sSocket (puerto);
-  cout << "Puerto servidor creado" << endl;
 
   timeout.tv_sec = SERVERSOCKET_TIMEOUT;
   timeout.tv_usec = 0;
   FD_ZERO(&fds);
   FD_SET(sSocket.ID, &fds);
 
-  //TODO Hacer algo si estoy mucho tiempo en el accept y no se conecta nadie.
+  cout<<"Eperando conexiones de cliente"<<endl;
   do
     {
       if (int response = select (sSocket.ID + 1, &fds, NULL, NULL, &timeout)
@@ -127,12 +115,10 @@ main (int argc, char * argv[])
 	  if (cSocket1 == NULL)
 	    {
 	      cSocket1 = sSocket.Accept ();
-	      cout << "Conexion recibida 1" << endl;
 	    }
 	  else
 	    {
 	      cSocket2 = sSocket.Accept ();
-	      cout << "Conexion recibida 2" << endl;
 	    }
 	  cantClientes++;
 	}
@@ -145,7 +131,6 @@ main (int argc, char * argv[])
 	    {
 	      delete (cSocket1);
 	    }
-	  //TODO Enviar mensaje al cliente de que su oponente no se conecto.
 	  exit (1);
 	}
     }
@@ -156,6 +141,8 @@ main (int argc, char * argv[])
   FD_ZERO(&fds);
   FD_SET(cSocket1->ID, &fds);
   FD_SET(cSocket2->ID, &fds);
+
+  int reintentos=0;
 
   while (felix1 == NULL && felix2 == NULL)
     {
@@ -193,8 +180,7 @@ main (int argc, char * argv[])
   pthread_create (&thread_sender1, NULL, sender1_thread, NULL);
   pthread_create (&thread_sender2, NULL, sender2_thread, NULL);
   pthread_create (&thread_validator, NULL, validator_thread, NULL);
-  pthread_create (&thread_sharedMemory, NULL, sharedMemory_thread,
-		  (void *) &ids);
+  pthread_create (&thread_sharedMemory, NULL, sharedMemory_thread,NULL);
 
   pthread_join (thread_timer, NULL);
   pthread_join (thread_receiver1, NULL);
@@ -212,14 +198,7 @@ main (int argc, char * argv[])
   pthread_mutex_destroy (&mutex_sender2);
 
   cout << "Se finalizara la partida" << endl;
-
-  delete (cSocket1);
-  delete (cSocket2);
-  shmdt (puntaje);
-  sem_close (semPartida);
-  sem_unlink (ids.semNamePartida);
-  sem_close (semTorneo);
-  sem_unlink (ids.semNameTorneo);
+  liberarRecursos ();
   return 0;
 }
 

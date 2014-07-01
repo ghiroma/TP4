@@ -48,6 +48,7 @@ extern sem_t * semPartida;
 extern sem_t* semTorneo;
 
 extern struct puntajes * puntaje;
+extern struct idsSharedResources shmIds;
 
 bool TimeDifference(int timeDifference, time_t startingTime);
 void* timer_thread(void* argument);
@@ -65,5 +66,6 @@ bool validateWindowFix(Felix * felix,Edificio * edificio);
 bool validateLives(Felix * felix);
 void SIGINT_Handler(int inum);
 string intToString(int number);
+void liberarRecursos();
 
 #endif /* FUNCIONESSERVIDORPARTIDA_H_ */

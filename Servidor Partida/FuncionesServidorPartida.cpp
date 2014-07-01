@@ -53,13 +53,15 @@ Felix *felix2;
 Edificio *edificio;
 
 pthread_mutex_t mutex_receiver1 = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mutex_receiver2 = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mutex_sender1 = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mutex_sender2 = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_t mutex_receiver2 = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_t mutex_sender1 = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_t mutex_sender2 = PTHREAD_MUTEX_INITIALIZER;
 
-sem_t * semPartida, *semTorneo;
+    sem_t * semPartida,
+*semTorneo;
 
 struct puntajes * puntaje;
+struct idsSharedResources shmIds;
 
 bool
 TimeDifference (int timeDifference, time_t startingTime)
@@ -347,27 +349,27 @@ void*
 sharedMemory_thread (void * arguments)
 {
   //TODO usar la clase de semaforo.
-  struct idsSharedResources * shmIds = (struct idsSharedResources *) arguments;
-  cout<<"key antes de utilizarse: "<<shmIds->shmId<<endl;
-  int shmId = shmget (shmIds->shmId, sizeof(struct puntajes), PERMISOS_SHM);
+  //struct idsSharedResources * shmIds = (struct idsSharedResources *) arguments;
+  //cout<<"key antes de utilizarse: "<<shmIds->shmId<<endl;
+  int shmId = shmget (shmIds.shmId, sizeof(struct puntajes), PERMISOS_SHM);
   if (shmId < 0)
     {
       cout << "SRV Partida error en shmget" << endl;
-      if(errno==ENOENT)
-	cout<<"No existe egmento de memoria para dicho key"<<endl;
-      if(errno==EACCES)
-	cout<<"No se tienen permisos"<<endl;
-      if(errno==EINVAL)
-	cout<<"No se puede crear porque ya existe."<<endl;
+      if (errno == ENOENT)
+	cout << "No existe egmento de memoria para dicho key" << endl;
+      if (errno == EACCES)
+	cout << "No se tienen permisos" << endl;
+      if (errno == EINVAL)
+	cout << "No se puede crear porque ya existe." << endl;
 
     }
   puntaje = (struct puntajes *) shmat (shmId, (void *) 0, 0);
-  if(puntaje==(void *)-1)
+  if (puntaje == (void *) -1)
     {
-      cout<<"Error en shmat"<<endl;
+      cout << "Error en shmat" << endl;
     }
-  semPartida = sem_open (shmIds->semNamePartida, O_CREAT);
-  semTorneo = sem_open (shmIds->semNameTorneo, O_CREAT);
+  semPartida = sem_open (shmIds.semNamePartida, O_CREAT);
+  semTorneo = sem_open (shmIds.semNameTorneo, O_CREAT);
 
   //Semaforo semTorneo(shmIds->semNameTorneo);
   //Semaforo semPartida(shmIds->semNamePartida);
@@ -375,20 +377,17 @@ sharedMemory_thread (void * arguments)
   //cout<<"SERV PARTIDA --> Sem_t * semaforo Partida: "<<semPartida.getSem_t()<<endl;
   int reintentos = 0;
 
-  cout << "Direccion de memoria compartida: " << puntaje << endl;
+  // cout << "Direccion de memoria compartida: " << puntaje << endl;
 
   struct timespec ts;
   ts.tv_sec = 1;
 
   while (stop == false && (cliente1_conectado || cliente2_conectado))
     {
-
-/*      cout<<"El pid del padre original era: "<<ppid<<endl;
-
-      if(kill(ppid,0)==-1)
+      if (kill (ppid, 0) == -1)
 	{
-	  cout<<"Padre muerto"<<endl;
-	}*/
+	  stop = true;
+	}
 
       //cout << "Espererando en el timedwait" << endl;
       if (sem_timedwait (semTorneo, &ts))
@@ -396,7 +395,6 @@ sharedMemory_thread (void * arguments)
 	  //if (semTorneo.timedWait(700000) == 0) {
 
 	  reintentos = 0;
-	  //cout << "Entro por el timedwait" << endl;
 
 	  if ((cliente1_jugando || cliente2_jugando)
 	      && (cliente1_conectado || cliente2_conectado))
@@ -410,11 +408,10 @@ sharedMemory_thread (void * arguments)
 	      aux.keepAlivePartida = true;
 	      aux.jugando = true;
 	      //if (puntaje->keepAliveTorneo == false)
-		//reintentos++;
+	      //reintentos++;
 	      //aux.keepAliveTorneo = false;
 	      puntaje = &aux;
 
-	      //cout << "Escribi en la memoria compartida" << endl;
 	    }
 	  else //Murieron los dos jugadores.
 	    {
@@ -446,19 +443,6 @@ sharedMemory_thread (void * arguments)
 	      if (reintentos == 5)
 		{
 		  cout << "Se cerro el servidor torneo" << endl;
-		  shmdt (puntaje);
-		  shmctl(shmId, IPC_RMID, 0);
-		  sem_close(semPartida);
-		  sem_unlink(shmIds->semNamePartida);
-		  sem_close(semTorneo);
-		  sem_unlink(shmIds->semNameTorneo);
-
-		  /*string message (CD_TORNEO_CAIDO);
-		  message.append (Helper::fillMessage ("0"));
-		  if (cliente1_conectado)
-		    Helper::encolar (&message, &sender1_queue, &mutex_sender1);
-		  if (cliente2_conectado)
-		    Helper::encolar (&message, &sender2_queue, &mutex_sender2);*/
 		  stop = true;
 
 		}
@@ -584,4 +568,20 @@ intToString (int number)
   stringstream ss;
   ss << number;
   return ss.str ();
+}
+
+void
+liberarRecursos ()
+{
+  if (puntaje != NULL)
+    shmdt (puntaje);
+  shmctl (shmIds.shmId, IPC_RMID, 0);
+  sem_close (semPartida);
+  sem_unlink (shmIds.semNamePartida);
+  sem_close (semTorneo);
+  sem_unlink (shmIds.semNameTorneo);
+  if (cSocket1 != NULL)
+    delete (cSocket1);
+  if (cSocket2 != NULL)
+    delete (cSocket2);
 }
