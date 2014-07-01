@@ -322,6 +322,8 @@ sharedMemory_thread (void * arguments)
 	cout << "No se puede crear porque ya existe." << endl;
 
     }
+  cout<<"ID de shmget"<<shmId<<endl;
+
   puntaje = (struct puntajes *) shmat (shmId, (void *) 0, 0);
   if (puntaje == (void *) -1)
     {
@@ -341,17 +343,16 @@ sharedMemory_thread (void * arguments)
       if (cliente1_jugando && cliente2_jugando)
 	{
 	  cout << "Murieron ambos jugadores" << endl;
-	  struct puntajes aux;
-	  cout<<"felix1 id"<<felix1->id<<endl;
-	  cout<<"felix2 id"<<felix2->id<<endl;
-	  aux.idJugador1 = felix1->id;
-	  aux.idJugador2 = felix2->id;
-	  /*aux.puntajeJugador1 = felix1->puntaje_parcial;
-	   aux.puntajeJugador2 = felix2->puntaje_parcial;*/
-	  aux.puntajeJugador1 = 1500;
-	  aux.puntajeJugador2 = 2000;
-	  aux.partidaFinalizadaOk = true;
-	  puntaje = &aux;
+
+	  sleep(21);
+
+	  puntaje->idJugador1=felix1->id;
+	  puntaje->idJugador2=felix2->id;
+	  //puntaje->puntajeJugador1 = felix1->puntaje_parcial;
+	  puntaje->puntajeJugador1 = 500;
+	  puntaje->puntajeJugador2 = 750;
+	  //puntaje->puntajeJugador2 = felix2->puntaje_parcial;
+	  puntaje->partidaFinalizadaOk = true;
 
 	  stop = true;
 	}
