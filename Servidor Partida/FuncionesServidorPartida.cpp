@@ -268,56 +268,13 @@ validator_thread (void * argument)
 	    {
 	    //Escribe en el sender_queue.
 	    case CD_MOVIMIENTO_FELIX_I:
-	      int fila;
-	      int columna;
-	      cout << "Entro a movimiento felix" << endl;
-	      fila = atoi (message.substr (5, 1).c_str ());
-	      columna = atoi (message.substr (6, 1).c_str ());
-
-	      if (validateMovement (felix1, fila, columna, edificio))
-		{
-		  string mensaje_movimiento1 = scodigo
-		      + Helper::fillMessage ("1" + message.substr (2, 2));
-		  string mensaje_movimiento2 = scodigo
-		      + Helper::fillMessage ("2" + message.substr (2, 2));
-		  Helper::encolar (&mensaje_movimiento1, &sender1_queue,
-				   &mutex_sender1);
-		  Helper::encolar (&mensaje_movimiento2, &sender2_queue,
-				   &mutex_sender2);
-		}
+	      caseMovimientoFelix (1, &message);
 	      break;
 	    case CD_PERDIDA_VIDA_I:
-	      cout << "Perdieron vida" << endl;
-	      if (!validateLives (felix1))
-		{
-		  string message1 (CD_PERDIDA_VIDA);
-		  string message2 (CD_PERDIDA_VIDA);
-		  message1.append (Helper::fillMessage ("1"));
-		  message2.append (Helper::fillMessage ("2"));
-		  Helper::encolar (&message1, &sender1_queue, &mutex_sender1);
-		  Helper::encolar (&message2, &sender2_queue, &mutex_sender2);
-		}
-	      else
-		{
-		  string message1 (CD_PERDIO);
-		  string message2 (CD_PERDIO);
-		  message1.append (Helper::fillMessage ("1"));
-		  message2.append (Helper::fillMessage ("2"));
-		  Helper::encolar (&message1, &sender1_queue, &mutex_sender1);
-		  Helper::encolar (&message2, &sender2_queue, &mutex_sender2);
-		  cliente1_jugando = false;
-		}
+	      casePerdidaVida (1);
 	      break;
 	    case CD_VENTANA_ARREGLADA_I:
-	      if (validateWindowFix (felix1, edificio))
-		{
-		  string message1 (CD_VENTANA_ARREGLADA);
-		  string message2 (CD_VENTANA_ARREGLADA);
-		  message1.append (Helper::fillMessage ("1"));
-		  message2.append (Helper::fillMessage ("2"));
-		  Helper::encolar (&message1, &sender1_queue, &mutex_sender1);
-		  Helper::encolar (&message2, &sender2_queue, &mutex_sender2);
-		}
+	      caseVentanaArreglada (2);
 	      break;
 	    }
 
@@ -332,57 +289,14 @@ validator_thread (void * argument)
 	  switch (codigo)
 	    {
 	    case CD_MOVIMIENTO_FELIX_I:
-	      int fila;
-	      int columna;
-	      cout << "Entro a movimiento felix" << endl;
-	      fila = atoi (message.substr (5, 1).c_str ());
-	      columna = atoi (message.substr (6, 1).c_str ());
-
-	      if (validateMovement (felix2, fila, columna, edificio))
-		{
-		  string mensaje_movimiento1 = scodigo
-		      + Helper::fillMessage ("2" + message.substr (2, 2));
-		  string mensaje_movimiento2 = scodigo
-		      + Helper::fillMessage ("1" + message.substr (2, 2));
-		  Helper::encolar (&mensaje_movimiento1, &sender1_queue,
-				   &mutex_sender1);
-		  Helper::encolar (&mensaje_movimiento2, &sender2_queue,
-				   &mutex_sender2);
-		}
+	      caseMovimientoFelix (2, &message);
 	      break;
 	    case CD_PERDIDA_VIDA_I:
-	      cout << "Perdieron vida" << endl;
-	      if (!validateLives (felix2))
-		{
-		  string message1 (CD_PERDIDA_VIDA);
-		  string message2 (CD_PERDIDA_VIDA);
-		  message1.append (Helper::fillMessage ("2"));
-		  message2.append (Helper::fillMessage ("1"));
-		  Helper::encolar (&message1, &sender1_queue, &mutex_sender1);
-		  Helper::encolar (&message2, &sender2_queue, &mutex_sender2);
-		}
-	      else
-		{
-		  string message1 (CD_PERDIO);
-		  string message2 (CD_PERDIO);
-		  message1.append (Helper::fillMessage ("2"));
-		  message2.append (Helper::fillMessage ("1"));
-		  Helper::encolar (&message1, &sender1_queue, &mutex_sender1);
-		  Helper::encolar (&message2, &sender2_queue, &mutex_sender2);
-		  cliente2_jugando = false;
-		}
+	      casePerdidaVida (2);
 	      break;
 
 	    case CD_VENTANA_ARREGLADA_I:
-	      if (validateWindowFix (felix2, edificio))
-		{
-		  string message1 (CD_VENTANA_ARREGLADA);
-		  string message2 (CD_VENTANA_ARREGLADA);
-		  message1.append (Helper::fillMessage ("2"));
-		  message2.append (Helper::fillMessage ("1"));
-		  Helper::encolar (&message1, &sender1_queue, &mutex_sender1);
-		  Helper::encolar (&message2, &sender2_queue, &mutex_sender2);
-		}
+	      caseVentanaArreglada (2);
 	      break;
 	    }
 	}
@@ -536,6 +450,126 @@ bool
 validateLives (Felix * felix)
 {
   return --felix->cantidad_vidas == 0;
+}
+
+void
+caseMovimientoFelix (int jugador, string *message)
+{
+  int fila;
+  int columna;
+  cout << "Entro a movimiento felix" << endl;
+  fila = atoi (message->substr (5, 1).c_str ());
+  columna = atoi (message->substr (6, 1).c_str ());
+
+  if (jugador == 1)
+    {
+      if (validateMovement (felix1, fila, columna, edificio))
+	{
+	  string mensaje_movimiento1 = message->substr (0, LONGITUD_CODIGO)
+	      + Helper::fillMessage ("1" + message->substr (2, 2));
+	  string mensaje_movimiento2 = message->substr (0, LONGITUD_CODIGO)
+	      + Helper::fillMessage ("2" + message->substr (2, 2));
+	  Helper::encolar (&mensaje_movimiento1, &sender1_queue,
+			   &mutex_sender1);
+	  Helper::encolar (&mensaje_movimiento2, &sender2_queue,
+			   &mutex_sender2);
+	}
+    }
+  else
+    {
+      if (validateMovement (felix2, fila, columna, edificio))
+	{
+	  string mensaje_movimiento1 = message->substr (0, LONGITUD_CODIGO)
+	      + Helper::fillMessage ("2" + message->substr (2, 2));
+	  string mensaje_movimiento2 = message->substr (0, LONGITUD_CODIGO)
+	      + Helper::fillMessage ("1" + message->substr (2, 2));
+	  Helper::encolar (&mensaje_movimiento1, &sender1_queue,
+			   &mutex_sender1);
+	  Helper::encolar (&mensaje_movimiento2, &sender2_queue,
+			   &mutex_sender2);
+	}
+
+    }
+}
+
+void
+casePerdidaVida (int jugador)
+{
+  if (jugador == 1)
+    {
+      cout << "Perdieron vida" << endl;
+      if (!validateLives (felix1))
+	{
+	  string message1 (CD_PERDIDA_VIDA);
+	  string message2 (CD_PERDIDA_VIDA);
+	  message1.append (Helper::fillMessage ("1"));
+	  message2.append (Helper::fillMessage ("2"));
+	  Helper::encolar (&message1, &sender1_queue, &mutex_sender1);
+	  Helper::encolar (&message2, &sender2_queue, &mutex_sender2);
+	}
+      else
+	{
+	  string message1 (CD_PERDIO);
+	  string message2 (CD_PERDIO);
+	  message1.append (Helper::fillMessage ("1"));
+	  message2.append (Helper::fillMessage ("2"));
+	  Helper::encolar (&message1, &sender1_queue, &mutex_sender1);
+	  Helper::encolar (&message2, &sender2_queue, &mutex_sender2);
+	  cliente1_jugando = false;
+	}
+    }
+  else
+    {
+      cout << "Perdieron vida" << endl;
+      if (!validateLives (felix2))
+	{
+	  string message1 (CD_PERDIDA_VIDA);
+	  string message2 (CD_PERDIDA_VIDA);
+	  message1.append (Helper::fillMessage ("2"));
+	  message2.append (Helper::fillMessage ("1"));
+	  Helper::encolar (&message1, &sender1_queue, &mutex_sender1);
+	  Helper::encolar (&message2, &sender2_queue, &mutex_sender2);
+	}
+      else
+	{
+	  string message1 (CD_PERDIO);
+	  string message2 (CD_PERDIO);
+	  message1.append (Helper::fillMessage ("2"));
+	  message2.append (Helper::fillMessage ("1"));
+	  Helper::encolar (&message1, &sender1_queue, &mutex_sender1);
+	  Helper::encolar (&message2, &sender2_queue, &mutex_sender2);
+	  cliente2_jugando = false;
+	}
+    }
+}
+
+void
+caseVentanaArreglada (int jugador)
+{
+  if (jugador == 1)
+    {
+      if (validateWindowFix (felix1, edificio))
+	{
+	  string message1 (CD_VENTANA_ARREGLADA);
+	  string message2 (CD_VENTANA_ARREGLADA);
+	  message1.append (Helper::fillMessage ("1"));
+	  message2.append (Helper::fillMessage ("2"));
+	  Helper::encolar (&message1, &sender1_queue, &mutex_sender1);
+	  Helper::encolar (&message2, &sender2_queue, &mutex_sender2);
+	}
+    }
+  else
+    {
+      if (validateWindowFix (felix2, edificio))
+	{
+	  string message1 (CD_VENTANA_ARREGLADA);
+	  string message2 (CD_VENTANA_ARREGLADA);
+	  message1.append (Helper::fillMessage ("2"));
+	  message2.append (Helper::fillMessage ("1"));
+	  Helper::encolar (&message1, &sender1_queue, &mutex_sender1);
+	  Helper::encolar (&message2, &sender2_queue, &mutex_sender2);
+	}
+    }
 }
 
 void
