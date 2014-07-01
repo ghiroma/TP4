@@ -20,6 +20,7 @@ struct thModoGrafico_data {
 
 void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* tiempoInmunidad, int* cantVidas);
 void SIG_Handler(int inum);
+void SIG_CHLD(int inum);
 void agregarJugador(Jugador* nuevoJugador);
 void quitarJugador(int id);
 bool torneoFinalizado();

@@ -25,14 +25,19 @@ unsigned int puertoPartida;
 int cantVidas = 0;
 
 int main(int argc, char * argv[]) {
-	/*Semaforo storneo("/s44", 1);
-	 storneo.V();
-	 storneo.V();
-	 storneo.V();
-	 storneo.V();
-	 cout << "TORNEO el valor del semaforo esss:: " << storneo.getValue() << " semt_t:" << storneo.getSem_t() << endl;
-	 */ //sleep(100);
-	  //exit(1);
+	Semaforo sem1("/timer",1);
+	sem1.close();
+	Semaforo sem2("/timer",1);
+	while( true ){
+
+		if(sem2.timedWait(1000000) == 0){
+			cout<<"semaforo OK entra por VERDADERO"<<endl;
+		}else{
+			cout<<"semaforo MALL espero un tiempo y siguio dando bloqueado"<<endl;
+		}
+
+	}
+
 	cout << "Comienza servidor Torneo PID:" << getpid() << endl;
 	string ip = "";
 	int duracionTorneo = 0;
@@ -55,6 +60,7 @@ int main(int argc, char * argv[]) {
 
 	signal(SIGINT, SIG_Handler);
 	signal(SIGTERM, SIG_Handler);
+	signal(SIGCHLD, SIG_CHLD);
 
 	//Obtener configuracion
 	getConfiguration(&puertoTorneo, &ip, &duracionTorneo, &tiempoInmunidad, &cantVidas);
