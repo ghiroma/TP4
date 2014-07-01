@@ -59,8 +59,8 @@ int main(int argc, char * argv[]) {
 	cout << "puertoTorneo: " << puertoTorneo << endl;
 
 	//Lanzar THREAD SDL Eventos
-	resultThSDLEventos = pthread_create(&thSDLEventos, NULL, sdlEventos, NULL);
-	/*if (resultThSDLEventos) {
+	/*resultThSDLEventos = pthread_create(&thSDLEventos, NULL, sdlEventos, NULL);
+	if (resultThSDLEventos) {
 		cout << "Error no se pudo crear el thread de SDL Eventos" << endl;
 		return 1;
 	}*/

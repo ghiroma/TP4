@@ -243,44 +243,20 @@ bool torneoFinalizado() {
 * THREAD -> Escucha teclas y eventos (utilizado para cerrar la ventana)
 */
 void* sdlEventos(void* data){
-	SDL_Event event;
-  	int close = 0;
+	SDL_Event evento; //Con esta variable reconozco si se apreto una tecla o se apreto el mouse.
+	SDL_keysym keysym; //Con esta variable reconzco el codigo de la tecla que se apreto.
 
-  /* message pump */
-  	while (!close) {
-	    /* look for an event */
-	    if (SDL_PollEvent(&event)) {
-	      /* an event was found */
-	      switch (event.type) {	      	
-	        /* close button clicked */
-	        /*case SDL_QUIT:
-	          close = 1;
-	          break;
-			*/
-	        /* handle the keyboard */
-	        case SDL_KEYDOWN:
-	          switch (event.key.keysym.sym) {
-	            case SDLK_ESCAPE:
-	              close = 1;
-	              break;
-	          }
-	          break;
-	      }
-	    }
-	    usleep(500000);
+	bool continuar = true;
+	//Lupeo escuchando el teclado.
+	while (SDL_WaitEvent(&evento) != 0 && continuar == true) {
+		switch (evento.type) {
+			case SDL_KEYDOWN:
+				if (evento.key.keysym.sym == SDLK_ESCAPE) {
+					continuar = false;
+				}
+			}
+		usleep(400000);
 	}
-
-	/*
-	if (event->type == SDL_WINDOWEVENT) {
-        switch (event->window.event) {
-   			case SDL_WINDOWEVENT_CLOSE:
-            	SDL_Log("Window %d closed", event->window.windowID);
-            	break;
-        	default:
-            	break;
-   		}
-   }
-	*/
 
     liberarRecursos();
     pthread_exit(NULL);
