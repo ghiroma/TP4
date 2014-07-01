@@ -400,6 +400,7 @@ modoGrafico(void* data) {
 		posDestino.y = 220;
 		int i = 1;
 		for (multimap<float, int>::reverse_iterator it = rankings.rbegin(); it != rankings.rend(); ++it) {
+			listJugadores[it->second]->Ranking = i;
 			sprintf(txtInfoJugador, "%02d           %-10.10s", i++, listJugadores[it->second]->Nombre.c_str());
 			infoJugador_part1 = TTF_RenderText_Solid(font, txtInfoJugador, colorNegro);
 			posDestino.x = 45;
@@ -471,6 +472,7 @@ modoGrafico(void* data) {
 	posDestino.y = 220;
 	int i = 1;
 	for (multimap<float, int>::reverse_iterator it = rankings.rbegin(); it != rankings.rend(); ++it) {
+		listJugadores[it->second]->Ranking = i;
 		sprintf(txtInfoJugador, "%02d           %-10.10s", i++, listJugadores[it->second]->Nombre.c_str());
 		infoJugador_part1 = TTF_RenderText_Solid(font, txtInfoJugador, colorNegro);
 		posDestino.x = 45;
