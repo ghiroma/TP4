@@ -74,6 +74,7 @@ string fillMessage(string);
 void PantallaIntermedia(char);
 bool hayChoque();
 void getConfiguration(unsigned short int* port, string* ip, int* arriba, int* derecha, int* abajo, int* izquierda, int* accion, int* salir);
+void mostrarRanking(const char*);
 /* 
 
  0 - Pantalla intermedia para ingresar el nombre.
@@ -520,6 +521,10 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	cout<<"Ingrese un tecla para terminar: ";
+	getchar();
+
+//LIBERAR TODOS LOS RECURSOS .... los SDL_Surface tambien
 	//	delete (socket);
 	SDL_Quit();
 	TTF_CloseFont(fuente);
@@ -693,9 +698,8 @@ void* EscuchaTorneo(void *arg) {
 					pthread_mutex_unlock(&mutex_msjPuertoRecibido);
 					break;
 				case CD_RANKING_I:
-					ranking = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
-					cout << "ME LLEGO EL RANKING #" << ranking << endl;
-					sleep(20);
+					mostrarRanking(aux_buffer.substr(LONGITUD_CODIGO+LONGITUD_CONTENIDO-2, 2).c_str());
+					cout<<"RANKING #"<<aux_buffer.substr(LONGITUD_CODIGO+LONGITUD_CONTENIDO-2, 2).c_str()<<endl;
 					break;
 				case CD_ACK_I:
 					string message(CD_ACK);
@@ -982,4 +986,28 @@ void getConfiguration(unsigned short int* port, string* ip, int* arriba, int* de
 			*salir= (int)line.substr(pos + 1, line.length()).at(0);
 		}
 	}
+}
+
+void mostrarRanking(const char* ranking) {
+	SDL_Rect posTextoRanking;
+	posTextoRanking.x = 315;
+	posTextoRanking.y = 340;
+	int h = 40;
+	int w = 25;
+	backgroundImg = SDL_LoadBMP("Sprites/Mensajes/ranking.bmp");
+	if (backgroundImg == NULL) {
+		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
+		exit(1);
+	}
+
+	fuente = TTF_OpenFont("./Fuentes/DejaVuSans.ttf", 75);
+	texto = TTF_RenderText_Solid(fuente, ranking, color_texto);
+	//TTF_SizeText(fuente, ranking, &w, &h);
+	SDL_BlitSurface(texto, NULL, backgroundImg, &posTextoRanking);
+
+	SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
+	SDL_Flip(superficie);
+
+	///ver de cambiar
+	salir= 'S';
 }
