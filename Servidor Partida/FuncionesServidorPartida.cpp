@@ -202,7 +202,7 @@ receiver1_thread (void * fd)
 
   while (stop == false && cliente1_conectado)
     {
-      readDataCode = cSocket1->ReceiveNoBloq (buffer, sizeof(buffer));
+      readDataCode = cSocket1->ReceiveBloq (buffer, sizeof(buffer));
       if (readDataCode > 0)
 	{
 	  string aux (buffer);
@@ -216,6 +216,7 @@ receiver1_thread (void * fd)
 	  cliente1_conectado = false;
 	}
       usleep (POLLING_DEADTIME);
+      cout << "Polling receive 1" << endl;
     }
 
   pthread_exit (0);
@@ -319,7 +320,7 @@ sharedMemory_thread (void * arguments)
 	cout << "No se puede crear porque ya existe." << endl;
 
     }
-  cout<<"ID de shmget"<<shmId<<endl;
+  cout << "ID de shmget" << shmId << endl;
 
   puntaje = (struct puntajes *) shmat (shmId, (void *) 0, 0);
   if (puntaje == (void *) -1)
@@ -336,15 +337,15 @@ sharedMemory_thread (void * arguments)
 	}
 
       //Perdieron ambos, asi que finalmente cierro.
-      //if (!cliente1_jugando && !cliente2_jugando)
-      if (cliente1_jugando && cliente2_jugando)
+      if (!cliente1_jugando && !cliente2_jugando)
+      //if (cliente1_jugando && cliente2_jugando)
 	{
 	  cout << "Murieron ambos jugadores" << endl;
 
-	  sleep(21);
+	  //sleep (21);
 
-	  puntaje->idJugador1=felix1->id;
-	  puntaje->idJugador2=felix2->id;
+	  puntaje->idJugador1 = felix1->id;
+	  puntaje->idJugador2 = felix2->id;
 	  //puntaje->puntajeJugador1 = felix1->puntaje_parcial;
 	  puntaje->puntajeJugador1 = 500;
 	  puntaje->puntajeJugador2 = 750;
@@ -419,6 +420,15 @@ randomPersiana ()
 bool
 validateMovement (Felix * felix, int fila, int columna, Edificio * edificio)
 {
+
+  cout << "Entro validacion movimiento" << endl;
+  if (felix == NULL)
+    cout << "Felix es nulo" << endl;
+  if (edificio == NULL)
+    cout << "El edificio es nulo" << endl;
+  cout << "fila: " << fila << endl;
+  cout << "columna: " << columna << endl;
+
   if (((fila < edificio->filas || fila >= 0)
       && (columna < edificio->columnas || columna >= 0))
       && !edificio->ventanas[fila][columna].marquesina
@@ -431,8 +441,10 @@ validateMovement (Felix * felix, int fila, int columna, Edificio * edificio)
       felix->posicion_x = fila;
       felix->posicion_y = fila;
 
+      cout << "Salgo validacion movimiento true" << endl;
       return true;
     }
+  cout << "Salgo validacion movimiento false" << endl;
   return false;
 }
 
@@ -460,7 +472,7 @@ caseMovimientoFelix (int jugador, string *message)
 {
   int fila;
   int columna;
-  cout << "Entro a movimiento felix" << endl;
+  cout << "Entro a movimiento felix, mensaje = " << *message << endl;
   fila = atoi (message->substr (5, 1).c_str ());
   columna = atoi (message->substr (6, 1).c_str ());
 
@@ -468,20 +480,59 @@ caseMovimientoFelix (int jugador, string *message)
     {
       if (validateMovement (felix1, fila, columna, edificio))
 	{
+	  char auxFila[2];
+	  char auxColumna[2];
+	  char aux1[5] =
+	    { "1" };
+	  char aux2[5] =
+	    { "2" };
+
+	  cout << "Por guardar auxfila y auxcoluna" << endl;
+
+	  sprintf (auxFila, "%d", fila);
+	  sprintf (auxColumna, "%d", columna);
+
+	  cout << "Por concatenar" << endl;
+
+	  strcat (aux1, auxFila);
+	  strcat (aux1, auxColumna);
+	  strcat (aux2, auxFila);
+	  strcat (aux2, auxColumna);
+
+	  cout << "Por crear mensajes" << endl;
+
+	  /*string mensaje_movimiento1 = message->substr (0, LONGITUD_CODIGO)
+	   + Helper::fillMessage ("1" + message->substr (2, 2));*/
 	  string mensaje_movimiento1 = message->substr (0, LONGITUD_CODIGO)
-	      + Helper::fillMessage ("1" + message->substr (2, 2));
+	      + Helper::fillMessage (aux1);
 	  string mensaje_movimiento2 = message->substr (0, LONGITUD_CODIGO)
-	      + Helper::fillMessage ("2" + message->substr (2, 2));
+	      + Helper::fillMessage (aux2);
 	  Helper::encolar (&mensaje_movimiento1, &sender1_queue,
 			   &mutex_sender1);
 	  Helper::encolar (&mensaje_movimiento2, &sender2_queue,
 			   &mutex_sender2);
+	  cout << "Encole mensaje de movimiento felix" << endl;
 	}
     }
   else
     {
       if (validateMovement (felix2, fila, columna, edificio))
 	{
+	  char auxFila[2];
+	  char auxColumna[2];
+	  char aux1[5] =
+	    { "2" };
+	  char aux2[5] =
+	    { "1" };
+
+	  sprintf (auxFila, "%d", fila);
+	  sprintf (auxColumna, "%d", columna);
+
+	  strcat (aux1, auxFila);
+	  strcat (aux1, auxColumna);
+	  strcat (aux2, auxFila);
+	  strcat (aux2, auxColumna);
+
 	  string mensaje_movimiento1 = message->substr (0, LONGITUD_CODIGO)
 	      + Helper::fillMessage ("2" + message->substr (2, 2));
 	  string mensaje_movimiento2 = message->substr (0, LONGITUD_CODIGO)
@@ -580,7 +631,6 @@ SIGINT_Handler (int inum)
 {
   stop = true;
 }
-
 
 void
 liberarRecursos ()
