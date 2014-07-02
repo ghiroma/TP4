@@ -258,7 +258,7 @@ temporizadorTorneo(void* data) {
 	cout << "unmutex comenzoConteo temporizadorTorneo" << endl;
 
 	cout << "MMMMMMMMMMMMMMMMMMMMMMMM  empieza a contar" << endl;
-	sleep(torneo->duracion * 20);
+	sleep(torneo->duracion * 60);
 	cout << "MMMMMMMMMMMMMMMMMMMMMMMM  termina de contar" << endl;
 
 	cout << "mutex_timeIsUp temporizadorTorneo --" << endl;
@@ -333,10 +333,10 @@ void* modoGrafico(void* data) {
 		pthread_exit(NULL);
 	}
 
-	//int minutos = torneo->duracion;
-	//int segundos = 0;
-	int minutos = 0;
-	int segundos = 20;
+	int minutos = torneo->duracion;
+	int segundos = 0;
+	//int minutos = 0;
+	//int segundos = 20;
 	posTiempo.x = 50;
 	posTiempo.y = 140;
 	char txtTiempo[10];
