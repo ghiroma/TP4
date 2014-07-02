@@ -72,6 +72,7 @@ char CambiaNivel();
 char ventana_reparada(struct posicion *);
 string fillMessage(string);
 void PantallaIntermedia(char);
+bool hayChoque();
 void getConfiguration(unsigned short int* port, string* ip, int* arriba, int* derecha, int* abajo, int* izquierda, int* accion, int* salir);
 /* 
 
@@ -483,6 +484,13 @@ int main(int argc, char *argv[]) {
 		}
 		//Ojo, hay que poner el delay porque sino el proceso no tiene tiempos muertos y
 		// el uso del procesador se me va al chori.
+		if(hayChoque()){
+			felix1_posicion.fila = 99;
+			felix1_posicion.columna = 99;
+			felix1_puntos--;
+			felix1_vidas--;
+		}
+		
 		if (ventanas_reparadas == 11) {
 			ventanas_reparadas = 10;
 			ventanas_cargadas = 'N';
@@ -506,6 +514,15 @@ int main(int argc, char *argv[]) {
 	TTF_CloseFont(fuente);
 	TTF_Quit();
 	return 0;
+}
+
+bool hayChoque(){
+	if(felix1_posicion.fila!=99 && felix1_posicion.columna!=99 && ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x <= (pajaro_desplazamiento.x + 20) && (ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x + 20) >= pajaro_desplazamiento.x && ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y == pajaro_desplazamiento.y)
+		return true;
+	for(int i=0; i<cant_rocas; i++)
+		if(felix1_posicion.fila!=99 && felix1_posicion.columna!=99 && ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y <= rocas_desplazamiento[i].y && (ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y + 50) >= rocas_desplazamiento[i].y && ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x == (rocas_desplazamiento[i].x-10))
+		return true;
+	return false;
 }
 
 void CargarVentanasDelTramo(struct ventana *ventana, unsigned short int x, unsigned short int y, unsigned short int nro, char N_S, unsigned short int f, unsigned short int c) {
