@@ -92,7 +92,7 @@ struct ventana ventanas_tramo1[3][5];
 struct posicion felix1_posicion = { 99, 99 };
 struct posicion ralph_posicion = { 3, 2 };
 struct posicion torta_posicion;
-struct desplazamiento pajaro_desplazamiento;
+struct desplazamiento pajaro_desplazamiento = {-1, -1};
 struct desplazamiento rocas_desplazamiento[20];
 
 unsigned short int rahlp_x = PARED_X + 200;
@@ -422,8 +422,12 @@ int main(int argc, char *argv[]) {
 		if (pajaro_moverse == 'S') {
 			pajaro_desplazamiento.x += 10;
 			Dibujar(pajaro_desplazamiento.x, pajaro_desplazamiento.y, pajaro, superficie);
-			if (pajaro_desplazamiento.x > 630)
+			if (pajaro_desplazamiento.x > 630){
 				pajaro_moverse = 'N';
+				pajaro_desplazamiento.x = -1;
+				pajaro_desplazamiento.y = -1;
+				
+			}	
 		} else {
 			if (!cola_pajaro.empty()) {
 				short int pajaro_fila = atoi(cola_pajaro.front().substr(6, 1).c_str());
