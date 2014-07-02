@@ -27,7 +27,6 @@ bool torneoFinalizado();
 void mandarPuntajes();
 void liberarRecursos();
 //THREADS
-void* sdlEventos(void* data);
 void* temporizadorTorneo(void* data);
 void* keepAliveJugadores(void*);
 void* modoGrafico(void*);

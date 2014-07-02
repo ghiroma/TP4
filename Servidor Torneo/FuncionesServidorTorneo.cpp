@@ -239,30 +239,6 @@ bool torneoFinalizado() {
 }
 
 /////////////////////////////// THREADS ////////////////////////////
-/**
-* THREAD -> Escucha teclas y eventos (utilizado para cerrar la ventana)
-*/
-void* sdlEventos(void* data){
-	SDL_Event evento; //Con esta variable reconozco si se apreto una tecla o se apreto el mouse.
-	SDL_keysym keysym; //Con esta variable reconzco el codigo de la tecla que se apreto.
-
-	bool continuar = true;
-	//Lupeo escuchando el teclado.
-	while (SDL_WaitEvent(&evento) != 0 && continuar == true) {
-		switch (evento.type) {
-			case SDL_KEYDOWN:
-				if (evento.key.keysym.sym == SDLK_ESCAPE) {
-					continuar = false;
-				}
-			}
-		usleep(400000);
-	}
-
-    liberarRecursos();
-    pthread_exit(NULL);
-}
-
-
 
 /**
  * THREAD -> Controla el tiempo que debe durar el torneo

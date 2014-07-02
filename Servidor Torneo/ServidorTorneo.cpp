@@ -58,13 +58,6 @@ int main(int argc, char * argv[]) {
 	puertoPartida = puertoTorneo;
 	cout << "puertoTorneo: " << puertoTorneo << endl;
 
-	//Lanzar THREAD SDL Eventos
-	/*resultThSDLEventos = pthread_create(&thSDLEventos, NULL, sdlEventos, NULL);
-	if (resultThSDLEventos) {
-		cout << "Error no se pudo crear el thread de SDL Eventos" << endl;
-		return 1;
-	}*/
-
 	//Lanzar THREAD establecer partidas
 	resultThEstablecerPartidas = pthread_create(&thEstablecerPartidas, NULL, establecerPartidas, NULL);
 	if (resultThEstablecerPartidas) {
@@ -79,7 +72,7 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 
-	//Lanzar THREAD ModoGrafico
+	//Lanzar THREAD ModoGrafico SDL
 	modoGraficoData.duracion = duracionTorneo;
 	resultThModoGrafico = pthread_create(&thModoGrafico, NULL, modoGrafico, (void*) &modoGraficoData);
 	if (resultThModoGrafico) {
@@ -107,7 +100,6 @@ int main(int argc, char * argv[]) {
 	pthread_join(thModoGrafico, NULL);
 	pthread_join(thkeepAliveJugadores, NULL);
 
-	//    //    //    //    //    //    //    //    ///
 	//ver si hace falta??????????
 	//el tiempo del Torneo llego a su fin, informar a cada cliente
 	/*pthread_mutex_lock(&mutex_listJugadores);
@@ -117,6 +109,7 @@ int main(int argc, char * argv[]) {
 	 it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
 	 }
 	 pthread_mutex_unlock(&mutex_listJugadores);*/
+
 
 	//mandar a cada cliente su puntaje y ranking
 	mandarPuntajes();
