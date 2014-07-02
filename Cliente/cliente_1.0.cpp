@@ -468,17 +468,18 @@ int main(int argc, char *argv[]) {
 				Dibujar(110, 405, felix1, superficie);
 			else {
 
-				if(!cola_felix1.empty()){
-					felix1_inicial = false;
-					String msj = cola_felix2.front();
-					cola_felix2.pop();
-					short int f1_fila = atoi(msj.substr(5,1).c_str());
-					short int f1_colu = atoi(msj.substr(6,1).c_str());
-			
-					Dibujar(ventanas_tramo1[f1_fila][f1_colu].x,ventanas_tramo1[f1_fila][f1_colu].y, felix1, superficie);
-				}
 				if(felix1_inicial == true)
 					Dibujar(110, 405, felix1, superficie);
+				else{
+					if(!cola_felix1.empty()){
+					felix1_inicial = false;
+					String msj = cola_felix1.front();
+					cola_felix1.pop();
+					short int felix1_posicion.fila = atoi(msj.substr(5,1).c_str());
+					short int felix1_posicion.columna = atoi(msj.substr(6,1).c_str());
+					}
+				Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x,ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
+				}
 			}
 		} else {
 			if (felix1 == felix_d1 || felix1 == felix_i1)
