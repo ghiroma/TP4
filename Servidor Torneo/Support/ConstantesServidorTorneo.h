@@ -27,12 +27,15 @@ static const char* CD_ID_JUGADOR = "06";
 static const char* CD_PUERTO_PARTIDA = "07";
 //static const char* CD_FIN_TORNEO = "08";
 static const char* CD_RANKING = "80";
+static const char* CD_FIN_TORNEO = "81";
 static const char* CD_ACK = "99";
 
 static const int CD_ID_JUGADOR_I = 6;
 static const int CD_PUERTO_PARTIDA_I = 7;
 static const int CD_RANKING_I = 80;
+static const int CD_FIN_TORNEO_I = 81;
 static const int CD_ACK_I = 99;
+
 
 static const int MAX_JUGADORES_SOPORTADOS = 100;
 

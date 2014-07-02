@@ -100,17 +100,6 @@ int main(int argc, char * argv[]) {
 	pthread_join(thModoGrafico, NULL);
 	pthread_join(thkeepAliveJugadores, NULL);
 
-	//ver si hace falta??????????
-	//el tiempo del Torneo llego a su fin, informar a cada cliente
-	/*pthread_mutex_lock(&mutex_listJugadores);
-	 for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
-	 string message(CD_FIN_TORNEO);
-	 message.append(fillMessage("1"));
-	 it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
-	 }
-	 pthread_mutex_unlock(&mutex_listJugadores);*/
-
-
 	//mandar a cada cliente su puntaje y ranking
 	mandarPuntajes();
 
