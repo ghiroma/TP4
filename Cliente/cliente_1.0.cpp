@@ -80,7 +80,7 @@ void getConfiguration(unsigned short int* port, string* ip, int* arriba, int* de
 
  */
 
-SDL_Surface *superficie,
+SDL_Surface *superficie, *backgroundImg,
 *pared_tramo1n1, *pared_tramo2n1, *pared_tramo3n1, *pared, *ventana_sana, *ventana_rota1, *ventana_rota2, *ventana_rota3, *ventana_rota4, *ventana, *puerta, *felix_d1, *felix_i1, *felix_r11, *felix_r21, *felix_r31, *felix_r41, *felix_r51, *felix_d2, *felix_i2, *felix1, *felix2, *ralph_1, *ralph_2,
 		*ralph_3, *ralph_4, *ralph_5, *ralph_6, *ralph, *roca1, *roca2, *roca, *pajaro_1, *pajaro_2, *pajaro, *texto, *puntos, *vidas, *torta;
 
@@ -121,7 +121,7 @@ short int ventanas_reparadas = 10;
 SDL_Event evento;
 SDL_keysym keysym;
 
-SDL_Rect pantalla_juego, pantalla_texto, pantalla_puntos, pantalla_vidas;
+SDL_Rect pantalla_juego, pantalla_texto, pantalla_puntos, pantalla_vidas, posBackground;
 
 SDL_Color color_texto;
 TTF_Font *fuente;
@@ -135,6 +135,8 @@ int key_abajo = -1;
 int key_izquierda = -1;
 int key_accion = -1;
 int key_salir = -1;
+
+int ranking = 0;
 
 int main(int argc, char *argv[]) {
 	CommunicationSocket * socketTorneo;
@@ -187,8 +189,7 @@ int main(int argc, char *argv[]) {
 	TTF_Init();
 	signal(SIGINT, handler);
 	//Defino las propiedades de la pantalla del juego
-	superficie = SDL_SetVideoMode(ANCHO_PANTALLA, ALTO_PANTALLA, BPP,
-	SDL_HWSURFACE);
+	superficie = SDL_SetVideoMode(ANCHO_PANTALLA, ALTO_PANTALLA, BPP, SDL_HWSURFACE);
 	//Seteo el titulo de la pantalla
 	SDL_WM_SetCaption("Rahlp Tournament", NULL);
 	//Cargo la fuente
@@ -197,7 +198,19 @@ int main(int argc, char *argv[]) {
 	color_texto.r = color_texto.g = color_texto.b = 245;
 
 	//Pantalla de inicio.
-	//Acá se ingresa el nombre
+	posBackground.x = 0;
+	posBackground.y = 0;
+	backgroundImg = SDL_LoadBMP("Sprites/Mensajes/start.bmp");
+	if (backgroundImg == NULL) {
+		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
+		exit(1);
+	}
+	SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
+	SDL_Flip(superficie);
+
+	//Empieza a cargar el nombre
+	PantallaIntermedia('0');
+	salir = 'N';
 
 	//Dimensiones rectangulo donde irá el texto
 	pantalla_texto.x = 10;
@@ -209,12 +222,6 @@ int main(int argc, char *argv[]) {
 		cout << "Error al obtener configuracion." << endl;
 		return 1;
 	}
-
-	//Pantalla para escribir el nombre.
-	// ---
-
-	PantallaIntermedia('0');
-	salir = 'N';
 
 	//Conexion con el servidor de torneo.
 
@@ -632,21 +639,26 @@ void* EscuchaTorneo(void *arg) {
 			cout << "Recibi: " << buffer << endl;
 			int codigo = atoi((aux_buffer.substr(0, LONGITUD_CODIGO).c_str()));
 			switch (codigo) {
-			//case CD_ID_JUGADOR_I:
-			//	break;
-			case CD_PUERTO_PARTIDA_I:
-				pthread_mutex_lock(&mutex_msjPuertoRecibido);
-				puertoServidorPartida = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
-				cout<<"Puerto: "<<puertoServidorPartida<<endl;
-				msjPuertoRecibido = true;
-				pthread_mutex_unlock(&mutex_msjPuertoRecibido);
-				break;
-			case CD_ACK_I:
-				string message(CD_ACK);
-				string content;
-				message.append(fillMessage(content));
-				cSocket.SendNoBloq(message.c_str(), LONGITUD_CODIGO);
-				break;
+				//case CD_ID_JUGADOR_I:
+				//	break;
+				case CD_PUERTO_PARTIDA_I:
+					pthread_mutex_lock(&mutex_msjPuertoRecibido);
+					puertoServidorPartida = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
+					cout<<"Puerto: "<<puertoServidorPartida<<endl;
+					msjPuertoRecibido = true;
+					pthread_mutex_unlock(&mutex_msjPuertoRecibido);
+					break;
+				case CD_RANKING_I:
+					ranking = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
+					cout << "ME LLEGO EL RANKING #" << ranking << endl;
+					sleep(20);
+					break;
+				case CD_ACK_I:
+					string message(CD_ACK);
+					string content = "1";
+					message.append(fillMessage(content));
+					cSocket.SendNoBloq(message.c_str(), LONGITUD_CODIGO);
+					break;
 			}
 		}
 		usleep(500000);
@@ -841,20 +853,22 @@ char CambiaNivel() {
 }
 
 char IngresaNombre() {
-
 	char salir = 'N';
 	short int caracter;
 	caracter = strlen(felix1_nombre);
 
-	SDL_WaitEvent(&evento);
+	SDL_Rect posTextoNombreIngresado;
+	posTextoNombreIngresado.x = 385;
+	posTextoNombreIngresado.y = 57;
 
-	if (evento.type == SDL_KEYDOWN)
+	SDL_WaitEvent(&evento);
+	if (evento.type == SDL_KEYDOWN) {
 		if (evento.key.keysym.sym != SDLK_RETURN && evento.key.keysym.sym != SDLK_KP_ENTER) {
-			pantalla_juego.x = 0;
-			pantalla_juego.y = 0;
-			pantalla_juego.w = ANCHO_PANTALLA;
-			pantalla_juego.h = ALTO_PANTALLA;
-			SDL_FillRect(superficie, &pantalla_juego, SDL_MapRGB(superficie->format, 0, 0, 0));
+			backgroundImg = SDL_LoadBMP("Sprites/Mensajes/start.bmp");
+			if (backgroundImg == NULL) {
+				printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
+				exit(1);
+			}
 
 			if (evento.key.keysym.sym >= 97 && evento.key.keysym.sym <= 122 && caracter <= 9)
 				felix1_nombre[caracter++] = evento.key.keysym.sym;
@@ -864,11 +878,15 @@ char IngresaNombre() {
 			felix1_nombre[caracter] = '\0';
 			//Texto del texto
 			texto = TTF_RenderText_Solid(fuente, felix1_nombre, color_texto);
-			SDL_BlitSurface(texto, NULL, superficie, &pantalla_texto);
+			SDL_BlitSurface(texto, NULL, backgroundImg, &posTextoNombreIngresado);
+
+			SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
 			SDL_Flip(superficie);
 
 		} else if (caracter >= 0)
 			salir = 'S';
+	}
+
 	return salir;
 }
 

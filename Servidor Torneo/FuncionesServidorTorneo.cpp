@@ -679,6 +679,7 @@ void mandarPuntajes() {
 		string message(CD_RANKING);
 		message.append(fillMessage(intToString(it->second->Ranking)));
 		it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
+		cout<<"MANDO RANKING #"<<it->second->Ranking<<" al Jugador:"<<it->second->Id<<endl;
 	}
 	pthread_mutex_unlock(&mutex_listJugadores);
 }

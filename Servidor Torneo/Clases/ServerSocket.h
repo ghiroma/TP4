@@ -16,6 +16,7 @@ public:
   ServerSocket (unsigned int port, char * ip);
   ServerSocket (unsigned int port);
   CommunicationSocket* Accept();
+  char * ShowHostName();
   virtual
   ~ServerSocket ();
 };
