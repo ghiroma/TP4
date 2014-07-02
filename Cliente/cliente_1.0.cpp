@@ -215,6 +215,16 @@ int main(int argc, char *argv[]) {
 	PantallaIntermedia('0');
 	salir = 'N';
 
+	//Muestro pantalla de "esperando al servidor por nueva partida"
+	backgroundImg = SDL_LoadBMP("Sprites/Mensajes/waitmatch.bmp");
+	if (backgroundImg == NULL) {
+		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
+		exit(1);
+	}
+	SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
+	SDL_Flip(superficie);
+
+
 	//Dimensiones rectangulo donde irá el texto
 	pantalla_texto.x = 10;
 	pantalla_texto.y = 10;
