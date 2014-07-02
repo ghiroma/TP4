@@ -43,7 +43,6 @@ main (int argc, char * argv[])
 
   unsigned int puerto;
   int cantVidas;
-  int response = 0;
   int cantClientes = 0;
 
   struct timeval timeout;

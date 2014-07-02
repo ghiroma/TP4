@@ -143,7 +143,6 @@ timer_thread (void* arg)
 	}
 
       usleep (POLLING_DEADTIME);
-      //sleep(1);
     }
 
   pthread_exit (0);
@@ -167,7 +166,6 @@ sender1_thread (void * arguments)
 	}
 
       usleep (POLLING_DEADTIME);
-      //sleep(1);
     }
 
   pthread_exit (0);
@@ -190,7 +188,6 @@ sender2_thread (void * arguments)
 	    }
 	}
       usleep (POLLING_DEADTIME);
-      //sleep(1);
     }
 
   pthread_exit (0);
@@ -584,16 +581,6 @@ SIGINT_Handler (int inum)
   stop = true;
 }
 
-/**
- * Convertir un numero de tipo int a String
- */
-string
-intToString (int number)
-{
-  stringstream ss;
-  ss << number;
-  return ss.str ();
-}
 
 void
 liberarRecursos ()

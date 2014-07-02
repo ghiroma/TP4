@@ -20,17 +20,6 @@ using namespace std;
 
 extern pid_t ppid;
 
-extern bool stop;
-extern bool cliente1_conectado;
-extern bool cliente2_conectado;
-extern bool cliente1_jugando;
-extern bool cliente2_jugando;
-
-extern queue<string> receiver1_queue;
-extern queue<string> receiver2_queue;
-extern queue<string> sender1_queue;
-extern queue<string> sender2_queue;
-
 extern CommunicationSocket * cSocket1;
 extern CommunicationSocket * cSocket2;
 
@@ -44,8 +33,6 @@ extern pthread_mutex_t mutex_receiver2;
 extern pthread_mutex_t mutex_sender1;
 extern pthread_mutex_t mutex_sender2;
 
-
-extern struct puntajes * puntaje;
 extern struct idsSharedResources shmIds;
 
 bool TimeDifference(int timeDifference, time_t startingTime);
@@ -66,7 +53,6 @@ void caseMovimientoFelix (int jugador, string *message);
 void casePerdidaVida(int nroJugador);
 void caseVentanaArreglada(int nroJugador);
 void SIGINT_Handler(int inum);
-string intToString(int number);
 void liberarRecursos();
 
 #endif /* FUNCIONESSERVIDORPARTIDA_H_ */
