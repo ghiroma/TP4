@@ -5,8 +5,8 @@
  *      Author: ghiroma
  */
 
-#ifndef CONSTANTES_H_2
-#define CONSTANTES_H_2
+#ifndef CONSTANTES_H_CLIENTE
+#define CONSTANTES_H_CLIENTE
 
 const int EDIFICIO_COLUMNAS = 5;
 const int EDIFICIO_FILAS_1 = 5;
@@ -37,4 +37,6 @@ static const char* CD_PUERTO_PARTIDA = "07";
 
 static const int CD_ID_JUGADOR_I = 6;
 static const int CD_PUERTO_PARTIDA_I = 7;
+
+
 #endif /* CONSTANTES_H_ */

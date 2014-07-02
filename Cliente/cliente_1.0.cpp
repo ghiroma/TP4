@@ -25,6 +25,7 @@ using namespace std;
 
 bool msjPuertoRecibido = false;
 pthread_mutex_t mutex_msjPuertoRecibido = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_cola_grafico = PTHREAD_MUTEX_INITIALIZER;
 
 struct ventana {
 
@@ -594,16 +595,31 @@ void* EscuchaServidor(void *arg) {
 				case '3':
 					break;
 				case '4':
+				      //TODO Movimiento felix/
 					break;
 				case '5':
+				      //TODO Perdida vida.
 					break;
 				}
 			}
+			if(buffer[0]=='9')
+			  {
+			    switch(buffer[1])
+			    {
+			      case '9':
+				string message(CD_ACK);
+				message.append(fillMessage("0"));
+				//TODO Agregar mutex.
+				cola_grafico.push(message);
+				break;
+			    }
+			  }
 		}
 		else if(readData==0)
 		  {
 		    cout<<"Murio el servidor de partida"<<endl;
-		    salir='S';
+		    pthread_exit(0);
+		    //salir='S';
 		  }
 		//sleep(1);
 		usleep(10000);
