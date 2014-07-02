@@ -55,7 +55,7 @@ queue<string> cola_grafico;
 queue<string> cola_ralph;
 queue<string> cola_pajaro;
 queue<string> cola_torta;
-queue<string> cola_mensajes_enviar
+queue<string> cola_mensajes_enviar;
 queue<string> cola_felix1;
 queue<string> cola_felix2;
 
@@ -473,10 +473,10 @@ int main(int argc, char *argv[]) {
 				else{
 					if(!cola_felix1.empty()){
 					felix1_inicial = false;
-					String msj = cola_felix1.front();
+					string msj = cola_felix1.front();
 					cola_felix1.pop();
-					short int felix1_posicion.fila = atoi(msj.substr(5,1).c_str());
-					short int felix1_posicion.columna = atoi(msj.substr(6,1).c_str());
+					felix1_posicion.fila = atoi(msj.substr(5,1).c_str());
+					felix1_posicion.columna = atoi(msj.substr(6,1).c_str());
 					}
 				Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x,ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
 				}
@@ -509,7 +509,7 @@ int main(int argc, char *argv[]) {
 		//Mueveo a felix2, salvo que este en la posicion inicial
 		if(!cola_felix2.empty()){
 			felix2_inicial = false;
-			String msj = cola_felix2.front();
+			string msj = cola_felix2.front();
 			cola_felix2.pop();
 			short int f2_fila = atoi(msj.substr(5,1).c_str());
 			short int f2_colu = atoi(msj.substr(6,1).c_str());
@@ -786,7 +786,7 @@ void* EscuchaTeclas(void *arg) {
 			if (evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo ) {
 				if ((felix1_posicion.fila - 1) >= 0)
 					if ((felix1_posicion.fila - 1) != 0)
-						f1_colu = felix1_posicion.fila -1;;
+						f1_colu = felix1_posicion.fila -1;
 					else if ((felix1_posicion.columna) != 2)
 						f1_colu = felix1_posicion.fila -1;
 				felix1_reparar = 'N';
@@ -867,6 +867,7 @@ void* EscuchaTeclas(void *arg) {
 			}
 			break;
 		case SDLK_ESCAPE:
+			break;
 		case SDL_QUIT:
 			salir = 'S';
 			break;

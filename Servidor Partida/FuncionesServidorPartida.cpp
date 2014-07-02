@@ -491,7 +491,7 @@ void caseMovimientoFelix(int jugador, string *message) {
 			strcat(aux2, auxFila);
 			strcat(aux2, auxColumna);
 
-			cout << "Por crear mensajes" << endl;
+			cout<<"mensaje movimiento a enviar: "<<aux1<<endl;
 
 			string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO)
 					+ Helper::fillMessage(aux1);
@@ -518,6 +518,8 @@ void caseMovimientoFelix(int jugador, string *message) {
 			strcat(aux1, auxColumna);
 			strcat(aux2, auxFila);
 			strcat(aux2, auxColumna);
+
+			cout<<"mensaje movimiento a enviar: "<<aux1<<endl;
 
 			string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO)
 					+ Helper::fillMessage(aux1);
