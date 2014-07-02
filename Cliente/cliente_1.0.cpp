@@ -55,7 +55,9 @@ queue<string> cola_grafico;
 queue<string> cola_ralph;
 queue<string> cola_pajaro;
 queue<string> cola_torta;
-queue<string> cola_mensajes_enviar;
+queue<string> cola_mensajes_enviar
+queue<string> cola_felix1;
+queue<string> cola_felix2;
 
 void handler(int);
 void ConfigRect(SDL_Rect *, int, int, int, int);
@@ -121,6 +123,8 @@ short int felix2_puntos = 0;
 short int felix1_vidas = 3;
 short int felix2_vidas = 3;
 short int ventanas_reparadas = 10;
+bool felix2_inicial = true;
+bool felix1_inicial = true;
 SDL_Event evento;
 SDL_keysym keysym;
 
@@ -463,7 +467,18 @@ int main(int argc, char *argv[]) {
 			if (felix1_posicion.fila == 99)
 				Dibujar(110, 405, felix1, superficie);
 			else {
-				Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
+
+				if(!cola_felix1.empty()){
+					felix1_inicial = false;
+					String msj = cola_felix2.front();
+					cola_felix2.pop();
+					short int f1_fila = atoi(msj.substr(5,1).c_str());
+					short int f1_colu = atoi(msj.substr(6,1).c_str());
+			
+					Dibujar(ventanas_tramo1[f1_fila][f1_colu].x,ventanas_tramo1[f1_fila][f1_colu].y, felix1, superficie);
+				}
+				if(felix1_inicial == true)
+					Dibujar(110, 405, felix1, superficie);
 			}
 		} else {
 			if (felix1 == felix_d1 || felix1 == felix_i1)
@@ -489,7 +504,20 @@ int main(int argc, char *argv[]) {
 
 		if (felix2 == NULL)
 			felix2 = felix_d2;
-		Dibujar(120, 405, felix2, superficie);
+		
+		//Mueveo a felix2, salvo que este en la posicion inicial
+		if(!cola_felix2.empty()){
+			felix2_inicial = false;
+			String msj = cola_felix2.front();
+			cola_felix2.pop();
+			short int f2_fila = atoi(msj.substr(5,1).c_str());
+			short int f2_colu = atoi(msj.substr(6,1).c_str());
+			
+			Dibujar(ventanas_tramo1[f2_fila][f2_colu].x,ventanas_tramo1[f2_fila][f2_colu].y, felix2, superficie);
+		}
+		
+		if(felix2_inicial == true)
+			Dibujar(120, 405, felix2, superficie);
 		//Dibujo las rocas
 		roca = roca1;
 		for (int i = 0; i < cant_rocas; i++) {
@@ -643,8 +671,13 @@ void* EscuchaServidor(void *arg) {
 				case '3':
 					break;
 				case '4':
-				      //TODO Movimiento felix/
+					if(buffer[2]=='1'){
+						cola_felix1.push(aux_buffer);
+					}
+					else
+						cola_felix2.push(aux_buffer);
 					break;
+
 				case '5':
 				      //TODO Perdida vida.
 					break;
@@ -737,9 +770,14 @@ void* EscuchaTeclas(void *arg) {
 
 	SDL_Event evento; //Con esta variable reconozco si se apreto una tecla o se apreto el mouse.
 	SDL_keysym keysym; //Con esta variable reconzco el codigo de la tecla que se apreto.
+	short int f1_fila;
+	short int f1_colu;
 
 	//Lupeo escuchando el teclado.
 	while (SDL_WaitEvent(&evento) != 0) {
+
+		f1_fila = felix1_posicion.fila;
+		f1_colu = felix1_posicion.columna;
 
 		switch (evento.type) {
 
@@ -747,15 +785,15 @@ void* EscuchaTeclas(void *arg) {
 			if (evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo ) {
 				if ((felix1_posicion.fila - 1) >= 0)
 					if ((felix1_posicion.fila - 1) != 0)
-						felix1_posicion.fila--;
+						f1_colu = felix1_posicion.fila -1;;
 					else if ((felix1_posicion.columna) != 2)
-						felix1_posicion.fila--;
+						f1_colu = felix1_posicion.fila -1;
 				felix1_reparar = 'N';
 
 				ostringstream ss1;
 				ostringstream ss2;
-				ss1 << felix1_posicion.fila;
-				ss2 << felix1_posicion.columna;
+				ss1 << f1_fila;
+				ss2 << f1_colu;
 				string aux(ss1.str() + ss2.str());
 				string message(CD_MOVIMIENTO_FELIX);
 				message.append(fillMessage(aux));
@@ -764,16 +802,16 @@ void* EscuchaTeclas(void *arg) {
 
 			} else if (evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba ) {
 				if (felix1_posicion.columna == 99) {
-					felix1_posicion.fila = 0;
-					felix1_posicion.columna = 0;
+					f1_fila = 0;
+					f1_colu = 0;
 				} else if ((felix1_posicion.fila + 1) < 3)
-					felix1_posicion.fila += 1;
+					f1_colu = felix1_posicion.fila +1;
 				felix1_reparar = 'N';
 
 				ostringstream ss1;
 				ostringstream ss2;
-				ss1 << felix1_posicion.fila;
-				ss2 << felix1_posicion.columna;
+				ss1 << f1_fila;
+				ss2 << f1_colu;
 				string aux(ss1.str() + ss2.str());
 				string message(CD_MOVIMIENTO_FELIX);
 				message.append(fillMessage(aux));
@@ -783,19 +821,19 @@ void* EscuchaTeclas(void *arg) {
 			} else if (evento.key.keysym.sym == SDLK_RIGHT || evento.key.keysym.sym == key_derecha) {
 				felix1 = felix_d1;
 				if (felix1_posicion.fila == 99) {
-					felix1_posicion.fila = 0;
-					felix1_posicion.columna = 0;
+					f1_fila = 0;
+					f1_colu = 0;
 				} else if ((felix1_posicion.columna + 1) < 5)
 					if ((felix1_posicion.columna + 1) != 2)
-						felix1_posicion.columna++;
+						f1_colu = felix1_posicion.columna +1;
 					else if ((felix1_posicion.fila) != 0)
-						felix1_posicion.columna++;
+						f1_colu = felix1_posicion.columna +1;
 				felix1_reparar = 'N';
 
 				ostringstream ss1;
 				ostringstream ss2;
-				ss1 << felix1_posicion.fila;
-				ss2 << felix1_posicion.columna;
+				ss1 << f1_fila;
+				ss2 << f1_colu;
 				string aux(ss1.str() + ss2.str());
 				string message(CD_MOVIMIENTO_FELIX);
 				message.append(fillMessage(aux));
@@ -806,15 +844,15 @@ void* EscuchaTeclas(void *arg) {
 				felix1 = felix_i1;
 				if ((felix1_posicion.columna - 1) >= 0)
 					if ((felix1_posicion.columna - 1) != 2)
-						felix1_posicion.columna--;
+						f1_colu = felix1_posicion.columna -1;
 					else if ((felix1_posicion.fila) != 0)
-						felix1_posicion.columna--;
+						f1_colu = felix1_posicion.columna -1;
 				felix1_reparar = 'N';
 
 				ostringstream ss1;
 				ostringstream ss2;
-				ss1 << felix1_posicion.fila;
-				ss2 << felix1_posicion.columna;
+				ss1 << f1_fila;
+				ss2 << f1_colu;
 				string aux(ss1.str() + ss2.str());
 				string message(CD_MOVIMIENTO_FELIX);
 				message.append(fillMessage(aux));
