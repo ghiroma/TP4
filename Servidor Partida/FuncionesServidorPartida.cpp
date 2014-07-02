@@ -60,6 +60,9 @@ pthread_mutex_t mutex_sender2 = PTHREAD_MUTEX_INITIALIZER;
 struct puntajes * puntaje;
 struct idsSharedResources shmIds;
 
+/*
+ * Retorna true si la diferencia de tiempo se da.
+ */
 bool TimeDifference(int timeDifference, time_t startingTime) {
 	if ((time(0) - startingTime) > timeDifference) {
 		return true;
@@ -68,6 +71,10 @@ bool TimeDifference(int timeDifference, time_t startingTime) {
 	}
 }
 
+/*
+ * Thread encargado de enviar los mensajes de los sucesos del juego no pertenecientes
+ * a ninguno de los dos jugadores, siendo movimiento ralph, paloma,etc.
+ */
 void*
 timer_thread(void* arg) {
 
@@ -137,6 +144,9 @@ timer_thread(void* arg) {
 	pthread_exit(0);
 }
 
+/*
+ * Thread encargado del envio de mensajes al jugador 1.
+ */
 void*
 sender1_thread(void * arguments) {
 	while (stop == false && cliente1_conectado) {
@@ -156,6 +166,9 @@ sender1_thread(void * arguments) {
 	pthread_exit(0);
 }
 
+/*
+ * Thread encargado del envio de mensajes al jugador2.
+ */
 void*
 sender2_thread(void * arguments) {
 	while (stop == false && cliente2_conectado) {
@@ -174,6 +187,10 @@ sender2_thread(void * arguments) {
 	pthread_exit(0);
 }
 
+/*
+ * Thread encargado de la recepcion de mensajes del jugador1 y detectar la
+ * desconexion del jugador 1.
+ */
 void*
 receiver1_thread(void * fd) {
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
@@ -187,17 +204,20 @@ receiver1_thread(void * fd) {
 			cout << "Recibi mensaje: " << buffer << endl;
 			Helper::encolar(&aux, &receiver1_queue, &mutex_receiver1);
 		} else if (readDataCode == 0) {
-			cout << "Se desconecto el cliente nro 1" << endl;
 			//TODO decirle al jugador nro2 que el cliente 1 se desconecto.
 			cliente1_conectado = false;
+			delete (cSocket1);
 		}
 		usleep(POLLING_DEADTIME);
-		cout << "Polling receive 1" << endl;
 	}
 
 	pthread_exit(0);
 }
 
+/*
+ * Thread encargado de la recepcion de mensajes del jugador 2 y detectar la
+ * desconexion del jugador 2
+ */
 void*
 receiver2_thread(void * fd) {
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
@@ -210,8 +230,8 @@ receiver2_thread(void * fd) {
 			string mensaje(buffer);
 			Helper::encolar(&mensaje, &receiver2_queue, &mutex_receiver2);
 		} else if (readDataCode == 0) {
-			cout << "Se desconecto el cliente nro 2" << endl;
 			cliente2_conectado = false;
+			delete (cSocket2);
 		}
 
 		usleep(POLLING_DEADTIME);
@@ -220,7 +240,10 @@ receiver2_thread(void * fd) {
 	pthread_exit(0);
 }
 
-//TODO el validator tambien se encarga de cerrar los socket una vez que el cliente se desconecto?
+/*
+ * Thread encargado de validar las acciones de los clientes y devolver mensajes
+ * de confirmacion.
+ */
 void *
 validator_thread(void * argument) {
 
@@ -270,28 +293,32 @@ validator_thread(void * argument) {
 	pthread_exit(0);
 }
 
+/*
+ * Thread encargado de verificar si el torneo esta vivo y grabar los puntajes
+ * finales de los clientes.
+ */
 void*
 sharedMemory_thread(void * arguments) {
 	int shmId = shmget(shmIds.shmId, sizeof(struct puntajes), PERMISOS_SHM);
 	if (shmId < 0) {
-		cout << "SRV Partida error en shmget" << endl;
-		if (errno == ENOENT)
-			cout << "No existe egmento de memoria para dicho key" << endl;
-		if (errno == EACCES)
-			cout << "No se tienen permisos" << endl;
-		if (errno == EINVAL)
-			cout << "No se puede crear porque ya existe." << endl;
-
+		/*cout << "SRV Partida error en shmget" << endl;
+		 if (errno == ENOENT)
+		 cout << "No existe egmento de memoria para dicho key" << endl;
+		 if (errno == EACCES)
+		 cout << "No se tienen permisos" << endl;
+		 if (errno == EINVAL)
+		 cout << "No se puede crear porque ya existe." << endl;
+		 */
+		exit(1);
 	}
-	cout << "ID de shmget" << shmId << endl;
-
 	puntaje = (struct puntajes *) shmat(shmId, (void *) 0, 0);
 	if (puntaje == (void *) -1) {
-		cout << "Error en shmat" << endl;
+		exit(1);
 	}
 
 	while (stop == false) {
 
+		//Verifico si el padre esta vivo
 		if (kill(ppid, 0) == -1) {
 			stop = true;
 		}
@@ -300,7 +327,6 @@ sharedMemory_thread(void * arguments) {
 		if (!cliente1_jugando && !cliente2_jugando)
 		//if (cliente1_jugando && cliente2_jugando)
 				{
-			cout << "Murieron ambos jugadores" << endl;
 
 			//sleep (21);
 
@@ -319,10 +345,16 @@ sharedMemory_thread(void * arguments) {
 	}
 }
 
+/*
+ * Genero movimiento random de ralph.
+ */
 int randomRalphMovement() {
 	return rand() % (EDIFICIO_COLUMNAS);
 }
 
+/*
+ * Genero aparicion random de paloma.
+ */
 int randomPaloma(int nivel) {
 	if (nivel == 0)
 		return rand() % (EDIFICIO_FILAS_1);
@@ -331,6 +363,9 @@ int randomPaloma(int nivel) {
 	return 0;
 }
 
+/*
+ * Genero aparicion random de torta.
+ */
 char*
 randomTorta() {
 	char location[3];
@@ -344,6 +379,9 @@ randomTorta() {
 	return location;
 }
 
+/*
+ * Genero aparicion random de persiana.
+ */
 char *
 randomPersiana() {
 	char location[3];
@@ -371,6 +409,9 @@ randomPersiana() {
 
 }
 
+/*
+ * Valido si es posible realizar el movimiento de felix pedido.
+ */
 bool validateMovement(Felix * felix, int fila, int columna,
 		Edificio * edificio) {
 
@@ -400,6 +441,9 @@ bool validateMovement(Felix * felix, int fila, int columna,
 	return false;
 }
 
+/*
+ * Valido si se arreglo una ventana.
+ */
 bool validateWindowFix(Felix * felix, Edificio * edificio) {
 	if (edificio->ventanas[felix->posicion_x][felix->posicion_y].ventanaRota > 0
 			&& !edificio->ventanas[felix->posicion_x][felix->posicion_y].persiana) {
@@ -410,9 +454,16 @@ bool validateWindowFix(Felix * felix, Edificio * edificio) {
 	return false;
 }
 
+/*
+ * Valido si se perdio una vida y murio felix.
+ */
 bool validateLives(Felix * felix) {
 	return --felix->cantidad_vidas == 0;
 }
+
+/*
+ * Caso de recepcion de mensaje de movimiento de felix.
+ */
 
 void caseMovimientoFelix(int jugador, string *message) {
 	int fila;
@@ -450,7 +501,7 @@ void caseMovimientoFelix(int jugador, string *message) {
 					&mutex_sender1);
 			Helper::encolar(&mensaje_movimiento2, &sender2_queue,
 					&mutex_sender2);
-			cout<<"Mensaje encolado: "<<mensaje_movimiento1<<endl;
+			cout << "Mensaje encolado: " << mensaje_movimiento1 << endl;
 			cout << "Encole mensaje de movimiento felix" << endl;
 		}
 	} else {
@@ -480,6 +531,10 @@ void caseMovimientoFelix(int jugador, string *message) {
 
 	}
 }
+
+/*
+ * Caso de recepcion de mensaje de perdida de vida.
+ */
 
 void casePerdidaVida(int jugador) {
 	if (jugador == 1) {
@@ -521,6 +576,10 @@ void casePerdidaVida(int jugador) {
 	}
 }
 
+/*
+ * Caso de recepcion de mensaje de ventana arreglada
+ */
+
 void caseVentanaArreglada(int jugador) {
 	if (jugador == 1) {
 		if (validateWindowFix(felix1, edificio)) {
@@ -550,14 +609,7 @@ void SIGINT_Handler(int inum) {
 void liberarRecursos() {
 	if (puntaje != NULL)
 		shmdt(puntaje);
-	if (shmctl(shmIds.shmId, IPC_RMID, 0) == -1)
-		cout << "No se pudo remover la memoria compartida" << endl;
-	/*sem_close (semPartida);
-	 sem_unlink (shmIds.semNamePartida);
-	 sem_close (semTorneo);
-	 sem_unlink (shmIds.semNameTorneo);*/
-	if (cSocket1 != NULL)
-		delete (cSocket1);
-	if (cSocket2 != NULL)
-		delete (cSocket2);
+	shmctl(shmIds.shmId, IPC_RMID, 0);
+	delete (cSocket1);
+	delete (cSocket2);
 }
