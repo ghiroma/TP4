@@ -35,6 +35,7 @@ CommunicationSocket::CommunicationSocket (unsigned short int port, char * ip)
 
 	if(connect(this->ID,(struct sockaddr*)&caddress,sizeof(sockaddr))!=0) // Error al conectarse
 	  {
+	    close(this->ID);
 	    throw "Error en connect";
 	  }
     }

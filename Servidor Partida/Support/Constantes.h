@@ -3,13 +3,6 @@
 
 static const int PERMISOS_SHM = 0777;
 
-static const int ANCHO_PANTALLA = 640;
-static const int ALT0_PANTALLA = 480;
-static const int BPP = 8;
-
-static const int PARED_X = 90;
-static const int PARED_Y = 110;
-
 static const int EDIFICIO_COLUMNAS = 5;
 static const int EDIFICIO_FILAS_1 = 3;
 static const int EDIFICIO_FILAS_2 = 4;
@@ -24,10 +17,11 @@ static const int INTERVALOS_PERSIANA = 35;
 static const int LONGITUD_CODIGO = 2;
 static const int LONGITUD_CONTENIDO = 5;
 
-static const int POLLING_DEADTIME = 1000; //Nanosegundos
+static const int POLLING_DEADTIME = 10000; //Microsegundos
 static const int SEMAPHORE_TIMEOUT = 1; //Segundos
 static const int SERVERSOCKET_TIMEOUT = 8; //Segundos
 static const int CLIENT_ID_TIMEOUT = 5000; //Milisegundos.
+
 //CD viene de codigo mensaje.
 static const char* CD_MOVIMIENTO_RALPH = "00";
 static const char* CD_PALOMA = "01";
@@ -42,11 +36,7 @@ static const char* CD_ACK = "99";
 static const char* CD_PERDIO = "98";
 static const char* CD_TORNEO_CAIDO = "97";
 static const char* CD_RANKING = "80";
-//const char *
-//const char *
-//const char *
-//const char *
-//const char *
+
 
 static const int CD_RANKING_I = 80;
 static const int CD_MOVIMIENTO_FELIX_I = 4;

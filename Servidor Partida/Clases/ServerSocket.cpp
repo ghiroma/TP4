@@ -27,11 +27,13 @@ ServerSocket::ServerSocket (unsigned int port, char * ip)
 	{
 	  if((listen(this->ID,MAX_PENDING_CONNECTIONS))!=0)
 	    {
-	      throw "Error en bind";
+	      close(this->ID);
+	      throw "Error en listen";
 	    }
 	}
       else //Error en bind.
 	{
+	  close(this->ID);
 	  throw "Error en bind";
 	}
     }
@@ -54,11 +56,13 @@ ServerSocket::ServerSocket (unsigned int port)
  	{
  	  if((listen(this->ID,MAX_PENDING_CONNECTIONS))!=0)//Error listen.
  	    {
+ 	     close(this->ID);
  	      throw "Error en listen";
  	    }
  	}
        else //Error en bind.
  	{
+	   close(this->ID);
 	   throw "Error en bind";
  	}
      }
