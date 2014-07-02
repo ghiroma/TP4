@@ -442,8 +442,6 @@ void caseMovimientoFelix(int jugador, string *message) {
 
 			cout << "Por crear mensajes" << endl;
 
-			/*string mensaje_movimiento1 = message->substr (0, LONGITUD_CODIGO)
-			 + Helper::fillMessage ("1" + message->substr (2, 2));*/
 			string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO)
 					+ Helper::fillMessage(aux1);
 			string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO)
@@ -452,6 +450,7 @@ void caseMovimientoFelix(int jugador, string *message) {
 					&mutex_sender1);
 			Helper::encolar(&mensaje_movimiento2, &sender2_queue,
 					&mutex_sender2);
+			cout<<"Mensaje encolado: "<<mensaje_movimiento1<<endl;
 			cout << "Encole mensaje de movimiento felix" << endl;
 		}
 	} else {
@@ -470,9 +469,9 @@ void caseMovimientoFelix(int jugador, string *message) {
 			strcat(aux2, auxColumna);
 
 			string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO)
-					+ Helper::fillMessage("2" + message->substr(2, 2));
+					+ Helper::fillMessage(aux1);
 			string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO)
-					+ Helper::fillMessage("1" + message->substr(2, 2));
+					+ Helper::fillMessage(aux2);
 			Helper::encolar(&mensaje_movimiento1, &sender1_queue,
 					&mutex_sender1);
 			Helper::encolar(&mensaje_movimiento2, &sender2_queue,
