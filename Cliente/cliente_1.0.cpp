@@ -499,6 +499,11 @@ int main(int argc, char *argv[]) {
 		if(hayChoque()){
 			felix1_posicion.fila = 99;
 			felix1_posicion.columna = 99;
+
+			string message(CD_PERDIDA_VIDA);
+			message.append(fillMessage("0"));
+			cola_grafico.push(message);
+
 			felix1_puntos--;
 			felix1_vidas--;
 		}
