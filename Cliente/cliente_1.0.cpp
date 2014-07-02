@@ -570,12 +570,13 @@ void DibujarVentanas(struct ventana ventanas[][5], unsigned short int cant_filas
 
 void* EscuchaServidor(void *arg) {
 	int fd = *(int *) arg;
+	int readData=0;
 	CommunicationSocket cSocket(fd);
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
 	while (salir == 'N') {
 		cout << "Espero msj del servidor de partida ... " << endl;
-		cSocket.ReceiveBloq(buffer, sizeof(buffer));
+		readData = cSocket.ReceiveBloq(buffer, sizeof(buffer));
 		if (strlen(buffer) > 0) {
 			string aux_buffer(buffer);
 			cout << "Recibi: " << buffer << endl;
@@ -599,8 +600,13 @@ void* EscuchaServidor(void *arg) {
 				}
 			}
 		}
-		sleep(1);
-		//usleep(10000);
+		else if(readData==0)
+		  {
+		    cout<<"Murio el servidor de partida"<<endl;
+		    salir='S';
+		  }
+		//sleep(1);
+		usleep(10000);
 	}
 }
 
@@ -620,13 +626,14 @@ void * EnvioServidor(void * arg) {
 
 void* EscuchaTorneo(void *arg) {
 	int fd = *(int *) arg;
+	int readData = 0;
 	cout<<"FD: "<<fd<<endl;
 	CommunicationSocket cSocket(fd);
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
 	while (salir == 'N') {
 		cout << "Espero msj del servidor de Torneo ... " << endl;
-		cSocket.ReceiveBloq(buffer, sizeof(buffer));
+		readData = cSocket.ReceiveBloq(buffer, sizeof(buffer));
 		if (strlen(buffer) > 0) {
 			string aux_buffer(buffer);
 			cout << "Recibi: " << buffer << endl;
@@ -649,7 +656,12 @@ void* EscuchaTorneo(void *arg) {
 				break;
 			}
 		}
-		usleep(500000);
+		else if(readData==0)
+		  {
+		    cout<<"Murio el servidor torneo"<<endl;
+		    salir='S';
+		  }
+		usleep(5000);
 	}
 }
 
