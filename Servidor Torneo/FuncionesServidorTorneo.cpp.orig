@@ -192,8 +192,13 @@ void SIG_CHLD(int inum) {
 void agregarJugador(Jugador* nuevoJugador) {
 	////cout << "---> agregarJugador" << endl;
 
+<<<<<<< HEAD
+	cout << "mutex agregarJugador" << endl;
+
+=======
 	////cout << "mutex agregarJugador" << endl;
 	pthread_mutex_lock(&mutex_listJugadores);
+>>>>>>> 49eb21ff5b0e191f51cb6dd1bf3d3c74b0ea7f3a
 	//le inicializo la lista de partidas al nuevo jugador
 	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 		nuevoJugador->agregarOponente(it->second->Id);
@@ -207,8 +212,12 @@ void agregarJugador(Jugador* nuevoJugador) {
 			it2->second->agregarOponente(nuevoJugador->Id);
 		}
 	}
+<<<<<<< HEAD
+	cout << "unmutex agregarJugador" << endl;
+=======
 	pthread_mutex_unlock(&mutex_listJugadores);
 	////cout << "unmutex agregarJugador" << endl;
+>>>>>>> 49eb21ff5b0e191f51cb6dd1bf3d3c74b0ea7f3a
 }
 
 /**
@@ -226,8 +235,6 @@ void quitarJugador(int id) {
 		//lo quito de la lista de jugadores del torneo
 		listJugadores.erase(id);
 	}
-	//lo quito de la lista de jugadores del torneo
-	listJugadores.erase(id);
 }
 
 /**
@@ -520,16 +527,30 @@ void* keepAliveJugadores(void*) {
 	bool partidasTerminadas = false;
 	while (!partidasTerminadas) {
 		//para cada jugador ver si me responden la señal de KEEPALIVE
+<<<<<<< HEAD
+		cout << "mutex1 keepAliveJugadores listJugadores" << endl;
+=======
 		//cout << "mutex1 keepAliveJugadores listJugadores" << endl;
+		pthread_mutex_lock(&mutex_listJugadores);
+		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
+>>>>>>> 49eb21ff5b0e191f51cb6dd1bf3d3c74b0ea7f3a
+
 		pthread_mutex_lock(&mutex_listJugadores);
 		map<int, Jugador*>::iterator it = listJugadores.begin();
 		while (it != listJugadores.end()) {
 			it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
 			readDataCode = it->second->SocketAsociado->ReceiveBloq(buffer, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
 
+<<<<<<< HEAD
 			if (readDataCode == 0) {
 				//el jugador se desconecto
 				cout << "Voy a eliminar a: " << it->first << endl;
+=======
+			//cout << "0000000000000-----  readDataCode: " << readDataCode << endl;
+			if (readDataCode == 0) {
+				//el jugador se desconecto
+				//cout << "0000000000000-----  Voy a eliminar a: " << it->first << endl;
+>>>>>>> 49eb21ff5b0e191f51cb6dd1bf3d3c74b0ea7f3a
 				quitarJugador(it->first);
 			} else {
 				it++;
@@ -554,6 +575,7 @@ void* keepAliveJugadores(void*) {
 void* aceptarJugadores(void* data) {
 	int clientId = 0;
 	//Crear Socket del Servidor
+<<<<<<< HEAD
 	cout << "aceptar jugadpres" << endl;
 
 	try {
@@ -571,13 +593,30 @@ void* aceptarJugadores(void* data) {
 		CommunicationSocket * cSocket = sSocket->Accept();
 		cout << "va a bloquearse esperando mensaje" << endl;
 		cout << "_____________________" << endl;
+=======
+	//cout << "aceptar jugadpres" << endl;
+	ServerSocket sSocket(puertoTorneo);
+	char nombreJugador[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
+
+	while (true) {
+		//cout << "va a bloquearse esperando al JUGADOR" << endl;
+		//cout << "_____________________" << endl;
+		CommunicationSocket * cSocket = sSocket.Accept();
+		//cout << "va a bloquearse esperando mensaje" << endl;
+		//cout << "_____________________" << endl;
+>>>>>>> 49eb21ff5b0e191f51cb6dd1bf3d3c74b0ea7f3a
 		cSocket->ReceiveBloq(nombreJugador, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
 		clientId++;
 		pthread_mutex_lock(&mutex_listJugadores);
 		agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
+<<<<<<< HEAD
 		pthread_mutex_unlock(&mutex_listJugadores);
 		cout << "Se agrega el jugador NRO:" << clientId << " NOMBRE: " << nombreJugador << endl;
 		cout << "______________________________________________________________________________" << endl;
+=======
+		//cout << "Se agrega el jugador NRO:" << clientId << " NOMBRE: " << nombreJugador << endl;
+		//cout << "______________________________________________________________________________" << endl;
+>>>>>>> 49eb21ff5b0e191f51cb6dd1bf3d3c74b0ea7f3a
 		//mandarle el ID al Jugador
 		char aux[LONGITUD_CONTENIDO];
 		string message(CD_ID_JUGADOR);
@@ -701,7 +740,11 @@ void mandarPuntajes() {
 		string message(CD_RANKING);
 		message.append(fillMessage(intToString(it->second->Ranking)));
 		it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
+<<<<<<< HEAD
+		cout << "MANDO RANKING #" << it->second->Ranking << " al Jugador:" << it->second->Id << endl;
+=======
 		//cout<<"MANDO RANKING #"<<it->second->Ranking<<" al Jugador:"<<it->second->Id<<endl;
+>>>>>>> 49eb21ff5b0e191f51cb6dd1bf3d3c74b0ea7f3a
 	}
 	pthread_mutex_unlock(&mutex_listJugadores);
 }

@@ -154,7 +154,7 @@ sender1_thread(void * arguments) {
 			//Lo que venga del timer y validator, se replica a ambos jugadores.
 			string message;
 			Helper::desencolar(&message, &sender1_queue, &mutex_sender1);
-			cout << "Mensaje a enviar: " << message.c_str() << endl;
+			cout << "Mensaje a enviar: " << message<< endl;
 			if (cliente1_conectado) {
 				cSocket1->SendBloq(message.c_str(), message.length());
 			}
@@ -176,7 +176,7 @@ sender2_thread(void * arguments) {
 			//Lo que venga del timer y validator, se replica a ambos jugadores.
 			string message;
 			Helper::desencolar(&message, &sender2_queue, &mutex_sender2);
-			cout << "Mensaje a enviar: " << message.c_str() << endl;
+			cout << "Mensaje a enviar: " << message<< endl;
 			if (cliente2_conectado) {
 				cSocket2->SendBloq(message.c_str(), message.length());
 			}
@@ -228,6 +228,7 @@ receiver2_thread(void * fd) {
 		readDataCode = cSocket2->ReceiveNoBloq(buffer, sizeof(buffer));
 		if (readDataCode > 0) {
 			string mensaje(buffer);
+			cout<<"Recibi mensaje: "<<mensaje<<endl;
 			Helper::encolar(&mensaje, &receiver2_queue, &mutex_receiver2);
 		} else if (readDataCode == 0) {
 			cliente2_conectado = false;
@@ -252,6 +253,7 @@ validator_thread(void * argument) {
 			string message = receiver1_queue.front();
 			receiver1_queue.pop();
 			string scodigo = message.substr(0, LONGITUD_CODIGO);
+			cout<<"Codigo leido "<<scodigo<<endl;
 			int codigo = atoi(scodigo.c_str());
 			switch (codigo) {
 			//Escribe en el sender_queue.
@@ -272,6 +274,7 @@ validator_thread(void * argument) {
 			string message = receiver2_queue.front();
 			receiver2_queue.pop();
 			string scodigo = message.substr(0, LONGITUD_CODIGO);
+			cout<<"Codigo leido "<<scodigo<<endl;
 			int codigo = atoi(scodigo.c_str());
 			switch (codigo) {
 			case CD_MOVIMIENTO_FELIX_I:
@@ -324,11 +327,12 @@ sharedMemory_thread(void * arguments) {
 		}
 
 		//Perdieron ambos, asi que finalmente cierro.
-		if (!cliente1_jugando && !cliente2_jugando)
-		//if (cliente1_jugando && cliente2_jugando)
+		//if (!cliente1_jugando && !cliente2_jugando)
+
+		if (cliente1_jugando && cliente2_jugando)
 				{
 
-			//sleep (21);
+			sleep (21);
 
 			puntaje->idJugador1 = felix1->id;
 			puntaje->idJugador2 = felix2->id;
@@ -415,13 +419,13 @@ randomPersiana() {
 bool validateMovement(Felix * felix, int fila, int columna,
 		Edificio * edificio) {
 
-	cout << "Entro validacion movimiento" << endl;
-	if (felix == NULL)
-		cout << "Felix es nulo" << endl;
-	if (edificio == NULL)
-		cout << "El edificio es nulo" << endl;
-	cout << "fila: " << fila << endl;
-	cout << "columna: " << columna << endl;
+	//cout << "Entro validacion movimiento" << endl;
+	//if (felix == NULL)
+		//cout << "Felix es nulo" << endl;
+	//if (edificio == NULL)
+		//cout << "El edificio es nulo" << endl;
+	//cout << "fila: " << fila << endl;
+	//cout << "columna: " << columna << endl;
 
 	if (((fila < edificio->filas || fila >= 0)
 			&& (columna < edificio->columnas || columna >= 0))
@@ -473,7 +477,7 @@ void caseMovimientoFelix(int jugador, string *message) {
 	columna = atoi(message->substr(6, 1).c_str());
 
 	if (jugador == 1) {
-		if (validateMovement(felix1, fila, columna, edificio)) {
+		//if (validateMovement(felix1, fila, columna, edificio)) {
 			char auxFila[2];
 			char auxColumna[2];
 			char aux1[5] = { "1" };
@@ -497,15 +501,19 @@ void caseMovimientoFelix(int jugador, string *message) {
 					+ Helper::fillMessage(aux1);
 			string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO)
 					+ Helper::fillMessage(aux2);
+
+			cout<<"Mensaje de movimiento armado1: "<<mensaje_movimiento1<<endl;
+			cout<<"Mensaje de movimiento armado2: "<<mensaje_movimiento2<<endl;
+
 			Helper::encolar(&mensaje_movimiento1, &sender1_queue,
 					&mutex_sender1);
 			Helper::encolar(&mensaje_movimiento2, &sender2_queue,
 					&mutex_sender2);
 			cout << "Mensaje encolado: " << mensaje_movimiento1 << endl;
 			cout << "Encole mensaje de movimiento felix" << endl;
-		}
+		//}
 	} else {
-		if (validateMovement(felix2, fila, columna, edificio)) {
+		//if (validateMovement(felix2, fila, columna, edificio)) {
 			char auxFila[2];
 			char auxColumna[2];
 			char aux1[5] = { "2" };
@@ -529,7 +537,7 @@ void caseMovimientoFelix(int jugador, string *message) {
 					&mutex_sender1);
 			Helper::encolar(&mensaje_movimiento2, &sender2_queue,
 					&mutex_sender2);
-		}
+		//}
 
 	}
 }
@@ -540,7 +548,7 @@ void caseMovimientoFelix(int jugador, string *message) {
 
 void casePerdidaVida(int jugador) {
 	if (jugador == 1) {
-		cout << "Perdieron vida" << endl;
+		//cout << "Perdieron vida" << endl;
 		if (!validateLives(felix1)) {
 			string message1(CD_PERDIDA_VIDA);
 			string message2(CD_PERDIDA_VIDA);
@@ -558,7 +566,7 @@ void casePerdidaVida(int jugador) {
 			cliente1_jugando = false;
 		}
 	} else {
-		cout << "Perdieron vida" << endl;
+		//cout << "Perdieron vida" << endl;
 		if (!validateLives(felix2)) {
 			string message1(CD_PERDIDA_VIDA);
 			string message2(CD_PERDIDA_VIDA);
