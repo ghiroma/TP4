@@ -226,8 +226,6 @@ void quitarJugador(int id) {
 		//lo quito de la lista de jugadores del torneo
 		listJugadores.erase(id);
 	}
-	//lo quito de la lista de jugadores del torneo
-	listJugadores.erase(id);
 }
 
 /**
