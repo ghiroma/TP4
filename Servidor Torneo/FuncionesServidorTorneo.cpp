@@ -112,7 +112,7 @@ void SIG_CHLD(int inum) {
 		////cout << "buscando idSHM" << endl;
 		////cout << "pidPartida:" << endl;
 		if (it->pidPartida == childpid) {
-			////cout << "encontro el idSHM:" << it->idShm;
+			cout << "SIG_CHLD encontro y borrara la SHM:" << it->idShm;
 			idSHM = it->idShm;
 			partidasActivas.erase(it);
 			break;
@@ -120,8 +120,6 @@ void SIG_CHLD(int inum) {
 	}
 	pthread_mutex_unlock(&mutex_partidasActivas);
 
-	////cout << "id SHM:" << idSHM << endl;
-	//pongo a los jugadores en no JUNGADO
 	puntajesPartida * resumenPartida;
 	resumenPartida = (struct puntajesPartida *) shmat(idSHM, (char *) 0, 0);
 
@@ -163,6 +161,7 @@ void SIG_CHLD(int inum) {
 		}
 	}
 
+	//pongo a los jugadores en no JUNGADO
 	//ya sea que murio o termino el serv partida los pongo en false para que se les vuelva a asignar una partida
 	if (listJugadores.count(resumenPartida->idJugador1) == 1) {
 		listJugadores[resumenPartida->idJugador1]->Jugando = false;
@@ -173,12 +172,12 @@ void SIG_CHLD(int inum) {
 	pthread_mutex_unlock(&mutex_listJugadores);
 
 	///mensajes de prueba
-	////cout << "CONTENIDO DE SHM" << endl;
-	////cout << "id1:" << resumenPartida->idJugador1 << endl;
-	////cout << "id2:" << resumenPartida->idJugador2 << endl;
-	////cout << "partidaFinalizadaOK:" << resumenPartida->partidaFinalizadaOK << endl;
-	////cout << "puntajeJugador1:" << resumenPartida->puntajeJugador1 << endl;
-	////cout << "puntajeJugador2:" << resumenPartida->puntajeJugador2 << endl;
+	cout << "CONTENIDO DE SHM" << endl;
+	cout << "id1:" << resumenPartida->idJugador1 << endl;
+	cout << "id2:" << resumenPartida->idJugador2 << endl;
+	cout << "partidaFinalizadaOK:" << resumenPartida->partidaFinalizadaOK << endl;
+	cout << "puntajeJugador1:" << resumenPartida->puntajeJugador1 << endl;
+	cout << "puntajeJugador2:" << resumenPartida->puntajeJugador2 << endl;
 
 	//desasocio la memoria compartida
 	shmdt((struct datosPartida *) resumenPartida);
@@ -190,10 +189,6 @@ void SIG_CHLD(int inum) {
  * Lo pongo en la lista de jugadores y lo sumo a la lista de Partidas de cada jugador
  */
 void agregarJugador(Jugador* nuevoJugador) {
-	////cout << "---> agregarJugador" << endl;
-
-	////cout << "mutex agregarJugador" << endl;
-	pthread_mutex_lock(&mutex_listJugadores);
 	//le inicializo la lista de partidas al nuevo jugador
 	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 		nuevoJugador->agregarOponente(it->second->Id);
@@ -207,8 +202,6 @@ void agregarJugador(Jugador* nuevoJugador) {
 			it2->second->agregarOponente(nuevoJugador->Id);
 		}
 	}
-	pthread_mutex_unlock(&mutex_listJugadores);
-	////cout << "unmutex agregarJugador" << endl;
 }
 
 /**
@@ -520,19 +513,34 @@ void* keepAliveJugadores(void*) {
 		//para cada jugador ver si me responden la señal de KEEPALIVE
 		//cout << "mutex1 keepAliveJugadores listJugadores" << endl;
 		pthread_mutex_lock(&mutex_listJugadores);
-		map<int, Jugador*>::iterator it = listJugadores.begin();
-		while (it != listJugadores.end()) {
+
+		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
+
 			it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
 			readDataCode = it->second->SocketAsociado->ReceiveBloq(buffer, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
 
+			cout << "readDataCode: " << readDataCode << endl;
 			if (readDataCode == 0) {
 				//el jugador se desconecto
 				cout << "Voy a eliminar a: " << it->first << endl;
 				quitarJugador(it->first);
 			} else {
-				it++;
+
 			}
 		}
+		/*map<int, Jugador*>::iterator it = listJugadores.begin();
+		 while (it != listJugadores.end()) {
+		 it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
+		 readDataCode = it->second->SocketAsociado->ReceiveBloq(buffer, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
+
+		 if (readDataCode == 0) {
+		 //el jugador se desconecto
+		 cout << "Voy a eliminar a: " << it->first << endl;
+		 quitarJugador(it->first);
+		 } else {
+		 it++;
+		 }
+		 }*/
 		pthread_mutex_unlock(&mutex_listJugadores);
 		//cout << "unmutex1 keepAliveJugadores listJugadores" << endl;
 		usleep(1000000);
@@ -555,9 +563,9 @@ void* aceptarJugadores(void* data) {
 	cout << "aceptar jugadpres" << endl;
 
 	try {
-		 sSocket = new ServerSocket(puertoTorneo);
-	}catch(...){
-		cout <<"No se pudo conectar a la IP solicitada. Pruebe otra."<<endl;
+		sSocket = new ServerSocket(puertoTorneo);
+	} catch (...) {
+		cout << "No se pudo conectar a la IP solicitada. Pruebe otra." << endl;
 		exit(1);
 	}
 
@@ -570,6 +578,7 @@ void* aceptarJugadores(void* data) {
 		cout << "va a bloquearse esperando mensaje" << endl;
 		cout << "_____________________" << endl;
 		cSocket->ReceiveBloq(nombreJugador, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
+		cout << "se conecto:" << nombreJugador << endl;
 		clientId++;
 		pthread_mutex_lock(&mutex_listJugadores);
 		agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
@@ -699,14 +708,14 @@ void mandarPuntajes() {
 		string message(CD_RANKING);
 		message.append(fillMessage(intToString(it->second->Ranking)));
 		it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
-		//cout<<"MANDO RANKING #"<<it->second->Ranking<<" al Jugador:"<<it->second->Id<<endl;
+		cout << "MANDO RANKING #" << it->second->Ranking << " al Jugador:" << it->second->Id << endl;
 	}
 	pthread_mutex_unlock(&mutex_listJugadores);
 }
 
 void liberarRecursos() {
 	//SOCKETS
-	delete(sSocket);
+	delete (sSocket);
 	pthread_mutex_lock(&mutex_listJugadores);
 	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 		delete (it->second->SocketAsociado);

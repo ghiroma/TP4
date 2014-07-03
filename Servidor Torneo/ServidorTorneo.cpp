@@ -56,7 +56,7 @@ int main(int argc, char * argv[]) {
 	getConfiguration(&puertoTorneo, &ip, &duracionTorneo, &tiempoInmunidad, &cantVidas);
 	if (puertoTorneo == 0 || ip.compare("") == 0 || duracionTorneo == 0 || tiempoInmunidad == 0 || cantVidas == 0) {
 		cout << "Error al obtener configuracion." << endl;
-		return 1;
+		exit(1);
 	}
 	puertoPartida = puertoTorneo;
 	cout << "puertoTorneo: " << puertoTorneo << endl;
@@ -65,14 +65,14 @@ int main(int argc, char * argv[]) {
 	resultThEstablecerPartidas = pthread_create(&thEstablecerPartidas, NULL, establecerPartidas, NULL);
 	if (resultThEstablecerPartidas) {
 		cout << "Error no se pudo crear el thread de Establecer Partidas" << endl;
-		return 1;
+		exit(1);
 	}
 
 	//Lanzar THREAD actualizar lista de jugadores (KEEPALIVE)
 	resultThkeepAliveJugadores = pthread_create(&thkeepAliveJugadores, NULL, keepAliveJugadores, (void*) NULL);
 	if (resultThkeepAliveJugadores) {
 		cout << "Error no se pudo crear el thread keepAliveJugadores" << endl;
-		return 1;
+		exit(1);
 	}
 
 	//Lanzar THREAD ModoGrafico SDL
@@ -80,14 +80,14 @@ int main(int argc, char * argv[]) {
 	resultThModoGrafico = pthread_create(&thModoGrafico, NULL, modoGrafico, (void*) &modoGraficoData);
 	if (resultThModoGrafico) {
 		cout << "Error no se pudo crear el thread de Modo Grafico" << endl;
-		return 1;
+		exit(1);
 	}
 
 	//Lanzar THREAD aceptar jugadores
 	resultThAceptarJugadores = pthread_create(&thAceptarJugadores, NULL, aceptarJugadores, (void *) &ip);
 	if (resultThAceptarJugadores) {
 		cout << "Error no se pudo crear el thread de Aceptar Jugadores" << endl;
-		return 1;
+		exit(1);
 	}
 
 	//Lanzar THREAD temporizador del torneo
@@ -97,7 +97,7 @@ int main(int argc, char * argv[]) {
 	resultThTemporizador = pthread_create(&thTemporizadorTorneo, NULL, temporizadorTorneo, (void *) &temporizacion);
 	if (resultThTemporizador) {
 		cout << "Error no se pudo crear el thread de temporizacion del torneo" << endl;
-		return 1;
+		exit(1);
 	}
 
 	pthread_join(thModoGrafico, NULL);

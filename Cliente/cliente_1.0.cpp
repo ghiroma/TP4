@@ -77,6 +77,8 @@ void PantallaIntermedia(char);
 bool hayChoque();
 void getConfiguration(unsigned short int* port, string* ip, int* arriba, int* derecha, int* abajo, int* izquierda, int* accion, int* salir);
 void mostrarRanking(const char*);
+void liberarRecursos();
+
 /* 
 
  0 - Pantalla intermedia para ingresar el nombre.
@@ -85,9 +87,9 @@ void mostrarRanking(const char*);
 
  */
 
-SDL_Surface *superficie, *backgroundImg,
-*pared_tramo1n1, *pared_tramo2n1, *pared_tramo3n1, *pared, *ventana_sana, *ventana_rota1, *ventana_rota2, *ventana_rota3, *ventana_rota4, *ventana, *puerta, *felix_d1, *felix_i1, *felix_r11, *felix_r21, *felix_r31, *felix_r41, *felix_r51, *felix_d2, *felix_i2, *felix1, *felix2, *ralph_1, *ralph_2,
-		*ralph_3, *ralph_4, *ralph_5, *ralph_6, *ralph, *roca1, *roca2, *roca, *pajaro_1, *pajaro_2, *pajaro, *texto, *puntos, *vidas, *torta;
+SDL_Surface *superficie,
+*backgroundImg, *pared_tramo1n1, *pared_tramo2n1, *pared_tramo3n1, *pared, *ventana_sana, *ventana_rota1, *ventana_rota2, *ventana_rota3, *ventana_rota4, *ventana, *puerta, *felix_d1, *felix_i1, *felix_r11, *felix_r21, *felix_r31, *felix_r41, *felix_r51, *felix_d2, *felix_i2, *felix1, *felix2,
+		*ralph_1, *ralph_2, *ralph_3, *ralph_4, *ralph_5, *ralph_6, *ralph, *roca1, *roca2, *roca, *pajaro_1, *pajaro_2, *pajaro, *texto, *puntos, *vidas, *torta;
 
 struct ventana ventanas_tramo1[3][5];
 /* ALMACENO FILA y COLUMNA -- pienso el edificio como una matriz */
@@ -95,7 +97,7 @@ struct ventana ventanas_tramo1[3][5];
 struct posicion felix1_posicion = { 99, 99 };
 struct posicion ralph_posicion = { 3, 2 };
 struct posicion torta_posicion;
-struct desplazamiento pajaro_desplazamiento = {-1, -1};
+struct desplazamiento pajaro_desplazamiento = { -1, -1 };
 struct desplazamiento rocas_desplazamiento[20];
 
 unsigned short int rahlp_x = PARED_X + 200;
@@ -144,6 +146,8 @@ int key_accion = -1;
 int key_salir = -1;
 
 int ranking = 0;
+bool torneoFinalizado = false;
+bool showWindowRanking = false;
 
 int main(int argc, char *argv[]) {
 	CommunicationSocket * socketTorneo;
@@ -228,7 +232,6 @@ int main(int argc, char *argv[]) {
 	SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
 	SDL_Flip(superficie);
 
-
 	//Dimensiones rectangulo donde irá el texto
 	pantalla_texto.x = 10;
 	pantalla_texto.y = 10;
@@ -249,7 +252,7 @@ int main(int argc, char *argv[]) {
 	do {
 		cout << "Esperando servidor" << endl;
 		try {
-			socketTorneo = new CommunicationSocket(puertoTorneo, (char*)ip.c_str());
+			socketTorneo = new CommunicationSocket(puertoTorneo, (char*) ip.c_str());
 			error = false;
 		} catch (const char *err) {
 			cout << "mensaje : " << err << endl;
@@ -275,7 +278,7 @@ int main(int argc, char *argv[]) {
 	//Espero que el servidor de Torneo me envie el puerto para conectarme al servidor de partida.
 	bool msjPuerto = false;
 	while (true) {
-		pthread_mutex_lock (&mutex_msjPuertoRecibido);
+		pthread_mutex_lock(&mutex_msjPuertoRecibido);
 		msjPuerto = msjPuertoRecibido;
 		pthread_mutex_unlock(&mutex_msjPuertoRecibido);
 
@@ -286,13 +289,13 @@ int main(int argc, char *argv[]) {
 	}
 
 	//Me conecto al servidor de partida.
-	cout<<"Antes de inicializar el socketPartida "<<puertoServidorPartida<<endl;
-	socketPartida = new CommunicationSocket(puertoServidorPartida, (char*)ip.c_str());
+	cout << "Antes de inicializar el socketPartida " << puertoServidorPartida << endl;
+	socketPartida = new CommunicationSocket(puertoServidorPartida, (char*) ip.c_str());
 
 	string message(CD_ID_JUGADOR);
 	message.append(fillMessage(mi_id));
 
-	socketPartida->SendBloq(message.c_str(),message.length());
+	socketPartida->SendBloq(message.c_str(), message.length());
 
 	//Empiezo a tirar Thread para comunicarme con el servidor de partida.
 	pthread_create(&tpid_teclas, NULL, EscuchaServidor, &socketPartida->ID);
@@ -311,7 +314,7 @@ int main(int argc, char *argv[]) {
 		pantalla_juego.h = ALTO_PANTALLA;
 
 		SDL_FillRect(superficie, &pantalla_juego, SDL_MapRGB(superficie->format, 0, 0, 0));
-	//Dibujo la pared.
+		//Dibujo la pared.
 		switch (tramo) {
 		case 1:
 			pared = pared_tramo1n1;
@@ -444,12 +447,12 @@ int main(int argc, char *argv[]) {
 		if (pajaro_moverse == 'S') {
 			pajaro_desplazamiento.x += 10;
 			Dibujar(pajaro_desplazamiento.x, pajaro_desplazamiento.y, pajaro, superficie);
-			if (pajaro_desplazamiento.x > 630){
+			if (pajaro_desplazamiento.x > 630) {
 				pajaro_moverse = 'N';
 				pajaro_desplazamiento.x = -1;
 				pajaro_desplazamiento.y = -1;
-				
-			}	
+
+			}
 		} else {
 			if (!cola_pajaro.empty()) {
 				short int pajaro_fila = atoi(cola_pajaro.front().substr(6, 1).c_str());
@@ -468,17 +471,17 @@ int main(int argc, char *argv[]) {
 				Dibujar(110, 405, felix1, superficie);
 			else {
 
-				if(felix1_inicial == true)
+				if (felix1_inicial == true)
 					Dibujar(110, 405, felix1, superficie);
-				else{
-					if(!cola_felix1.empty()){
-					felix1_inicial = false;
-					string msj = cola_felix1.front();
-					cola_felix1.pop();
-					felix1_posicion.fila = atoi(msj.substr(5,1).c_str());
-					felix1_posicion.columna = atoi(msj.substr(6,1).c_str());
+				else {
+					if (!cola_felix1.empty()) {
+						felix1_inicial = false;
+						string msj = cola_felix1.front();
+						cola_felix1.pop();
+						felix1_posicion.fila = atoi(msj.substr(5, 1).c_str());
+						felix1_posicion.columna = atoi(msj.substr(6, 1).c_str());
 					}
-				Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x,ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
+					Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
 				}
 			}
 		} else {
@@ -505,19 +508,19 @@ int main(int argc, char *argv[]) {
 
 		if (felix2 == NULL)
 			felix2 = felix_d2;
-		
+
 		//Mueveo a felix2, salvo que este en la posicion inicial
-		if(!cola_felix2.empty()){
+		if (!cola_felix2.empty()) {
 			felix2_inicial = false;
 			string msj = cola_felix2.front();
 			cola_felix2.pop();
-			short int f2_fila = atoi(msj.substr(5,1).c_str());
-			short int f2_colu = atoi(msj.substr(6,1).c_str());
-			
-			Dibujar(ventanas_tramo1[f2_fila][f2_colu].x,ventanas_tramo1[f2_fila][f2_colu].y, felix2, superficie);
+			short int f2_fila = atoi(msj.substr(5, 1).c_str());
+			short int f2_colu = atoi(msj.substr(6, 1).c_str());
+
+			Dibujar(ventanas_tramo1[f2_fila][f2_colu].x, ventanas_tramo1[f2_fila][f2_colu].y, felix2, superficie);
 		}
-		
-		if(felix2_inicial == true)
+
+		if (felix2_inicial == true)
 			Dibujar(120, 405, felix2, superficie);
 		//Dibujo las rocas
 		roca = roca1;
@@ -535,7 +538,7 @@ int main(int argc, char *argv[]) {
 		}
 		//Ojo, hay que poner el delay porque sino el proceso no tiene tiempos muertos y
 		// el uso del procesador se me va al chori.
-		if(hayChoque()){
+		if (hayChoque()) {
 			felix1_posicion.fila = 99;
 			felix1_posicion.columna = 99;
 
@@ -546,7 +549,7 @@ int main(int argc, char *argv[]) {
 			felix1_puntos--;
 			felix1_vidas--;
 		}
-		
+
 		if (ventanas_reparadas == 11) {
 			ventanas_reparadas = 10;
 			ventanas_cargadas = 'N';
@@ -565,23 +568,33 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	cout<<"Ingrese un tecla para terminar: ";
+	//esperar mientras las demas partidas no han finalizado. (mostrar msj "GameOver. waiting for rankings.. ")
+	backgroundImg = SDL_LoadBMP("Sprites/Mensajes/gameover.bmp");
+	if (backgroundImg == NULL) {
+		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
+		exit(1);
+	}
+	SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
+	SDL_Flip(superficie);
+	while (!showWindowRanking) {
+		sleep(1);
+	}
+	cout << "Ingrese un tecla para terminar: ";
 	getchar();
 
-//LIBERAR TODOS LOS RECURSOS .... los SDL_Surface tambien
-	//	delete (socket);
-	SDL_Quit();
-	TTF_CloseFont(fuente);
-	TTF_Quit();
+	//Liberar recursos
+	liberarRecursos();
 	return 0;
 }
 
-bool hayChoque(){
-	if(felix1_posicion.fila!=99 && felix1_posicion.columna!=99 && ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x <= (pajaro_desplazamiento.x + 20) && (ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x + 20) >= pajaro_desplazamiento.x && ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y == pajaro_desplazamiento.y)
+bool hayChoque() {
+	if (felix1_posicion.fila != 99 && felix1_posicion.columna != 99 && ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x <= (pajaro_desplazamiento.x + 20) && (ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x + 20) >= pajaro_desplazamiento.x
+			&& ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y == pajaro_desplazamiento.y)
 		return true;
-	for(int i=0; i<cant_rocas; i++)
-		if(felix1_posicion.fila!=99 && felix1_posicion.columna!=99 && ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y <= rocas_desplazamiento[i].y && (ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y + 50) >= rocas_desplazamiento[i].y && ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x == (rocas_desplazamiento[i].x-10))
-		return true;
+	for (int i = 0; i < cant_rocas; i++)
+		if (felix1_posicion.fila != 99 && felix1_posicion.columna != 99 && ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y <= rocas_desplazamiento[i].y && (ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y + 50) >= rocas_desplazamiento[i].y
+				&& ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x == (rocas_desplazamiento[i].x - 10))
+			return true;
 	return false;
 }
 
@@ -648,7 +661,7 @@ void DibujarVentanas(struct ventana ventanas[][5], unsigned short int cant_filas
 
 void* EscuchaServidor(void *arg) {
 	int fd = *(int *) arg;
-	int readData=0;
+	int readData = 0;
 	CommunicationSocket cSocket(fd);
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
@@ -672,37 +685,32 @@ void* EscuchaServidor(void *arg) {
 				case '3':
 					break;
 				case '4':
-					if(buffer[2]=='1'){
+					if (buffer[2] == '1') {
 						cola_felix1.push(aux_buffer);
-					}
-					else
+					} else
 						cola_felix2.push(aux_buffer);
 					break;
 
 				case '5':
-				      //TODO Perdida vida.
+					//TODO Perdida vida.
 					break;
 				}
 			}
-			if(buffer[0]=='9')
-			  {
-			    switch(buffer[1])
-			    {
-			      case '9':
-				string message(CD_ACK);
-				message.append(fillMessage("0"));
-				//TODO Agregar mutex.
-				cola_grafico.push(message);
-				break;
-			    }
-			  }
+			if (buffer[0] == '9') {
+				switch (buffer[1]) {
+				case '9':
+					string message(CD_ACK);
+					message.append(fillMessage("0"));
+					//TODO Agregar mutex.
+					cola_grafico.push(message);
+					break;
+				}
+			}
+		} else if (readData == 0) {
+			cout << "Murio el servidor de partida" << endl;
+			pthread_exit(0);
+			//salir='S';
 		}
-		else if(readData==0)
-		  {
-		    cout<<"Murio el servidor de partida"<<endl;
-		    pthread_exit(0);
-		    //salir='S';
-		  }
 		//sleep(1);
 		usleep(10000);
 	}
@@ -725,7 +733,7 @@ void * EnvioServidor(void * arg) {
 void* EscuchaTorneo(void *arg) {
 	int fd = *(int *) arg;
 	int readData = 0;
-	cout<<"FD: "<<fd<<endl;
+	cout << "FD: " << fd << endl;
 	CommunicationSocket cSocket(fd);
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
@@ -737,32 +745,36 @@ void* EscuchaTorneo(void *arg) {
 			cout << "Recibi: " << buffer << endl;
 			int codigo = atoi((aux_buffer.substr(0, LONGITUD_CODIGO).c_str()));
 			switch (codigo) {
-				//case CD_ID_JUGADOR_I:
-				//	break;
-				case CD_PUERTO_PARTIDA_I:
-					pthread_mutex_lock(&mutex_msjPuertoRecibido);
-					puertoServidorPartida = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
-					cout<<"Puerto: "<<puertoServidorPartida<<endl;
-					msjPuertoRecibido = true;
-					pthread_mutex_unlock(&mutex_msjPuertoRecibido);
-					break;
-				case CD_RANKING_I:
-					mostrarRanking(aux_buffer.substr(LONGITUD_CODIGO+LONGITUD_CONTENIDO-2, 2).c_str());
-					cout<<"RANKING #"<<aux_buffer.substr(LONGITUD_CODIGO+LONGITUD_CONTENIDO-2, 2).c_str()<<endl;
-					break;
-				case CD_ACK_I:
-					string message(CD_ACK);
-					string content = "1";
-					message.append(fillMessage(content));
-					cSocket.SendNoBloq(message.c_str(), LONGITUD_CODIGO);
-					break;
+			//case CD_ID_JUGADOR_I:
+			//	break;
+			case CD_PUERTO_PARTIDA_I:
+				pthread_mutex_lock(&mutex_msjPuertoRecibido);
+				puertoServidorPartida = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
+				cout << "Puerto: " << puertoServidorPartida << endl;
+				msjPuertoRecibido = true;
+				pthread_mutex_unlock(&mutex_msjPuertoRecibido);
+				break;
+			case CD_RANKING_I:
+				mostrarRanking(aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str());
+				cout << "RANKING #" << aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str() << endl;
+				break;
+			case CD_FIN_TORNEO_I:
+				//aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str()
+				torneoFinalizado = true;
+				salir = true;
+				cout << "Fin de Toreno:" << aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str() << endl;
+				break;
+			case CD_ACK_I:
+				string message(CD_ACK);
+				string content = "1";
+				message.append(fillMessage(content));
+				cSocket.SendNoBloq(message.c_str(), LONGITUD_CODIGO);
+				break;
 			}
+		} else if (readData == 0) {
+			cout << "Murio el servidor torneo" << endl;
+			salir = 'S';
 		}
-		else if(readData==0)
-		  {
-		    cout<<"Murio el servidor torneo"<<endl;
-		    salir='S';
-		  }
 		usleep(5000);
 	}
 }
@@ -783,12 +795,12 @@ void* EscuchaTeclas(void *arg) {
 		switch (evento.type) {
 
 		case SDL_KEYDOWN:
-			if (evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo ) {
+			if (evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo) {
 				if ((felix1_posicion.fila - 1) >= 0)
 					if ((felix1_posicion.fila - 1) != 0)
-						f1_colu = felix1_posicion.fila -1;
+						f1_colu = felix1_posicion.fila - 1;
 					else if ((felix1_posicion.columna) != 2)
-						f1_colu = felix1_posicion.fila -1;
+						f1_colu = felix1_posicion.fila - 1;
 				felix1_reparar = 'N';
 
 				ostringstream ss1;
@@ -801,12 +813,12 @@ void* EscuchaTeclas(void *arg) {
 				cout << "MENSAJE: " << message << endl;
 				cola_grafico.push(message);
 
-			} else if (evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba ) {
+			} else if (evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba) {
 				if (felix1_posicion.columna == 99) {
 					f1_fila = 0;
 					f1_colu = 0;
 				} else if ((felix1_posicion.fila + 1) < 3)
-					f1_colu = felix1_posicion.fila +1;
+					f1_colu = felix1_posicion.fila + 1;
 				felix1_reparar = 'N';
 
 				ostringstream ss1;
@@ -826,9 +838,9 @@ void* EscuchaTeclas(void *arg) {
 					f1_colu = 0;
 				} else if ((felix1_posicion.columna + 1) < 5)
 					if ((felix1_posicion.columna + 1) != 2)
-						f1_colu = felix1_posicion.columna +1;
+						f1_colu = felix1_posicion.columna + 1;
 					else if ((felix1_posicion.fila) != 0)
-						f1_colu = felix1_posicion.columna +1;
+						f1_colu = felix1_posicion.columna + 1;
 				felix1_reparar = 'N';
 
 				ostringstream ss1;
@@ -845,9 +857,9 @@ void* EscuchaTeclas(void *arg) {
 				felix1 = felix_i1;
 				if ((felix1_posicion.columna - 1) >= 0)
 					if ((felix1_posicion.columna - 1) != 2)
-						f1_colu = felix1_posicion.columna -1;
+						f1_colu = felix1_posicion.columna - 1;
 					else if ((felix1_posicion.fila) != 0)
-						f1_colu = felix1_posicion.columna -1;
+						f1_colu = felix1_posicion.columna - 1;
 				felix1_reparar = 'N';
 
 				ostringstream ss1;
@@ -1023,22 +1035,22 @@ void getConfiguration(unsigned short int* port, string* ip, int* arriba, int* de
 			*port = atoi(sport.c_str());
 		} else if (line.find("Arriba") == 0) {
 			int pos = line.find(":");
-			*arriba = (int)line.substr(pos + 1, line.length()).at(0);
+			*arriba = (int) line.substr(pos + 1, line.length()).at(0);
 		} else if (line.find("Derecha") == 0) {
 			int pos = line.find(":");
-			*derecha = (int)line.substr(pos + 1, line.length()).at(0);
+			*derecha = (int) line.substr(pos + 1, line.length()).at(0);
 		} else if (line.find("Abajo") == 0) {
 			int pos = line.find(":");
-			*abajo = (int)line.substr(pos + 1, line.length()).at(0);
+			*abajo = (int) line.substr(pos + 1, line.length()).at(0);
 		} else if (line.find("Izquierda") == 0) {
 			int pos = line.find(":");
-			*izquierda = (int)line.substr(pos + 1, line.length()).at(0);
+			*izquierda = (int) line.substr(pos + 1, line.length()).at(0);
 		} else if (line.find("Accion") == 0) {
 			int pos = line.find(":");
-			*accion = (int)line.substr(pos + 1, line.length()).at(0);
+			*accion = (int) line.substr(pos + 1, line.length()).at(0);
 		} else if (line.find("Salir") == 0) {
 			int pos = line.find(":");
-			*salir= (int)line.substr(pos + 1, line.length()).at(0);
+			*salir = (int) line.substr(pos + 1, line.length()).at(0);
 		}
 	}
 }
@@ -1057,12 +1069,60 @@ void mostrarRanking(const char* ranking) {
 
 	fuente = TTF_OpenFont("./Fuentes/DejaVuSans.ttf", 75);
 	texto = TTF_RenderText_Solid(fuente, ranking, color_texto);
-	//TTF_SizeText(fuente, ranking, &w, &h);
 	SDL_BlitSurface(texto, NULL, backgroundImg, &posTextoRanking);
 
 	SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
 	SDL_Flip(superficie);
 
+	showWindowRanking = true;
+
 	///ver de cambiar
-	salir= 'S';
+	salir = 'S';
+}
+
+void liberarRecursos() {
+	SDL_FreeSurface(superficie);
+	SDL_FreeSurface(backgroundImg);
+	SDL_FreeSurface(pared_tramo1n1);
+	SDL_FreeSurface(pared_tramo2n1);
+	SDL_FreeSurface(pared_tramo3n1);
+	SDL_FreeSurface(pared);
+	SDL_FreeSurface(ventana_sana);
+	SDL_FreeSurface(ventana_rota1);
+	SDL_FreeSurface(ventana_rota2);
+	SDL_FreeSurface(ventana_rota3);
+	SDL_FreeSurface(ventana_rota4);
+	SDL_FreeSurface(ventana);
+	SDL_FreeSurface(puerta);
+	SDL_FreeSurface(felix_d1);
+	SDL_FreeSurface(felix_i1);
+	SDL_FreeSurface(felix_r11);
+	SDL_FreeSurface(felix_r21);
+	SDL_FreeSurface(felix_r31);
+	SDL_FreeSurface(felix_r41);
+	SDL_FreeSurface(felix_r51);
+	SDL_FreeSurface(felix_d2);
+	SDL_FreeSurface(felix_i2);
+	SDL_FreeSurface(felix1);
+	SDL_FreeSurface(felix2);
+	SDL_FreeSurface(ralph_1);
+	SDL_FreeSurface(ralph_2);
+	SDL_FreeSurface(ralph_3);
+	SDL_FreeSurface(ralph_4);
+	SDL_FreeSurface(ralph_5);
+	SDL_FreeSurface(ralph_6);
+	SDL_FreeSurface(ralph);
+	SDL_FreeSurface(roca1);
+	SDL_FreeSurface(roca2);
+	SDL_FreeSurface(roca);
+	SDL_FreeSurface(pajaro_1);
+	SDL_FreeSurface(pajaro_2);
+	SDL_FreeSurface(pajaro);
+	SDL_FreeSurface(texto);
+	SDL_FreeSurface(puntos);
+	SDL_FreeSurface(vidas);
+	SDL_FreeSurface(torta);
+	SDL_Quit();
+	TTF_CloseFont(fuente);
+	TTF_Quit();
 }
