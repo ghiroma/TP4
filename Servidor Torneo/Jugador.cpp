@@ -46,7 +46,9 @@ void Jugador::agregarOponente(int idOponente) {
 }
 
 void Jugador::quitarJugador(int idOponente) {
-	this->Partidas.erase(idOponente);
+	if(this->Partidas.count(idOponente) == 1){
+		this->Partidas.erase(idOponente);
+	}
 }
 
 int Jugador::obtenerOponente() {

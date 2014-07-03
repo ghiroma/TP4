@@ -25,6 +25,8 @@ unsigned int puertoPartida;
 int cantVidas = 0;
 
 int main(int argc, char * argv[]) {
+	atexit(liberarRecursos);
+
 	cout << "Comienza servidor Torneo PID:" << getpid() << endl;
 	string ip = "";
 	int duracionTorneo = 0;
@@ -48,6 +50,7 @@ int main(int argc, char * argv[]) {
 	signal(SIGINT, SIG_Handler);
 	signal(SIGTERM, SIG_Handler);
 	signal(SIGCHLD, SIG_CHLD);
+
 
 	//Obtener configuracion
 	getConfiguration(&puertoTorneo, &ip, &duracionTorneo, &tiempoInmunidad, &cantVidas);
