@@ -1012,37 +1012,40 @@ char CambiaNivel() {
 
 char IngresaNombre() {
 	char salir = 'N';
-	short int caracter;
 	int teclaIngresada;
 
 	SDL_Rect posTextoNombreIngresado;
 	posTextoNombreIngresado.x = 385;
 	posTextoNombreIngresado.y = 57;
 
-	SDL_WaitEvent(&evento);
-	if (evento.type == SDL_KEYDOWN) {
-		teclaIngresada = evento.key.keysym.sym;
-		if (teclaIngresada != SDLK_RETURN && teclaIngresada != SDLK_KP_ENTER) {
-			backgroundImg = SDL_LoadBMP("Sprites/Mensajes/start.bmp");
-			if (backgroundImg == NULL) {
-				printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
-				exit(1);
+	while (true) {
+		SDL_WaitEvent(&evento);
+		if (evento.type == SDL_KEYDOWN) {
+			teclaIngresada = evento.key.keysym.sym;
+			if (teclaIngresada != SDLK_RETURN && teclaIngresada != SDLK_KP_ENTER) {
+				backgroundImg = SDL_LoadBMP("Sprites/Mensajes/start.bmp");
+				if (backgroundImg == NULL) {
+					printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
+					exit(1);
+				}
+
+				if (teclaIngresada >= 97 && teclaIngresada <= 122 && felix1_nombre.length() < LONGITUD_CONTENIDO)
+					felix1_nombre += teclaIngresada;
+				else if (teclaIngresada == SDLK_BACKSPACE && felix1_nombre.length() > 0)
+					felix1_nombre = felix1_nombre.substr(0, felix1_nombre.length() - 1);
+
+				//Texto del texto
+				texto = TTF_RenderText_Solid(fuente, felix1_nombre.c_str(), color_texto);
+				SDL_BlitSurface(texto, NULL, backgroundImg, &posTextoNombreIngresado);
+
+				SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
+				SDL_Flip(superficie);
+
+			} else if (felix1_nombre.length() > 0) {
+				salir = 'S';
+				break;
 			}
-
-			if (teclaIngresada >= 97 && teclaIngresada <= 122 && felix1_nombre.length() < LONGITUD_CONTENIDO)
-				felix1_nombre += teclaIngresada;
-			else if (teclaIngresada == SDLK_BACKSPACE && felix1_nombre.length() > 0)
-				felix1_nombre = felix1_nombre.substr(0, felix1_nombre.length() - 1);
-
-			//Texto del texto
-			texto = TTF_RenderText_Solid(fuente, felix1_nombre.c_str(), color_texto);
-			SDL_BlitSurface(texto, NULL, backgroundImg, &posTextoNombreIngresado);
-
-			SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
-			SDL_Flip(superficie);
-
-		} else if (felix1_nombre.length() > 0)
-			salir = 'S';
+		}
 	}
 	return salir;
 }
