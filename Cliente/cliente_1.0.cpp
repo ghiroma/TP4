@@ -304,9 +304,9 @@ int main(int argc, char *argv[]) {
 
 	//recibo el nombre de mi oponente
 	/*char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
-	socketPartida->ReceiveBloq(buffer, sizeof(buffer));
-	string aux_buffer(buffer);
-	felix2_nombre = aux_buffer;*/
+	 socketPartida->ReceiveBloq(buffer, sizeof(buffer));
+	 string aux_buffer(buffer);
+	 felix2_nombre = aux_buffer;*/
 	felix2_nombre = "Jugador 2";
 
 	//Empiezo a tirar Thread para comunicarme con el servidor de partida.
@@ -497,6 +497,7 @@ int main(int argc, char *argv[]) {
 				}
 			}
 		} else {
+			cout << "inicia repara ventana" << endl;
 			if (felix1 == felix_d1 || felix1 == felix_i1)
 				felix1 = felix_r11;
 			else if (felix1 == felix_r11)
@@ -515,7 +516,9 @@ int main(int argc, char *argv[]) {
 				}
 				felix1_reparar = 'N';
 			}
+			cout << "casi termina repara ventana" << endl;
 			Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
+			cout << "termino repara ventana" << endl;
 		}
 
 		if (felix2 == NULL)
@@ -685,7 +688,7 @@ void* EscuchaServidor(void *arg) {
 		if (strlen(buffer) > 0) {
 			string aux_buffer(buffer);
 
-			if(aux_buffer.compare("9900000") != 0){
+			if (aux_buffer.compare("9900000") != 0) {
 				cout << "Recibi: " << buffer << endl;
 			}
 
@@ -762,7 +765,7 @@ void* EscuchaTorneo(void *arg) {
 		if (strlen(buffer) > 0) {
 			string aux_buffer(buffer);
 
-			if(aux_buffer.compare("9900000") != 0){
+			if (aux_buffer.compare("9900000") != 0) {
 				cout << "Recibi: " << buffer << endl;
 			}
 
@@ -780,7 +783,6 @@ void* EscuchaTorneo(void *arg) {
 			case CD_RANKING_I:
 				cout << "RANKING #" << aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str() << endl;
 				ranking = aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str();
-
 
 				//ESTO NO DEBERIA SER ASI, EL JUGADOR TIENE QUE RECONOCER QUE SE TERMINO LA PARTIDA
 				//HARCODEADO PARA PROBAR LA PANTALLA DE RANKING
@@ -1011,7 +1013,7 @@ char CambiaNivel() {
 char IngresaNombre() {
 	char salir = 'N';
 	short int caracter;
-	///caracter = strlen(felix1_nombre);
+	int teclaIngresada;
 
 	SDL_Rect posTextoNombreIngresado;
 	posTextoNombreIngresado.x = 385;
@@ -1019,19 +1021,19 @@ char IngresaNombre() {
 
 	SDL_WaitEvent(&evento);
 	if (evento.type == SDL_KEYDOWN) {
-		if (evento.key.keysym.sym != SDLK_RETURN && evento.key.keysym.sym != SDLK_KP_ENTER) {
+		teclaIngresada = evento.key.keysym.sym;
+		if (teclaIngresada != SDLK_RETURN && teclaIngresada != SDLK_KP_ENTER) {
 			backgroundImg = SDL_LoadBMP("Sprites/Mensajes/start.bmp");
 			if (backgroundImg == NULL) {
 				printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
 				exit(1);
 			}
 
-			if (evento.key.keysym.sym >= 97 && evento.key.keysym.sym <= 122 && caracter <= 9)
-				felix1_nombre += evento.key.keysym.sym;
-			else if (evento.key.keysym.sym == SDLK_BACKSPACE && caracter >= 0)
-				felix1_nombre = felix1_nombre.substr(0,felix1_nombre.length()-1);
+			if (teclaIngresada >= 97 && teclaIngresada <= 122 && felix1_nombre.length() < LONGITUD_CONTENIDO)
+				felix1_nombre += teclaIngresada;
+			else if (teclaIngresada == SDLK_BACKSPACE && felix1_nombre.length() > 0)
+				felix1_nombre = felix1_nombre.substr(0, felix1_nombre.length() - 1);
 
-			//felix1_nombre[caracter] = '\0';
 			//Texto del texto
 			texto = TTF_RenderText_Solid(fuente, felix1_nombre.c_str(), color_texto);
 			SDL_BlitSurface(texto, NULL, backgroundImg, &posTextoNombreIngresado);
@@ -1039,10 +1041,9 @@ char IngresaNombre() {
 			SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
 			SDL_Flip(superficie);
 
-		} else if (caracter >= 0)
+		} else if (felix1_nombre.length() > 0)
 			salir = 'S';
 	}
-
 	return salir;
 }
 
