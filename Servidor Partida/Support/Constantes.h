@@ -32,6 +32,7 @@ static const char* CD_PERDIDA_VIDA = "05";
 static const char* CD_ID_JUGADOR = "06";
 static const char* CD_PUERTO_PARTIDA = "07";
 static const char* CD_VENTANA_ARREGLADA = "08";
+static const char* CD_NOMBRE = "50";
 static const char* CD_ACK = "99";
 static const char* CD_PERDIO = "98";
 static const char* CD_TORNEO_CAIDO = "97";

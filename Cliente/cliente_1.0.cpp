@@ -145,9 +145,10 @@ int key_izquierda = -1;
 int key_accion = -1;
 int key_salir = -1;
 
-int ranking = 0;
+const char* ranking;
 bool torneoFinalizado = false;
 bool showWindowRanking = false;
+bool murioServidorTorneo = false;
 
 int main(int argc, char *argv[]) {
 	CommunicationSocket * socketTorneo;
@@ -292,11 +293,21 @@ int main(int argc, char *argv[]) {
 	cout << "Antes de inicializar el socketPartida " << puertoServidorPartida << endl;
 	socketPartida = new CommunicationSocket(puertoServidorPartida, (char*) ip.c_str());
 
+	//mando mi ID
 	string message(CD_ID_JUGADOR);
 	message.append(fillMessage(mi_id));
-
+	socketPartida->SendBloq(message.c_str(), message.length());
+/*
+	//mando mi nombre de jugador
+	string message(CD_NOMBRE);
+	message.append(fillMessage(felix1_nombre));
 	socketPartida->SendBloq(message.c_str(), message.length());
 
+	//recibo el nombre de mi oponente
+	string message(CD_NOMBRE);
+	message.append(fillMessage(felix1_nombre));
+	socketPartida->SendBloq(message.c_str(), message.length());
+*/
 	//Empiezo a tirar Thread para comunicarme con el servidor de partida.
 	pthread_create(&tpid_teclas, NULL, EscuchaServidor, &socketPartida->ID);
 	pthread_create(&tpid_envia, NULL, EnvioServidor, &socketPartida->ID);
@@ -579,6 +590,8 @@ int main(int argc, char *argv[]) {
 	while (!showWindowRanking) {
 		sleep(1);
 	}
+	mostrarRanking(ranking);
+
 	cout << "Ingrese un tecla para terminar: ";
 	getchar();
 
@@ -714,6 +727,7 @@ void* EscuchaServidor(void *arg) {
 		//sleep(1);
 		usleep(10000);
 	}
+	pthread_exit(NULL);
 }
 
 void * EnvioServidor(void * arg) {
@@ -756,7 +770,10 @@ void* EscuchaTorneo(void *arg) {
 				break;
 			case CD_RANKING_I:
 				cout << "RANKING #" << aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str() << endl;
-				mostrarRanking(aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str());
+				ranking = aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str();
+				showWindowRanking = true;
+				//salgo del thread porque este el ultimo mensaje que me interesa
+				pthread_exit(NULL);
 				break;
 			case CD_FIN_TORNEO_I:
 				//que no busque mas establecer partidas
@@ -772,10 +789,15 @@ void* EscuchaTorneo(void *arg) {
 			}
 		} else if (readData == 0) {
 			cout << "Murio el servidor torneo" << endl;
-			salir = 'S';
+
+			/// dar aviso de que murio y cerrar todo
+
+			murioServidorTorneo = true;
 		}
 		usleep(5000);
 	}
+
+	pthread_exit(NULL);
 }
 
 void* EscuchaTeclas(void *arg) {
@@ -885,7 +907,7 @@ void* EscuchaTeclas(void *arg) {
 		}
 		usleep(100000);
 	}
-	return NULL;
+	pthread_exit(NULL);
 }
 
 char ventana_reparada(struct posicion *felix_posicion) {
@@ -1072,8 +1094,6 @@ void mostrarRanking(const char* ranking) {
 
 	SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
 	SDL_Flip(superficie);
-
-	showWindowRanking = true;
 }
 
 void liberarRecursos() {

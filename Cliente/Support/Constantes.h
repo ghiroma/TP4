@@ -23,13 +23,14 @@ const int LONGITUD_CONTENIDO = 5;
 
 static const int CD_ACK_I = 99;
 //CD viene de codigo mensaje.
-const char* CD_MOVIMIENTO_RALPH = "00";
-const char* CD_PALOMA = "01";
-const char* CD_TORTA = "02";
-const char* CD_PERSIANA = "03";
-const char* CD_MOVIMIENTO_FELIX = "04";
-const char* CD_PERDIDA_VIDA = "05";
-const char* CD_ACK = "99";
+static const char* CD_MOVIMIENTO_RALPH = "00";
+static const char* CD_PALOMA = "01";
+static const char* CD_TORTA = "02";
+static const char* CD_PERSIANA = "03";
+static const char* CD_MOVIMIENTO_FELIX = "04";
+static const char* CD_PERDIDA_VIDA = "05";
+static const char* CD_NOMBRE = "50";
+static const char* CD_ACK = "99";
 
 //CODIGOS SERVIDOR TORNEO
 static const char* CD_ID_JUGADOR = "06";

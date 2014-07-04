@@ -101,10 +101,11 @@ int main(int argc, char * argv[]) {
 	}
 
 	pthread_join(thModoGrafico, NULL);
-	pthread_join(thkeepAliveJugadores, NULL);
 
 	//mandar a cada cliente su puntaje y ranking
 	mandarPuntajes();
+
+	pthread_join(thkeepAliveJugadores, NULL);
 
 	//bloqueo en espera de que ingrese una tecla para cerrar la pantalla
 	cout << "Ingrese una tecla para finalizar: ";

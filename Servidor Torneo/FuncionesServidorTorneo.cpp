@@ -123,6 +123,10 @@ void SIG_CHLD(int inum) {
 	puntajesPartida * resumenPartida;
 	resumenPartida = (struct puntajesPartida *) shmat(idSHM, (char *) 0, 0);
 
+	//////cambiar,,,,,
+	//////agregar a la estructura  j1terminoOK y j2terminoOK
+
+
 	pthread_mutex_lock(&mutex_listJugadores);
 	//si el torneo termino ok Grabo los puntajes
 	if (resumenPartida->partidaFinalizadaOK == true) {
@@ -244,6 +248,7 @@ bool torneoFinalizado() {
  */
 void*
 temporizadorTorneo(void* data) {
+	cout << "Thread temporizadorTorneo - PID:" << getpid() << endl;
 	struct thTemporizador_data *torneo;
 	torneo = (struct thTemporizador_data *) data;
 
@@ -285,6 +290,7 @@ temporizadorTorneo(void* data) {
  * THREAD -> Modo Grafico
  */
 void* modoGrafico(void* data) {
+	cout << "Thread modoGrafico - PID:" << getpid() << endl;
 	struct thModoGrafico_data *torneo;
 	torneo = (struct thModoGrafico_data *) data;
 
@@ -504,6 +510,7 @@ void* modoGrafico(void* data) {
  * THREAD -> KEEPALIVE Jugadores - Actualiza la lista de jugadores quitando los que ya no estan activos
  */
 void* keepAliveJugadores(void*) {
+	cout << "Thread keepAliveJugadores - PID:" << getpid() << endl;
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
 	int readDataCode;
@@ -523,7 +530,6 @@ void* keepAliveJugadores(void*) {
 			it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
 			readDataCode = it->second->SocketAsociado->ReceiveBloq(buffer, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
 
-			cout << "readDataCode: " << readDataCode << endl;
 			if (readDataCode == 0) {
 				//el jugador se desconecto
 				cout << "Voy a eliminar a: " << it->first << endl;
@@ -562,6 +568,7 @@ void* keepAliveJugadores(void*) {
  * THREAD -> Aceptar las conexiones de nuevos jugadores al torneo
  */
 void* aceptarJugadores(void* data) {
+	cout << "Thread aceptarJugadores - PID:" << getpid() << endl;
 	int clientId = 0;
 	//Crear Socket del Servidor
 	cout << "aceptar jugadpres" << endl;
@@ -605,6 +612,7 @@ void* aceptarJugadores(void* data) {
  */
 void*
 establecerPartidas(void* data) {
+	cout << "Thread establecerPartidas - PID:" << getpid() << endl;
 	pid_t pid;
 	int idJugador;
 	int idOponente;
@@ -656,6 +664,7 @@ establecerPartidas(void* data) {
 				listJugadores[idOponente]->SocketAsociado->SendNoBloq(message.c_str(), message.length());
 
 				if ((pid = fork()) == 0) {
+					cout << "Thread establecerPartidas FORK - PID:" << getpid() << endl;
 					//cout << "partida nro: " << nroPartida << " FORK- PID:" << getpid() << endl;
 					//Proceso hijo. Hacer exec
 					//cout << "J" << idJugador << " Crear Partida en el puerto: " << (puertoPartida - 1) << " (" << idJugador << "vs" << idOponente << ")" << endl;
