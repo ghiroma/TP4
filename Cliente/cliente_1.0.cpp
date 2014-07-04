@@ -118,8 +118,10 @@ char ventanas_cargadas = 'N';
 char torta_aparece = 'N';
 char felix_cartel_puntos[10] = { 0 };
 char felix_cartel_vidas[10] = { 0 };
-char felix1_nombre[10] = { ' ' };
-char felix2_nombre[10] = { "Player 2" };
+//string felix1_nombre[10] = { ' ' };
+//string felix2_nombre[10] = { "Player 2" };
+string felix1_nombre = "";
+string felix2_nombre = "";
 short int felix1_puntos = 0;
 short int felix2_puntos = 0;
 short int felix1_vidas = 3;
@@ -224,15 +226,6 @@ int main(int argc, char *argv[]) {
 	PantallaIntermedia('0');
 	salir = 'N';
 
-	//Muestro pantalla de "esperando al servidor por nueva partida"
-	backgroundImg = SDL_LoadBMP("Sprites/Mensajes/waitmatch.bmp");
-	if (backgroundImg == NULL) {
-		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
-		exit(1);
-	}
-	SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
-	SDL_Flip(superficie);
-
 	//Dimensiones rectangulo donde irá el texto
 	pantalla_texto.x = 10;
 	pantalla_texto.y = 10;
@@ -245,8 +238,14 @@ int main(int argc, char *argv[]) {
 	}
 
 	//Conexion con el servidor de torneo.
-
-	/////Ventana esperando servidor////
+	//Muestro pantalla de "esperando al servidor por nueva partida"
+	backgroundImg = SDL_LoadBMP("Sprites/Mensajes/waitmatch.bmp");
+	if (backgroundImg == NULL) {
+		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
+		exit(1);
+	}
+	SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
+	SDL_Flip(superficie);
 
 	cout << "Intentando conectarme al torneo" << endl;
 	bool error = true;
@@ -265,7 +264,7 @@ int main(int argc, char *argv[]) {
 
 	cout << "Conectado" << endl;
 
-	socketTorneo->SendNoBloq(felix1_nombre, sizeof(felix1_nombre));
+	socketTorneo->SendNoBloq(felix1_nombre.c_str(), sizeof(felix1_nombre));
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
 	socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
@@ -297,17 +296,19 @@ int main(int argc, char *argv[]) {
 	string message(CD_ID_JUGADOR);
 	message.append(fillMessage(mi_id));
 	socketPartida->SendBloq(message.c_str(), message.length());
-/*
+
 	//mando mi nombre de jugador
-	string message(CD_NOMBRE);
-	message.append(fillMessage(felix1_nombre));
-	socketPartida->SendBloq(message.c_str(), message.length());
+	string messageNombre(CD_NOMBRE);
+	messageNombre.append(fillMessage(felix1_nombre));
+	socketPartida->SendBloq(messageNombre.c_str(), messageNombre.length());
 
 	//recibo el nombre de mi oponente
-	string message(CD_NOMBRE);
-	message.append(fillMessage(felix1_nombre));
-	socketPartida->SendBloq(message.c_str(), message.length());
-*/
+	/*char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
+	socketPartida->ReceiveBloq(buffer, sizeof(buffer));
+	string aux_buffer(buffer);
+	felix2_nombre = aux_buffer;*/
+	felix2_nombre = "Jugador 2";
+
 	//Empiezo a tirar Thread para comunicarme con el servidor de partida.
 	pthread_create(&tpid_teclas, NULL, EscuchaServidor, &socketPartida->ID);
 	pthread_create(&tpid_envia, NULL, EnvioServidor, &socketPartida->ID);
@@ -366,11 +367,11 @@ int main(int argc, char *argv[]) {
 		//Dibujo el texto.
 		pantalla_texto.x = 10;
 		pantalla_texto.y = 10;
-		texto = TTF_RenderText_Solid(fuente, felix1_nombre, color_texto);
+		texto = TTF_RenderText_Solid(fuente, felix1_nombre.c_str(), color_texto);
 		SDL_BlitSurface(texto, NULL, superficie, &pantalla_texto);
 
 		pantalla_texto.x = 520;
-		texto = TTF_RenderText_Solid(fuente, felix2_nombre, color_texto);
+		texto = TTF_RenderText_Solid(fuente, felix2_nombre.c_str(), color_texto);
 		SDL_BlitSurface(texto, NULL, superficie, &pantalla_texto);
 
 		// cargar las ventanas del tramo 1 -- fila 0 es la de mas abajo.
@@ -679,11 +680,15 @@ void* EscuchaServidor(void *arg) {
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
 	while (salir == 'N') {
-		cout << "Espero msj del servidor de partida ... " << endl;
+		//cout << "Espero msj del servidor de partida ... " << endl;
 		readData = cSocket.ReceiveBloq(buffer, sizeof(buffer));
 		if (strlen(buffer) > 0) {
 			string aux_buffer(buffer);
-			cout << "Recibi: " << buffer << endl;
+
+			if(aux_buffer.compare("9900000") != 0){
+				cout << "Recibi: " << buffer << endl;
+			}
+
 			if (buffer[0] == '0') {
 				switch (buffer[1]) {
 				case '0':
@@ -752,11 +757,15 @@ void* EscuchaTorneo(void *arg) {
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
 	while (salir == 'N') {
-		cout << "Espero msj del servidor de Torneo ... " << endl;
+		//cout << "Espero msj del servidor de Torneo ... " << endl;
 		readData = cSocket.ReceiveBloq(buffer, sizeof(buffer));
 		if (strlen(buffer) > 0) {
 			string aux_buffer(buffer);
-			cout << "Recibi: " << buffer << endl;
+
+			if(aux_buffer.compare("9900000") != 0){
+				cout << "Recibi: " << buffer << endl;
+			}
+
 			int codigo = atoi((aux_buffer.substr(0, LONGITUD_CODIGO).c_str()));
 			switch (codigo) {
 			//case CD_ID_JUGADOR_I:
@@ -771,6 +780,12 @@ void* EscuchaTorneo(void *arg) {
 			case CD_RANKING_I:
 				cout << "RANKING #" << aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str() << endl;
 				ranking = aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str();
+
+
+				//ESTO NO DEBERIA SER ASI, EL JUGADOR TIENE QUE RECONOCER QUE SE TERMINO LA PARTIDA
+				//HARCODEADO PARA PROBAR LA PANTALLA DE RANKING
+				salir = 'S';
+
 				showWindowRanking = true;
 				//salgo del thread porque este el ultimo mensaje que me interesa
 				pthread_exit(NULL);
@@ -996,7 +1011,7 @@ char CambiaNivel() {
 char IngresaNombre() {
 	char salir = 'N';
 	short int caracter;
-	caracter = strlen(felix1_nombre);
+	///caracter = strlen(felix1_nombre);
 
 	SDL_Rect posTextoNombreIngresado;
 	posTextoNombreIngresado.x = 385;
@@ -1012,13 +1027,13 @@ char IngresaNombre() {
 			}
 
 			if (evento.key.keysym.sym >= 97 && evento.key.keysym.sym <= 122 && caracter <= 9)
-				felix1_nombre[caracter++] = evento.key.keysym.sym;
+				felix1_nombre += evento.key.keysym.sym;
 			else if (evento.key.keysym.sym == SDLK_BACKSPACE && caracter >= 0)
-				felix1_nombre[caracter--] = ' ';
+				felix1_nombre = felix1_nombre.substr(0,felix1_nombre.length()-1);
 
-			felix1_nombre[caracter] = '\0';
+			//felix1_nombre[caracter] = '\0';
 			//Texto del texto
-			texto = TTF_RenderText_Solid(fuente, felix1_nombre, color_texto);
+			texto = TTF_RenderText_Solid(fuente, felix1_nombre.c_str(), color_texto);
 			SDL_BlitSurface(texto, NULL, backgroundImg, &posTextoNombreIngresado);
 
 			SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);

@@ -332,17 +332,17 @@ sharedMemory_thread(void * arguments) {
 		if (cliente1_jugando && cliente2_jugando)
 				{
 
-			sleep (5);/////////////////////
+			//sleep (5);/////////////////////
 
 			puntaje->idJugador1 = felix1->id;
 			puntaje->idJugador2 = felix2->id;
-			puntaje->puntajeJugador1 = felix1->puntaje_parcial;
+			//puntaje->puntajeJugador1 = felix1->puntaje_parcial;
 			puntaje->puntajeJugador1 = 500;
 			puntaje->puntajeJugador2 = 750;
-			puntaje->puntajeJugador2 = felix2->puntaje_parcial;
+			//puntaje->puntajeJugador2 = felix2->puntaje_parcial;
 			puntaje->partidaFinalizadaOk = true;
 
-			exit(1);///////////////
+			//exit(1);///////////////
 			stop = true;
 		}
 
