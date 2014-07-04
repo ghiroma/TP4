@@ -149,14 +149,17 @@ void SIG_CHLD(int inum) {
 
 		//si los dos estan vivos veo quien gano
 		if (listJugadores.count(resumenPartida->idJugador1) == 1 && listJugadores.count(resumenPartida->idJugador2) == 1) {
-			if ((listJugadores[resumenPartida->idJugador1]->Puntaje / listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas) > (listJugadores[resumenPartida->idJugador2]->Puntaje / listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas)) {
-				//J1 Gana
-				listJugadores[resumenPartida->idJugador1]->PartidasGanadas++;
-				listJugadores[resumenPartida->idJugador2]->PartidasPerdidas++;
-			} else {
-				//J2 Gana
-				listJugadores[resumenPartida->idJugador2]->PartidasGanadas++;
-				listJugadores[resumenPartida->idJugador1]->PartidasPerdidas++;
+			//si no es empate, veo quien gano y perdio
+			if ((listJugadores[resumenPartida->idJugador1]->Puntaje / listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas) != (listJugadores[resumenPartida->idJugador2]->Puntaje / listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas)) {
+				if ((listJugadores[resumenPartida->idJugador1]->Puntaje / listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas) > (listJugadores[resumenPartida->idJugador2]->Puntaje / listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas)) {
+					//J1 Gana
+					listJugadores[resumenPartida->idJugador1]->PartidasGanadas++;
+					listJugadores[resumenPartida->idJugador2]->PartidasPerdidas++;
+				} else {
+					//J2 Gana
+					listJugadores[resumenPartida->idJugador2]->PartidasGanadas++;
+					listJugadores[resumenPartida->idJugador1]->PartidasPerdidas++;
+				}
 			}
 		}
 	}
@@ -270,6 +273,7 @@ temporizadorTorneo(void* data) {
 		string message(CD_FIN_TORNEO);
 		message.append(fillMessage("1"));
 		it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
+		cout<<"mande CD_FIN_TORNEO a"<<it->second->Id<<" . Nombre:"<<it->second->Nombre<<endl;
 	}
 	pthread_mutex_unlock(&mutex_listJugadores);
 

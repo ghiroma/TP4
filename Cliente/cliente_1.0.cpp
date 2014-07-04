@@ -755,13 +755,12 @@ void* EscuchaTorneo(void *arg) {
 				pthread_mutex_unlock(&mutex_msjPuertoRecibido);
 				break;
 			case CD_RANKING_I:
-				mostrarRanking(aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str());
 				cout << "RANKING #" << aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str() << endl;
+				mostrarRanking(aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str());
 				break;
 			case CD_FIN_TORNEO_I:
-				//aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str()
+				//que no busque mas establecer partidas
 				torneoFinalizado = true;
-				salir = true;
 				cout << "Fin de Toreno:" << aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str() << endl;
 				break;
 			case CD_ACK_I:
@@ -910,7 +909,7 @@ void handler(int senial) {
 
 	switch (senial) {
 	case SIGINT:
-		SDL_Quit();
+		liberarRecursos();
 		break;
 	}
 
@@ -1075,9 +1074,6 @@ void mostrarRanking(const char* ranking) {
 	SDL_Flip(superficie);
 
 	showWindowRanking = true;
-
-	///ver de cambiar
-	salir = 'S';
 }
 
 void liberarRecursos() {
