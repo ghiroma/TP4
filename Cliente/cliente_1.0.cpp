@@ -26,10 +26,18 @@ using namespace std;
 
 bool msjPuertoRecibido = false;
 pthread_mutex_t mutex_msjPuertoRecibido = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mutex_cola_grafico = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_nombreOponente = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_torneoFinalizado = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_solicitudDeNuevaParitda = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_partidaFinalizada = PTHREAD_MUTEX_INITIALIZER;
+
+pthread_mutex_t mutex_cola_grafico = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_cola_ralph = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_cola_pajaro = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_cola_torta = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_cola_mensajes_enviar = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_cola_felix1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_cola_felix2 = PTHREAD_MUTEX_INITIALIZER;
 
 struct ventana {
 	short int x;
@@ -82,6 +90,7 @@ void liberarRecursos();
 void mostrarPantalla(const char*);
 void esperarNombreOponente();
 void esperarPuertoPartida();
+void esperarPosicionesIniciales();
 void vaciarColas();
 void inicializarNuevaPartida();
 
@@ -114,7 +123,7 @@ short int ralph_destino = 0;
 int puertoServidorPartida = 0;
 unsigned short int tramo = 1;
 unsigned short int nivel = 1;
-pthread_t tpid_teclas, tpid_escuchar, tpid_envia, tpid_escuchar_torneo;
+pthread_t tpid_teclas, tpid_escuchar_partida, tpid_enviar_partida, tpid_escuchar_torneo;
 char salir = 'N';
 char ralph_moverse = 'N';
 char pajaro_moverse = 'N';
@@ -157,7 +166,7 @@ bool showWindowRanking = false;
 bool murioServidorTorneo = false;
 string nombreOponente;
 string mi_id;
-bool solicitudDeNuevaParitda = true;
+bool solicitudDeNuevaParitda = false;
 
 CommunicationSocket * socketTorneo;
 CommunicationSocket * socketPartida;
@@ -284,10 +293,13 @@ int main(int argc, char *argv[]) {
 	//Lanzo el thread que va a estar a la escucha de las teclas que se presionan.
 	pthread_create(&tpid_teclas, NULL, EscuchaTeclas, NULL);
 
+	///thEscucharServdior =  create thread;
 	unsigned short int fila, columna;
 	unsigned short int ventana_x, ventana_y;
 	bool auxSolicitudDeNuevaPartida;
 	bool auxTorneoFinalizado;
+
+	inicializarNuevaPartida();
 	while (salir == 'N') {
 		pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
 		auxSolicitudDeNuevaPartida = solicitudDeNuevaParitda;
@@ -296,6 +308,9 @@ int main(int argc, char *argv[]) {
 		auxTorneoFinalizado = torneoFinalizado;
 		pthread_mutex_unlock(&mutex_torneoFinalizado);
 		if (auxSolicitudDeNuevaPartida && !auxTorneoFinalizado) {
+			//espero a que se cierre el ultimo thread de la partida anterior
+			cout << "bloqueado en el join esperando el th enviarServidoPartida" << endl;
+			///pthread_join(tpid_enviar_partida, NULL);
 			inicializarNuevaPartida();
 			pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
 			solicitudDeNuevaParitda = false;
@@ -663,6 +678,7 @@ void DibujarVentanas(struct ventana ventanas[][5], unsigned short int cant_filas
  * THREAD -> Escucha mensajes del servidor de Partida
  */
 void* EscuchaServidor(void *arg) {
+	cout << "inicia th EscuchaServidor" << endl;
 	int fd = *(int *) arg;
 	int readData = 0;
 	int codigo;
@@ -722,30 +738,42 @@ void* EscuchaServidor(void *arg) {
 				pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
 				solicitudDeNuevaParitda = true;
 				pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
+
+				//termino la partida hago que termine el thread y seteo una variable para que tambine finalize el thread de EnviarServidor de la partida
+				pthread_cancel(tpid_enviar_partida);
+				break;
 			}
 		}
 
-		/*if(){
-
-		}*/
-
-		usleep(10000);
+		usleep(20000);
 	}
+	cout << "sale el thread de escucharServidor" << endl;
 	pthread_exit(NULL);
 }
 
 void * EnvioServidor(void * arg) {
 	int fd = *(int *) arg;
 	CommunicationSocket cSocket(fd);
-	while (salir == 'N') {
+	bool murioServTorneo = false;
+	cout << "inicia th EnviaServidor" << endl;
+	while (true) {
 		if (!cola_grafico.empty()) {
 			string mensaje = cola_grafico.front();
 			cola_grafico.pop();
 			cout << "Mensaje a enviar al servPartida: " << mensaje.c_str() << endl;
 			cSocket.SendBloq(mensaje.c_str(), mensaje.length());
 		}
-		usleep(10000);
+
+		//si murio la partida salgo de este thread (me doy cuenta cuando solicitan una nueva partida)
+		/*pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
+		murioServTorneo = solicitudDeNuevaParitda;
+		pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
+		if (murioServTorneo) {
+			break;
+		}*/
+		usleep(20000);
 	}
+	cout << "sale el thread de EnvioServidor" << endl;
 	pthread_exit(NULL);
 }
 
@@ -758,7 +786,7 @@ void* EscuchaTorneo(void *arg) {
 	CommunicationSocket cSocket(fd);
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
-	while (salir == 'N') {
+	while (true) {
 		//cout << "Espero msj del servidor de Torneo ... " << endl;
 		readData = cSocket.ReceiveBloq(buffer, sizeof(buffer));
 		if (strlen(buffer) > 0) {
@@ -819,6 +847,7 @@ void* EscuchaTorneo(void *arg) {
 			/// dar aviso de que murio y cerrar todo
 
 			murioServidorTorneo = true;
+			break;
 		}
 		usleep(10000);
 	}
@@ -1113,9 +1142,9 @@ void mostrarRanking(const char* ranking) {
 void inicializarNuevaPartida() {
 	//Espero que el servidor de Torneo me envie el puerto para conectarme al servidor de partida.
 	esperarPuertoPartida();
-
 	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
 	esperarNombreOponente();
+	cout << "nombre oponente:" << nombreOponente << endl;
 
 	//Me conecto al servidor de partida.
 	cout << "Socket Partida:" << puertoServidorPartida << endl;
@@ -1128,8 +1157,8 @@ void inicializarNuevaPartida() {
 
 	//Empiezo a tirar Thread para comunicarme con el servidor de partida.
 	vaciarColas();
-	pthread_create(&tpid_teclas, NULL, EscuchaServidor, &socketPartida->ID);
-	pthread_create(&tpid_envia, NULL, EnvioServidor, &socketPartida->ID);
+	pthread_create(&tpid_escuchar_partida, NULL, EscuchaServidor, &socketPartida->ID);
+	pthread_create(&tpid_enviar_partida, NULL, EnvioServidor, &socketPartida->ID);
 }
 
 void esperarPuertoPartida() {
@@ -1162,6 +1191,10 @@ void esperarNombreOponente() {
 		usleep(10000);
 	}
 	cout << "recibo el nombre de mi oponente:" << felix2_nombre << endl;
+}
+
+void esperarPosicionesIniciales() {
+
 }
 
 void vaciarColas() {

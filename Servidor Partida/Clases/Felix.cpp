@@ -28,15 +28,8 @@ Felix::Felix(int cantVidas, int id) {
 
 bool Felix::mover(int columna, int fila, Edificio * edificio) {
 
-	if (fila < edificio->filas && fila >= 0 && columna < edificio->columnas
-			&& columna >= 0
-			&& (!edificio->ventanas[fila][columna].marquesina
-					|| (edificio->ventanas[fila][columna].marquesina
-							&& (this->columna != columna
-+									|| (this->columna == columna
-+											&& this->fila + 1 != fila))))
-			&& !edificio->ventanas[fila][columna].ocupado
-			&& !edificio->ventanas[fila][columna].persiana) {
+	if (fila < edificio->filas && fila >= 0 && columna < edificio->columnas && columna >= 0 && (!edificio->ventanas[fila][columna].marquesina || (edificio->ventanas[fila][columna].marquesina && (this->columna != columna || (this->columna == columna && this->fila + 1 != fila))))
+			&& !edificio->ventanas[fila][columna].ocupado && !edificio->ventanas[fila][columna].persiana) {
 
 		edificio->ventanas[this->fila][this->columna].ocupado = false;
 		edificio->ventanas[fila][columna].ocupado = true;
@@ -51,12 +44,10 @@ bool Felix::mover(int columna, int fila, Edificio * edificio) {
 }
 
 bool Felix::reparar(Edificio * edificio) {
-	if (this->fila < edificio->filas && this->fila >= 0
-			&& this->columna < edificio->columnas && this->columna >= 0) {
+	if (this->fila < edificio->filas && this->fila >= 0 && this->columna < edificio->columnas && this->columna >= 0) {
 
-				if (edificio->ventanas[this->fila][this->columna].ventanaRota
-				> 0) {
-						edificio->ventanas[this->fila][this->columna].ventanaRota--;
+		if (edificio->ventanas[this->fila][this->columna].ventanaRota > 0) {
+			edificio->ventanas[this->fila][this->columna].ventanaRota--;
 			return true;
 		}
 	}
