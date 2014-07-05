@@ -12,36 +12,36 @@ using namespace std;
 
 Felix::Felix(int cantVidas) {
 	this->id = 0;
-	this->posicion_x = 0;
-	this->posicion_y = 0;
+	this->fila = 0;
+	this->columna = 0;
 	this->puntaje_parcial = 0;
 	this->cantidad_vidas = cantVidas;
 }
 
 Felix::Felix(int cantVidas, int id) {
 	this->id = id;
-	this->posicion_x = 0;
-	this->posicion_y = 0;
+	this->fila = 0;
+	this->columna = 0;
 	this->puntaje_parcial = 0;
 	this->cantidad_vidas = cantVidas;
 }
 
-bool Felix::mover(int fila, int columna, Edificio * edificio) {
+bool Felix::mover(int columna, int fila, Edificio * edificio) {
 
 	if (fila < edificio->filas && fila >= 0 && columna < edificio->columnas
 			&& columna >= 0
 			&& (!edificio->ventanas[fila][columna].marquesina
 					|| (edificio->ventanas[fila][columna].marquesina
-							&& (this->posicion_y != columna
-									|| (this->posicion_y == columna
-											&& this->posicion_x + 1 != fila))))
+							&& (this->columna != columna
++									|| (this->columna == columna
++											&& this->fila + 1 != fila))))
 			&& !edificio->ventanas[fila][columna].ocupado
 			&& !edificio->ventanas[fila][columna].persiana) {
 
-		edificio->ventanas[this->posicion_x][this->posicion_y].ocupado = false;
+		edificio->ventanas[this->fila][this->columna].ocupado = false;
 		edificio->ventanas[fila][columna].ocupado = true;
-		this->posicion_x = fila;
-		this->posicion_y = columna;
+		this->columna = columna;
+		this->fila = fila;
 
 		cout << "Salgo validacion movimiento true" << endl;
 		return true;
@@ -51,12 +51,12 @@ bool Felix::mover(int fila, int columna, Edificio * edificio) {
 }
 
 bool Felix::reparar(Edificio * edificio) {
-	if (this->posicion_x < edificio->filas && this->posicion_x >= 0
-			&& this->posicion_y < edificio->columnas && this->posicion_y >= 0) {
+	if (this->fila < edificio->filas && this->fila >= 0
+			&& this->columna < edificio->columnas && this->columna >= 0) {
 
-		if (edificio->ventanas[this->posicion_x][this->posicion_y].ventanaRota
+				if (edificio->ventanas[this->fila][this->columna].ventanaRota
 				> 0) {
-			edificio->ventanas[this->posicion_x][this->posicion_y].ventanaRota--;
+						edificio->ventanas[this->fila][this->columna].ventanaRota--;
 			return true;
 		}
 	}
