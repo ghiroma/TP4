@@ -35,7 +35,7 @@ bool Felix::mover(int fila, int columna, Edificio * edificio) {
 							&& (this->posicion_y != columna
 									|| (this->posicion_y == columna
 											&& this->posicion_x + 1 != fila))))
-			&& edificio->ventanas[fila][columna].ocupado == false
+			&& !edificio->ventanas[fila][columna].ocupado
 			&& !edificio->ventanas[fila][columna].persiana) {
 
 		edificio->ventanas[this->posicion_x][this->posicion_y].ocupado = false;
