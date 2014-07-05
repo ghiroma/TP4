@@ -97,8 +97,6 @@ int main(int argc, char * argv[]) {
 	 * Espero la conexion de los clientes, dado tiempo SERVERSOCKET_TIMEDOUT
 	 * si no se conectan, cierra lo partida.
 	 */
-
-
 	do {
 		if (int response = select(sSocket.ID + 1, &fds, NULL, NULL, &timeout)
 				> 0) {
@@ -122,7 +120,6 @@ int main(int argc, char * argv[]) {
 	/*
 	 * Estoy a la espera de que los clientes me envien sus ids.
 	 */
-
 	while (felix1 == NULL && felix2 == NULL) {
 		cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
 		string message(buffer);
@@ -141,6 +138,12 @@ int main(int argc, char * argv[]) {
 									message2.substr(LONGITUD_CODIGO,
 											LONGITUD_CONTENIDO).c_str()));
 	}
+
+	/*
+	 * Envio las posiciones iniciales a cada jugador.
+	 */
+	cSocket1->SendNoBloq(posicionInicial1().c_str(),LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+	cSocket2->SendNoBloq(posicionInicial2().c_str(),LONGITUD_CODIGO + LONGITUD_CONTENIDO);
 
 	edificio = new Edificio(EDIFICIO_FILAS_1, EDIFICIO_COLUMNAS, 0);
 
