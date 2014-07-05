@@ -16,8 +16,8 @@ using namespace std;
 class Felix {
 public:
 	int id;
-	short int posicion_x;
-	short int posicion_y;
+	short int fila;
+	short int columna;
 	unsigned short int cantidad_vidas;
 	unsigned int puntaje_parcial;
 

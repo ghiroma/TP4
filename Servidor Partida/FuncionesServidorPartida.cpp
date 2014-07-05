@@ -312,11 +312,13 @@ void caseMovimientoFelix(int jugador, string *message) {
 	int fila;
 	int columna;
 	cout << "Entro a movimiento felix, mensaje = " << *message << endl;
-	fila = atoi(message->substr(5, 1).c_str());
-	columna = atoi(message->substr(6, 1).c_str());
+	columna = atoi(message->substr(5, 1).c_str());
+	//columna = atoi(message->substr(4, 1).c_str());
+	fila = atoi(message->substr(6, 1).c_str());
 
 	if (jugador == 1) {
 		//if (validateMovement(felix1, fila, columna, edificio)) {
+				if(felix1->mover(columna,fila, edificio)){
 		char auxFila[2];
 		char auxColumna[2];
 		char aux1[5] = { "1" };
@@ -350,9 +352,10 @@ void caseMovimientoFelix(int jugador, string *message) {
 		Helper::encolar(&mensaje_movimiento2, &sender2_queue, &mutex_sender2);
 		cout << "Mensaje encolado: " << mensaje_movimiento1 << endl;
 		cout << "Encole mensaje de movimiento felix" << endl;
-		//}
+		}
 	} else {
 		//if (validateMovement(felix2, fila, columna, edificio)) {
+		if(felix2->mover(columna,fila,edificio)){
 		char auxFila[2];
 		char auxColumna[2];
 		char aux1[5] = { "2" };
@@ -374,7 +377,7 @@ void caseMovimientoFelix(int jugador, string *message) {
 				+ Helper::fillMessage(aux2);
 		Helper::encolar(&mensaje_movimiento1, &sender1_queue, &mutex_sender1);
 		Helper::encolar(&mensaje_movimiento2, &sender2_queue, &mutex_sender2);
-		//}
+		}
 
 	}
 }
