@@ -80,6 +80,7 @@ bool hayChoque();
 void getConfiguration(unsigned short int* port, string* ip, int* arriba, int* derecha, int* abajo, int* izquierda, int* accion, int* salir);
 void mostrarRanking(const char*);
 void liberarRecursos();
+void mostrarPantalla(const char*);
 
 /* 
 
@@ -215,17 +216,10 @@ int main(int argc, char *argv[]) {
 	//Pantalla de inicio.
 	posBackground.x = 0;
 	posBackground.y = 0;
-	backgroundImg = SDL_LoadBMP("Sprites/Mensajes/start.bmp");
-	if (backgroundImg == NULL) {
-		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
-		exit(1);
-	}
-	SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
-	SDL_Flip(superficie);
+	mostrarPantalla("start");
 
 	//Empieza a cargar el nombre
-	PantallaIntermedia('0');
-	salir = 'N';
+	IngresaNombre();
 
 	//Dimensiones rectangulo donde irá el texto
 	pantalla_texto.x = 10;
@@ -235,18 +229,12 @@ int main(int argc, char *argv[]) {
 	getConfiguration(&puertoTorneo, &ip, &key_arriba, &key_derecha, &key_abajo, &key_izquierda, &key_accion, &key_salir);
 	if (puertoTorneo == 0 || ip.compare("") == 0) {
 		cout << "Error al obtener configuracion." << endl;
-		return 1;
+		exit(1);
 	}
 
 	//Conexion con el servidor de torneo.
 	//Muestro pantalla de "esperando al servidor por nueva partida"
-	backgroundImg = SDL_LoadBMP("Sprites/Mensajes/waitmatch.bmp");
-	if (backgroundImg == NULL) {
-		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
-		exit(1);
-	}
-	SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
-	SDL_Flip(superficie);
+	mostrarPantalla("waitmatch");
 
 	cout << "Intentando conectarme al torneo" << endl;
 	bool error = true;
@@ -594,13 +582,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	//esperar mientras las demas partidas no han finalizado. (mostrar msj "GameOver. waiting for rankings.. ")
-	backgroundImg = SDL_LoadBMP("Sprites/Mensajes/gameover.bmp");
-	if (backgroundImg == NULL) {
-		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
-		exit(1);
-	}
-	SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
-	SDL_Flip(superficie);
+	mostrarPantalla("gameover");
+
 	while (!showWindowRanking) {
 		sleep(1);
 	}
@@ -1037,9 +1020,7 @@ char CambiaNivel() {
 }
 
 char IngresaNombre() {
-	char salir = 'N';
 	int teclaIngresada;
-
 	SDL_Rect posTextoNombreIngresado;
 	posTextoNombreIngresado.x = 385;
 	posTextoNombreIngresado.y = 57;
@@ -1068,7 +1049,6 @@ char IngresaNombre() {
 				SDL_Flip(superficie);
 
 			} else if (felix1_nombre.length() > 0) {
-				salir = 'S';
 				break;
 			}
 		}
@@ -1121,12 +1101,23 @@ void getConfiguration(unsigned short int* port, string* ip, int* arriba, int* de
 	}
 }
 
+void mostrarPantalla(const char* nombrPantalla) {
+	string dir = "Sprites/Mensajes/";
+	dir += nombrPantalla;
+	dir += ".bmp";
+	backgroundImg = SDL_LoadBMP(dir.c_str());
+	if (backgroundImg == NULL) {
+		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
+		exit(1);
+	}
+	SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
+	SDL_Flip(superficie);
+}
+
 void mostrarRanking(const char* ranking) {
 	SDL_Rect posTextoRanking;
 	posTextoRanking.x = 315;
 	posTextoRanking.y = 340;
-	int h = 40;
-	int w = 25;
 	backgroundImg = SDL_LoadBMP("Sprites/Mensajes/ranking.bmp");
 	if (backgroundImg == NULL) {
 		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());

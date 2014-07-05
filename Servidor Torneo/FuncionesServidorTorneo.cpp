@@ -552,7 +552,7 @@ void* keepAliveJugadores(void*) {
 		 }*/
 		pthread_mutex_unlock(&mutex_listJugadores);
 		//cout << "unmutex1 keepAliveJugadores listJugadores" << endl;
-		usleep(1000000);
+		usleep(100000);
 		pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
 		//cout << "mutex2 keepAliveJugadores todasLasPartidasFinalizadas" << endl;
 		partidasTerminadas = todasLasPartidasFinalizadas;
@@ -657,26 +657,14 @@ establecerPartidas(void* data) {
 				listJugadores[idOponente]->SocketAsociado->SendNoBloq(message.c_str(), message.length());
 
 				//Les mando el nombre de su oponente
-				/*string nombreOponente1 = listJugadores[idOponente]->Nombre;
-				 string nombreOponente2 = listJugadores[idJugador]->Nombre;
-				 fill(nombreOponente1.begin(), nombreOponente1.begin() + (LONGITUD_CONTENIDO - nombreOponente1.length()), ' ');
-				 fill(nombreOponente2.begin(), nombreOponente2.begin() + (LONGITUD_CONTENIDO - nombreOponente2.length()), ' ');
-				 nombreOponente1 = CD_NOMBRE + nombreOponente1;
-				 nombreOponente2 = CD_NOMBRE + nombreOponente2;
-				 */
 				char auxnombreOponente1[LONGITUD_CONTENIDO];
 				sprintf(auxnombreOponente1, "%s", listJugadores[idOponente]->Nombre.c_str());
 				string nombreOponente1(CD_NOMBRE);
 				nombreOponente1.append(fillMessage(auxnombreOponente1));
-
 				char auxnombreOponente2[LONGITUD_CONTENIDO];
 				sprintf(auxnombreOponente2, "%s", listJugadores[idJugador]->Nombre.c_str());
 				string nombreOponente2(CD_NOMBRE);
 				nombreOponente2.append(fillMessage(auxnombreOponente2));
-
-				cout << "mando nombre1: " << nombreOponente1.c_str() << endl;
-				cout << "mando nombre2: " << nombreOponente2.c_str() << endl;
-
 				listJugadores[idJugador]->SocketAsociado->SendNoBloq(nombreOponente1.c_str(), nombreOponente1.length());
 				listJugadores[idOponente]->SocketAsociado->SendNoBloq(nombreOponente2.c_str(), nombreOponente2.length());
 
