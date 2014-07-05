@@ -163,6 +163,7 @@ CommunicationSocket * socketTorneo;
 CommunicationSocket * socketPartida;
 
 int main(int argc, char *argv[]) {
+	atexit(liberarRecursos);
 
 	const char pared_tramo1n1_bmp[] = "Sprites/pared_tramo1n1.bmp", pared_tramo2n1_bmp[] = "Sprites/pared_tramo2n1.bmp", pared_tramo3n1_bmp[] = "Sprites/pared_tramo3n1.bmp", ventana_sana_bmp[] = "Sprites/ventana_sana.bmp", ventana_rota1_bmp[] = "Sprites/ventana_rota1.bmp", ventana_rota2_bmp[] =
 			"Sprites/ventana_rota2.bmp", ventana_rota3_bmp[] = "Sprites/ventana_rota3.bmp", ventana_rota4_bmp[] = "Sprites/ventana_rota4.bmp", puerta_bmp[] = "Sprites/puerta_grande.bmp", felixd1_bmp[] = "Sprites/felix_d1.bmp", felixi1_bmp[] = "Sprites/felix_i1.bmp", felixr11_bmp[] =
@@ -668,7 +669,7 @@ void* EscuchaServidor(void *arg) {
 	CommunicationSocket cSocket(fd);
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
-	while (salir == 'N') {
+	while (true) {
 		//cout << "Espero msj del servidor de partida ... " << endl;
 		readData = cSocket.ReceiveBloq(buffer, sizeof(buffer));
 		if (strlen(buffer) > 0) {
@@ -723,7 +724,11 @@ void* EscuchaServidor(void *arg) {
 				pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
 			}
 		}
-		//sleep(1);
+
+		/*if(){
+
+		}*/
+
 		usleep(10000);
 	}
 	pthread_exit(NULL);
@@ -838,85 +843,59 @@ void* EscuchaTeclas(void *arg) {
 
 		case SDL_KEYDOWN:
 			if (evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo) {
-				/*if ((felix1_posicion.fila - 1) >= 0)
-				 if ((felix1_posicion.fila - 1) != 0)
-				 f1_colu = felix1_posicion.fila - 1;
-				 else if ((felix1_posicion.columna) != 2)
-				 f1_colu = felix1_posicion.fila - 1;*/
 				felix1_reparar = 'N';
-
-				ostringstream ss1;
-				ostringstream ss2;
-				ss1 << felix1_posicion.columna;
-				ss2 << felix1_posicion.fila - 1;
-				string aux(ss1.str() + ss2.str());
-				string message(CD_MOVIMIENTO_FELIX);
-				message.append(fillMessage(aux));
-				//cout << "MENSAJE: " << message << endl;
-				cola_grafico.push(message);
-
+				if ((felix1_posicion.fila - 1) >= 0) {
+					ostringstream ss1;
+					ostringstream ss2;
+					ss1 << felix1_posicion.columna;
+					ss2 << felix1_posicion.fila - 1;
+					string aux(ss1.str() + ss2.str());
+					string message(CD_MOVIMIENTO_FELIX);
+					message.append(fillMessage(aux));
+					//cout << "MENSAJE: " << message << endl;
+					cola_grafico.push(message);
+				}
 			} else if (evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba) {
-				/*if (felix1_posicion.columna == 99) {
-				 f1_fila = 0;
-				 f1_colu = 0;
-				 } else if ((felix1_posicion.fila + 1) < 3)
-				 f1_fila = felix1_posicion.fila +1;*/
-				//f1_colu = felix1_posicion.fila + 1;
 				felix1_reparar = 'N';
-
-				ostringstream ss1;
-				ostringstream ss2;
-				ss1 << felix1_posicion.columna;
-				ss2 << felix1_posicion.fila + 1;
-				//ss1 << felix1_posicion.fila;
-				//ss2 << felix1_posicion.columna;
-				string aux(ss1.str() + ss2.str());
-				string message(CD_MOVIMIENTO_FELIX);
-				message.append(fillMessage(aux));
-				cout << "MENSAJE: " << message << endl;
-				cola_grafico.push(message);
-
+				if ((felix1_posicion.fila + 1) < 3) {
+					ostringstream ss1;
+					ostringstream ss2;
+					ss1 << felix1_posicion.columna;
+					ss2 << felix1_posicion.fila + 1;
+					string aux(ss1.str() + ss2.str());
+					string message(CD_MOVIMIENTO_FELIX);
+					message.append(fillMessage(aux));
+					cout << "MENSAJE: " << message << endl;
+					cola_grafico.push(message);
+				}
 			} else if (evento.key.keysym.sym == SDLK_RIGHT || evento.key.keysym.sym == key_derecha) {
 				felix1 = felix_d1;
-				/*if (felix1_posicion.fila == 99) {
-				 f1_fila = 0;
-				 f1_colu = 0;
-				 } else if ((felix1_posicion.columna + 1) < 5)
-				 if ((felix1_posicion.columna + 1) != 2)
-				 f1_colu = felix1_posicion.columna + 1;
-				 else if ((felix1_posicion.fila) != 0)
-				 f1_colu = felix1_posicion.columna + 1;*/
 				felix1_reparar = 'N';
-
-				ostringstream ss1;
-				ostringstream ss2;
-				ss1 << felix1_posicion.columna + 1;
-				ss2 << felix1_posicion.fila;
-				string aux(ss1.str() + ss2.str());
-				string message(CD_MOVIMIENTO_FELIX);
-				message.append(fillMessage(aux));
-				cout << "MENSAJE: " << message << endl;
-				cola_grafico.push(message);
-
+				if ((felix1_posicion.columna + 1) < 5) {
+					ostringstream ss1;
+					ostringstream ss2;
+					ss1 << felix1_posicion.columna + 1;
+					ss2 << felix1_posicion.fila;
+					string aux(ss1.str() + ss2.str());
+					string message(CD_MOVIMIENTO_FELIX);
+					message.append(fillMessage(aux));
+					cout << "MENSAJE: " << message << endl;
+					cola_grafico.push(message);
+				}
 			} else if (evento.key.keysym.sym == SDLK_LEFT || evento.key.keysym.sym == key_izquierda) {
 				felix1 = felix_i1;
-				/*if ((felix1_posicion.columna - 1) >= 0)
-				 if ((felix1_posicion.columna - 1) != 2)
-				 f1_colu = felix1_posicion.columna - 1;
-				 else if ((felix1_posicion.fila) != 0)
-				 f1_colu = felix1_posicion.columna - 1;*/
 				felix1_reparar = 'N';
-
-				ostringstream ss1;
-				ostringstream ss2;
-				ss1 << felix1_posicion.columna - 1;
-				ss2 << felix1_posicion.fila;
-				string aux(ss1.str() + ss2.str());
-				string message(CD_MOVIMIENTO_FELIX);
-				message.append(fillMessage(aux));
-				cout << "MENSAJE: " << message << endl;
-				cola_grafico.push(message);
-
+				if ((felix1_posicion.columna - 1) >= 0) {
+					ostringstream ss1;
+					ostringstream ss2;
+					ss1 << felix1_posicion.columna - 1;
+					ss2 << felix1_posicion.fila;
+					string aux(ss1.str() + ss2.str());
+					string message(CD_MOVIMIENTO_FELIX);
+					message.append(fillMessage(aux));
+					cout << "MENSAJE: " << message << endl;
+					cola_grafico.push(message);
+				}
 			} else if (evento.key.keysym.sym == SDLK_SPACE || evento.key.keysym.sym == key_accion) {
 				felix1_reparar = 'S';
 			} else if (evento.key.keysym.sym == key_salir) {
@@ -949,6 +928,7 @@ char ventana_reparada(struct posicion *felix_posicion) {
 		} else
 			return 'N';
 	}
+	return 'N';
 }
 
 void handler(int senial) {
@@ -1210,8 +1190,8 @@ void vaciarColas() {
 
 void liberarRecursos() {
 	//SOCKET
-	delete(socketTorneo);
-	delete(socketPartida);
+	delete (socketTorneo);
+	delete (socketPartida);
 
 	//SEM
 	pthread_mutex_destroy(&mutex_msjPuertoRecibido);
