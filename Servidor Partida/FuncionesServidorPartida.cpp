@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "Clases/Edificio.h"
+#include "Clases/Timer.h"
 #include "Support/Helper.h"
 #include "Support/Estructuras.h"
 #include <cstdio>
@@ -77,68 +78,33 @@ bool TimeDifference(int timeDifference, time_t startingTime) {
  */
 void*
 timer_thread(void* arg) {
+	string message;
+	Timer timer;
 
-	time_t startingTimeKeepAlive = time(0);
-	time_t startingTimeRalph = time(0);
-	time_t startingTimePaloma = time(0);
-	time_t startingTimePersiana = time(0);
-	time_t startingTimeTorta = time(0);
+	while (!stop && (cliente1_conectado || cliente2_conectado)) {
 
-	//TODO Agregar variacion segun el nivel.
-	while (stop == false && (cliente1_conectado || cliente2_conectado)) {
-		if (TimeDifference(INTERVALOS_KEEPALIVE, startingTimeKeepAlive)
-				== true) {
-			string message(CD_ACK);
-			string content;
-			message.append(Helper::fillMessage(content));
-			if (cliente1_conectado)
-				Helper::encolar(&message, &sender1_queue, &mutex_sender1);
-			if (cliente2_conectado)
-				Helper::encolar(&message, &sender2_queue, &mutex_sender2);
-			startingTimeKeepAlive = time(0);
+		message = timer.keepAlive();
+		if(message.length()>0)
+		{
+			Helper::encolar(&message,&sender1_queue,&mutex_sender1);
+			Helper::encolar(&message,&sender2_queue,&mutex_sender2);
 		}
 
-		if (TimeDifference(INTERVALOS_RALPH, startingTimeRalph) == true) {
-			char aux[5];
-			string message(CD_MOVIMIENTO_RALPH);
-			sprintf(aux, "%d", randomRalphMovement());
-			message.append(Helper::fillMessage(aux));
-			if (cliente1_conectado)
-				Helper::encolar(&message, &sender1_queue, &mutex_sender1);
-			if (cliente2_conectado)
-				Helper::encolar(&message, &sender2_queue, &mutex_sender2);
-			startingTimeRalph = time(0);
+		message = timer.ralph(edificio->nivel);
+		if(message.length()>0)
+		{
+			Helper::encolar(&message,&sender1_queue,&mutex_sender1);
+			Helper::encolar(&message,&sender2_queue,&mutex_sender2);
 		}
 
-		if (TimeDifference(INTERVALOS_PALOMA, startingTimePaloma) == true) {
-			string message(CD_PALOMA);
-			char aux[5];
-			sprintf(aux, "%d", randomPaloma(0));
-			message.append(Helper::fillMessage(aux));
-			if (cliente1_conectado)
-				Helper::encolar(&message, &sender1_queue, &mutex_sender1);
-			if (cliente2_conectado)
-				Helper::encolar(&message, &sender2_queue, &mutex_sender2);
-			startingTimePaloma = time(0);
+		message = timer.paloma(edificio->nivel);
+		if(message.length()>0)
+		{
+			Helper::encolar(&message,&sender1_queue,&mutex_sender1);
+			Helper::encolar(&message,&sender2_queue,&mutex_sender2);
 		}
 
-		if (TimeDifference(INTERVALOS_TORTA, startingTimeTorta) == true) {
-			//string message(CD_TORTA);
-			//message.append(randomTorta());
-			//Helper::encolar(&message, &sender1_queue, &mutex_sender1);
-			//Helper::encolar(&message, &sender2_queue, &mutex_sender2);
-			startingTimeTorta = time(0);
-		}
-
-		if (TimeDifference(INTERVALOS_PERSIANA, startingTimePersiana) == true) {
-			//strcpy(message.codigo_mensaje,CD_PERSIANA);
-			//strcpy(message.contenido,randomPersiana);
-			//Helper::encolar(&message, &sender1_queue, &mutex_sender1);
-			//Helper::encolar(&message, &sender2_queue, &mutex_sender2);
-			startingTimePersiana = time(0);
-		}
-
-		usleep(POLLING_DEADTIME);
+		usleep(POOLING_DEADTIME);
 	}
 
 	pthread_exit(0);
@@ -154,13 +120,13 @@ sender1_thread(void * arguments) {
 			//Lo que venga del timer y validator, se replica a ambos jugadores.
 			string message;
 			Helper::desencolar(&message, &sender1_queue, &mutex_sender1);
-			cout << "Mensaje a enviar: " << message<< endl;
+			cout << "Mensaje a enviar: " << message << endl;
 			if (cliente1_conectado) {
 				cSocket1->SendBloq(message.c_str(), message.length());
 			}
 		}
 
-		usleep(POLLING_DEADTIME);
+		usleep(POOLING_DEADTIME);
 	}
 
 	pthread_exit(0);
@@ -176,12 +142,12 @@ sender2_thread(void * arguments) {
 			//Lo que venga del timer y validator, se replica a ambos jugadores.
 			string message;
 			Helper::desencolar(&message, &sender2_queue, &mutex_sender2);
-			cout << "Mensaje a enviar: " << message<< endl;
+			cout << "Mensaje a enviar: " << message << endl;
 			if (cliente2_conectado) {
 				cSocket2->SendBloq(message.c_str(), message.length());
 			}
 		}
-		usleep(POLLING_DEADTIME);
+		usleep(POOLING_DEADTIME);
 	}
 
 	pthread_exit(0);
@@ -208,7 +174,7 @@ receiver1_thread(void * fd) {
 			cliente1_conectado = false;
 			delete (cSocket1);
 		}
-		usleep(POLLING_DEADTIME);
+		usleep(POOLING_DEADTIME);
 	}
 
 	pthread_exit(0);
@@ -228,14 +194,14 @@ receiver2_thread(void * fd) {
 		readDataCode = cSocket2->ReceiveNoBloq(buffer, sizeof(buffer));
 		if (readDataCode > 0) {
 			string mensaje(buffer);
-			cout<<"Recibi mensaje: "<<mensaje<<endl;
+			cout << "Recibi mensaje: " << mensaje << endl;
 			Helper::encolar(&mensaje, &receiver2_queue, &mutex_receiver2);
 		} else if (readDataCode == 0) {
 			cliente2_conectado = false;
 			delete (cSocket2);
 		}
 
-		usleep(POLLING_DEADTIME);
+		usleep(POOLING_DEADTIME);
 	}
 
 	pthread_exit(0);
@@ -253,7 +219,7 @@ validator_thread(void * argument) {
 			string message = receiver1_queue.front();
 			receiver1_queue.pop();
 			string scodigo = message.substr(0, LONGITUD_CODIGO);
-			cout<<"Codigo leido "<<scodigo<<endl;
+			cout << "Codigo leido " << scodigo << endl;
 			int codigo = atoi(scodigo.c_str());
 			switch (codigo) {
 			//Escribe en el sender_queue.
@@ -274,7 +240,7 @@ validator_thread(void * argument) {
 			string message = receiver2_queue.front();
 			receiver2_queue.pop();
 			string scodigo = message.substr(0, LONGITUD_CODIGO);
-			cout<<"Codigo leido "<<scodigo<<endl;
+			cout << "Codigo leido " << scodigo << endl;
 			int codigo = atoi(scodigo.c_str());
 			switch (codigo) {
 			case CD_MOVIMIENTO_FELIX_I:
@@ -290,7 +256,7 @@ validator_thread(void * argument) {
 			}
 		}
 
-		usleep(POLLING_DEADTIME);
+		usleep(POOLING_DEADTIME);
 	}
 
 	pthread_exit(0);
@@ -302,21 +268,14 @@ validator_thread(void * argument) {
  */
 void*
 sharedMemory_thread(void * arguments) {
+	try{
 	int shmId = shmget(shmIds.shmId, sizeof(struct puntajes), PERMISOS_SHM);
 	if (shmId < 0) {
-		cout << "SRV Partida error en shmget" << endl;
-		/* if (errno == ENOENT)
-		 cout << "No existe egmento de memoria para dicho key" << endl;
-		 if (errno == EACCES)
-		 cout << "No se tienen permisos" << endl;
-		 if (errno == EINVAL)
-		 cout << "No se puede crear porque ya existe." << endl;
-		 */
-		exit(1);
+		throw "Error al obtener memoria compartida";
 	}
 	puntaje = (struct puntajes *) shmat(shmId, (void *) 0, 0);
 	if (puntaje == (void *) -1) {
-		exit(1);
+		throw "Error al mapear la memoria compartida";
 	}
 
 	while (stop == false) {
@@ -327,10 +286,9 @@ sharedMemory_thread(void * arguments) {
 		}
 
 		//Perdieron ambos, asi que finalmente cierro.
-		//if (!cliente1_jugando && !cliente2_jugando)
+		if (!cliente1_jugando && !cliente2_jugando){
 
-		if (cliente1_jugando && cliente2_jugando)
-				{
+		//if (cliente1_jugando && cliente2_jugando) {
 
 			//sleep (5);/////////////////////
 
@@ -346,124 +304,14 @@ sharedMemory_thread(void * arguments) {
 			stop = true;
 		}
 
-		usleep(POLLING_DEADTIME);
+		usleep(POOLING_DEADTIME);
 	}
-}
-
-/*
- * Genero movimiento random de ralph.
- */
-int randomRalphMovement() {
-	return rand() % (EDIFICIO_COLUMNAS);
-}
-
-/*
- * Genero aparicion random de paloma.
- */
-int randomPaloma(int nivel) {
-	if (nivel == 0)
-		return rand() % (EDIFICIO_FILAS_1);
-	else if (nivel == 1)
-		return rand() % (EDIFICIO_FILAS_2);
-	return 0;
-}
-
-/*
- * Genero aparicion random de torta.
- */
-char*
-randomTorta() {
-	char location[3];
-	char aux[2];
-
-	sprintf(aux, "%d", rand() % (EDIFICIO_FILAS_1));
-	strcpy(location, aux);
-	sprintf(aux, "%d", rand() % (EDIFICIO_COLUMNAS));
-	strcat(location, aux);
-
-	return location;
-}
-
-/*
- * Genero aparicion random de persiana.
- */
-char *
-randomPersiana() {
-	char location[3];
-	char aux[2];
-
-	//No hay persiana cerrada. Actualizo el edificio.
-	if (filaPreviaPersiana != 0 && columnaPreviaPersiana != 0) {
-		sprintf(aux, "%d", rand() % (EDIFICIO_FILAS_1));
-		strcpy(location, aux);
-		filaPreviaPersiana = atoi(aux);
-		sprintf(aux, "%d", rand() % (EDIFICIO_COLUMNAS));
-		strcat(location, aux);
-		columnaPreviaPersiana = atoi(aux);
-		return location;
-	} else //Hay persiana cerrada. Debo abrirla.
+	}catch(const char * err)
 	{
-		sprintf(aux, "%d", filaPreviaPersiana);
-		strcpy(location, aux);
-		sprintf(aux, "%d", columnaPreviaPersiana);
-		strcat(location, aux);
-		filaPreviaPersiana = 0;
-		columnaPreviaPersiana = 0;
-		return location;
+		cout<<"Error inesperado: "<<err<<endl;
+		exit(1);
 	}
-
-}
-
-/*
- * Valido si es posible realizar el movimiento de felix pedido.
- */
-bool validateMovement(Felix * felix, int fila, int columna,
-		Edificio * edificio) {
-
-	//cout << "Entro validacion movimiento" << endl;
-	//if (felix == NULL)
-		//cout << "Felix es nulo" << endl;
-	//if (edificio == NULL)
-		//cout << "El edificio es nulo" << endl;
-	//cout << "fila: " << fila << endl;
-	//cout << "columna: " << columna << endl;
-
-	if (((fila < edificio->filas || fila >= 0)
-			&& (columna < edificio->columnas || columna >= 0))
-			&& !edificio->ventanas[fila][columna].marquesina
-			&& edificio->ventanas[fila][columna].felix == NULL
-			&& !edificio->ventanas[fila][columna].persiana) {
-
-		edificio->ventanas[felix->posicion_x][felix->posicion_y].felix = NULL;
-		edificio->ventanas[fila][columna].felix = felix;
-		felix->posicion_x = fila;
-		felix->posicion_y = fila;
-
-		cout << "Salgo validacion movimiento true" << endl;
-		return true;
-	}
-	cout << "Salgo validacion movimiento false" << endl;
-	return false;
-}
-
-/*
- * Valido si se arreglo una ventana.
- */
-bool validateWindowFix(Felix * felix, Edificio * edificio) {
-	if (edificio->ventanas[felix->posicion_x][felix->posicion_y].ventanaRota > 0
-			&& !edificio->ventanas[felix->posicion_x][felix->posicion_y].persiana) {
-		felix->puntaje_parcial++;
-		edificio->ventanas[felix->posicion_x][felix->posicion_y].ventanaRota--;
-		return true;
-	}
-	return false;
-}
-
-/*
- * Valido si se perdio una vida y murio felix.
- */
-bool validateLives(Felix * felix) {
-	return --felix->cantidad_vidas == 0;
+	pthread_exit(0);
 }
 
 /*
@@ -479,65 +327,63 @@ void caseMovimientoFelix(int jugador, string *message) {
 
 	if (jugador == 1) {
 		//if (validateMovement(felix1, fila, columna, edificio)) {
-			char auxFila[2];
-			char auxColumna[2];
-			char aux1[5] = { "1" };
-			char aux2[5] = { "2" };
+		char auxFila[2];
+		char auxColumna[2];
+		char aux1[5] = { "1" };
+		char aux2[5] = { "2" };
 
-			cout << "Por guardar auxfila y auxcoluna" << endl;
+		cout << "Por guardar auxfila y auxcoluna" << endl;
 
-			sprintf(auxFila, "%d", fila);
-			sprintf(auxColumna, "%d", columna);
+		sprintf(auxFila, "%d", fila);
+		sprintf(auxColumna, "%d", columna);
 
-			cout << "Por concatenar" << endl;
+		cout << "Por concatenar" << endl;
 
-			strcat(aux1, auxFila);
-			strcat(aux1, auxColumna);
-			strcat(aux2, auxFila);
-			strcat(aux2, auxColumna);
+		strcat(aux1, auxFila);
+		strcat(aux1, auxColumna);
+		strcat(aux2, auxFila);
+		strcat(aux2, auxColumna);
 
-			cout<<"mensaje movimiento a enviar: "<<aux1<<endl;
+		cout << "mensaje movimiento a enviar: " << aux1 << endl;
 
-			string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO)
-					+ Helper::fillMessage(aux1);
-			string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO)
-					+ Helper::fillMessage(aux2);
+		string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO)
+				+ Helper::fillMessage(aux1);
+		string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO)
+				+ Helper::fillMessage(aux2);
 
-			cout<<"Mensaje de movimiento armado1: "<<mensaje_movimiento1<<endl;
-			cout<<"Mensaje de movimiento armado2: "<<mensaje_movimiento2<<endl;
+		cout << "Mensaje de movimiento armado1: " << mensaje_movimiento1
+				<< endl;
+		cout << "Mensaje de movimiento armado2: " << mensaje_movimiento2
+				<< endl;
 
-			Helper::encolar(&mensaje_movimiento1, &sender1_queue,
-					&mutex_sender1);
-			Helper::encolar(&mensaje_movimiento2, &sender2_queue,
-					&mutex_sender2);
-			cout << "Mensaje encolado: " << mensaje_movimiento1 << endl;
-			cout << "Encole mensaje de movimiento felix" << endl;
+		Helper::encolar(&mensaje_movimiento1, &sender1_queue, &mutex_sender1);
+		Helper::encolar(&mensaje_movimiento2, &sender2_queue, &mutex_sender2);
+		cout << "Mensaje encolado: " << mensaje_movimiento1 << endl;
+		cout << "Encole mensaje de movimiento felix" << endl;
 		//}
 	} else {
 		//if (validateMovement(felix2, fila, columna, edificio)) {
-			char auxFila[2];
-			char auxColumna[2];
-			char aux1[5] = { "2" };
-			char aux2[5] = { "1" };
+		char auxFila[2];
+		char auxColumna[2];
+		char aux1[5] = { "2" };
+		char aux2[5] = { "1" };
 
-			sprintf(auxFila, "%d", fila);
-			sprintf(auxColumna, "%d", columna);
+		sprintf(auxFila, "%d", fila);
+		sprintf(auxColumna, "%d", columna);
 
-			strcat(aux1, auxFila);
-			strcat(aux1, auxColumna);
-			strcat(aux2, auxFila);
-			strcat(aux2, auxColumna);
+		strcat(aux1, auxFila);
+		strcat(aux1, auxColumna);
+		strcat(aux2, auxFila);
+		strcat(aux2, auxColumna);
 
-			cout<<"mensaje movimiento a enviar: "<<aux1<<endl;
+		cout << "mensaje movimiento a enviar: " << aux1 << endl;
 
-			string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO)
-					+ Helper::fillMessage(aux1);
-			string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO)
-					+ Helper::fillMessage(aux2);
-			Helper::encolar(&mensaje_movimiento1, &sender1_queue,
-					&mutex_sender1);
-			Helper::encolar(&mensaje_movimiento2, &sender2_queue,
-					&mutex_sender2);
+		string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO)
+				+ Helper::fillMessage(aux1);
+		string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO)
+				+ Helper::fillMessage(aux2);
+		Helper::encolar(&mensaje_movimiento1, &sender1_queue, &mutex_sender1);
+		Helper::encolar(&mensaje_movimiento2, &sender2_queue, &mutex_sender2);
 		//}
 
 	}
@@ -550,7 +396,7 @@ void caseMovimientoFelix(int jugador, string *message) {
 void casePerdidaVida(int jugador) {
 	if (jugador == 1) {
 		//cout << "Perdieron vida" << endl;
-		if (!validateLives(felix1)) {
+		if (!felix1->perderVida()) {
 			string message1(CD_PERDIDA_VIDA);
 			string message2(CD_PERDIDA_VIDA);
 			message1.append(Helper::fillMessage("1"));
@@ -568,7 +414,7 @@ void casePerdidaVida(int jugador) {
 		}
 	} else {
 		//cout << "Perdieron vida" << endl;
-		if (!validateLives(felix2)) {
+		if (!felix2->perderVida()) {
 			string message1(CD_PERDIDA_VIDA);
 			string message2(CD_PERDIDA_VIDA);
 			message1.append(Helper::fillMessage("2"));
@@ -593,7 +439,7 @@ void casePerdidaVida(int jugador) {
 
 void caseVentanaArreglada(int jugador) {
 	if (jugador == 1) {
-		if (validateWindowFix(felix1, edificio)) {
+		if (felix1->reparar(edificio)) {
 			string message1(CD_VENTANA_ARREGLADA);
 			string message2(CD_VENTANA_ARREGLADA);
 			message1.append(Helper::fillMessage("1"));
@@ -602,7 +448,7 @@ void caseVentanaArreglada(int jugador) {
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
 		}
 	} else {
-		if (validateWindowFix(felix2, edificio)) {
+		if (felix2->reparar(edificio)) {
 			string message1(CD_VENTANA_ARREGLADA);
 			string message2(CD_VENTANA_ARREGLADA);
 			message1.append(Helper::fillMessage("2"));

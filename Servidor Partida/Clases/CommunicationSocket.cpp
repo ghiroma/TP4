@@ -36,7 +36,7 @@ CommunicationSocket::CommunicationSocket (unsigned short int port, char * ip)
 	if(connect(this->ID,(struct sockaddr*)&caddress,sizeof(sockaddr))!=0) // Error al conectarse
 	  {
 	    close(this->ID);
-	    throw "Error en connect";
+	    throw "Error al conectar el socket";
 	  }
     }
   else //Error al crear socket.
@@ -58,11 +58,13 @@ CommunicationSocket::CommunicationSocket(int fd)
 
 int CommunicationSocket::SendBloq(const char * data,int dataSize)
 {
+	//std::cout<<"SRV Partida envia: "<<data<<std::endl;
   return send(this->ID,data,dataSize,0);
 }
 
 int CommunicationSocket::SendNoBloq(const char * data, int dataSize)
 {
+	//std::cout<<"SRV Partida envia: "<<data<<std::endl;
   return send(this->ID,data,dataSize,MSG_DONTWAIT);
 }
 
