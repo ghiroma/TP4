@@ -108,7 +108,7 @@ sender1_thread(void * arguments) {
 		if (!sender1_queue.empty()) {
 			//Lo que venga del timer y validator, se replica a ambos jugadores.
 			string message;
-			Helper::desencolar(&message, &sender1_queue, &mutex_sender1);
+			message = Helper::desencolar(&sender1_queue, &mutex_sender1);
 			cout << "Mensaje a enviar: " << message << endl;
 			if (cliente1_conectado) {
 				cSocket1->SendBloq(message.c_str(), message.length());
@@ -130,7 +130,7 @@ sender2_thread(void * arguments) {
 		if (!sender2_queue.empty()) {
 			//Lo que venga del timer y validator, se replica a ambos jugadores.
 			string message;
-			Helper::desencolar(&message, &sender2_queue, &mutex_sender2);
+			message = Helper::desencolar(&sender2_queue, &mutex_sender2);
 			cout << "Mensaje a enviar: " << message << endl;
 			if (cliente2_conectado) {
 				cSocket2->SendBloq(message.c_str(), message.length());
@@ -161,6 +161,7 @@ receiver1_thread(void * fd) {
 		} else if (readDataCode == 0) {
 			//TODO decirle al jugador nro2 que el cliente 1 se desconecto.
 			cliente1_conectado = false;
+			cliente1_jugando = false;
 			delete (cSocket1);
 		}
 		usleep(POOLING_DEADTIME);
@@ -187,6 +188,7 @@ receiver2_thread(void * fd) {
 			Helper::encolar(&mensaje, &receiver2_queue, &mutex_receiver2);
 		} else if (readDataCode == 0) {
 			cliente2_conectado = false;
+			cliente2_jugando = false;
 			delete (cSocket2);
 		}
 
@@ -200,8 +202,7 @@ receiver2_thread(void * fd) {
  * Thread encargado de validar las acciones de los clientes y devolver mensajes
  * de confirmacion.
  */
-void *
-validator_thread(void * argument) {
+void *validator_thread(void * argument) {
 
 	while (stop == false && (cliente1_conectado || cliente2_conectado)) {
 		if (!receiver1_queue.empty()) {
