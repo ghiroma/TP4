@@ -29,9 +29,9 @@ pthread_mutex_t mutex_msjPuertoRecibido = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cola_grafico = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_nombreOponente = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_torneoFinalizado = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_solicitudDeNuevaParitda = PTHREAD_MUTEX_INITIALIZER;
 
 struct ventana {
-
 	short int x;
 	short int y;
 	short int fila;
@@ -43,10 +43,8 @@ struct ventana {
 };
 
 struct posicion {
-
 	unsigned short int fila;
 	unsigned short int columna;
-
 };
 
 struct desplazamiento {
@@ -82,6 +80,10 @@ void getConfiguration(unsigned short int* port, string* ip, int* arriba, int* de
 void mostrarRanking(const char*);
 void liberarRecursos();
 void mostrarPantalla(const char*);
+void esperarNombreOponente();
+void esperarPuertoPartida();
+void vaciarColas();
+void inicializarNuevaPartida();
 
 /* 
 
@@ -154,10 +156,13 @@ bool torneoFinalizado = false;
 bool showWindowRanking = false;
 bool murioServidorTorneo = false;
 string nombreOponente;
+string mi_id;
+bool solicitudDeNuevaParitda = true;
+
+CommunicationSocket * socketTorneo;
+CommunicationSocket * socketPartida;
 
 int main(int argc, char *argv[]) {
-	CommunicationSocket * socketTorneo;
-	CommunicationSocket * socketPartida;
 
 	const char pared_tramo1n1_bmp[] = "Sprites/pared_tramo1n1.bmp", pared_tramo2n1_bmp[] = "Sprites/pared_tramo2n1.bmp", pared_tramo3n1_bmp[] = "Sprites/pared_tramo3n1.bmp", ventana_sana_bmp[] = "Sprites/ventana_sana.bmp", ventana_rota1_bmp[] = "Sprites/ventana_rota1.bmp", ventana_rota2_bmp[] =
 			"Sprites/ventana_rota2.bmp", ventana_rota3_bmp[] = "Sprites/ventana_rota3.bmp", ventana_rota4_bmp[] = "Sprites/ventana_rota4.bmp", puerta_bmp[] = "Sprites/puerta_grande.bmp", felixd1_bmp[] = "Sprites/felix_d1.bmp", felixi1_bmp[] = "Sprites/felix_i1.bmp", felixr11_bmp[] =
@@ -245,10 +250,9 @@ int main(int argc, char *argv[]) {
 			socketTorneo = new CommunicationSocket(puertoTorneo, (char*) ip.c_str());
 			error = false;
 		} catch (const char *err) {
-			cout << "mensaje : " << err << endl;
 			cout << "No se puedo conectar al torneo" << endl;
 			error = true;
-			usleep(1000000);
+			usleep(10000);
 		}
 	} while (error == true);
 	cout << "Conectado" << endl;
@@ -261,7 +265,7 @@ int main(int argc, char *argv[]) {
 	bzero(buffer, sizeof(buffer));
 	socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
 	string aux_buffer(buffer);
-	string mi_id = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO);
+	mi_id = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO);
 	cout << "Mi id: " << mi_id << endl;
 
 	//mando mi nombre de jugador
@@ -272,60 +276,31 @@ int main(int argc, char *argv[]) {
 	//Thread para escuchar al servidor de Torneo.
 	pthread_create(&tpid_escuchar_torneo, NULL, EscuchaTorneo, &socketTorneo->ID);
 
-	//me quedo esperando a recibir el nombre de mi oponente (me lo manda el servTorneo)
-	int recibioNombreOponente = false;
-	pthread_mutex_lock(&mutex_nombreOponente);
-	nombreOponente = "";
-	pthread_mutex_unlock(&mutex_nombreOponente);
-	while (!recibioNombreOponente) {
-		pthread_mutex_lock(&mutex_nombreOponente);
-		if (nombreOponente.length() > 0) {
-			pthread_mutex_lock(&mutex_nombreOponente);
-			felix2_nombre = nombreOponente;
-			pthread_mutex_unlock(&mutex_nombreOponente);
-			recibioNombreOponente = true;
-		}
-		pthread_mutex_unlock(&mutex_nombreOponente);
-		usleep(10000);
-	}
-	//felix2_nombre = nombreOponente;
-	cout << "recibo el nombre de mi oponente:" << felix2_nombre << endl;
-	//felix2_nombre = "Jugador 2";
+	///////////////////////////////////////////////////////////////////////////////
 
-	//Espero que el servidor de Torneo me envie el puerto para conectarme al servidor de partida.
-	bool msjPuerto = false;
-	while (true) {
-		pthread_mutex_lock(&mutex_msjPuertoRecibido);
-		msjPuerto = msjPuertoRecibido;
-		pthread_mutex_unlock(&mutex_msjPuertoRecibido);
-
-		if (msjPuerto == true) {
-			break;
-		}
-		usleep(1000000);
-	}
-	msjPuertoRecibido = false;
-
-	//Me conecto al servidor de partida.
-	cout << "Antes de inicializar el socketPartida " << puertoServidorPartida << endl;
-	socketPartida = new CommunicationSocket(puertoServidorPartida, (char*) ip.c_str());
-
-	//mando mi ID
-	string message(CD_ID_JUGADOR);
-	message.append(fillMessage(mi_id));
-	socketPartida->SendBloq(message.c_str(), message.length());
-
-	//Empiezo a tirar Thread para comunicarme con el servidor de partida.
-	pthread_create(&tpid_teclas, NULL, EscuchaServidor, &socketPartida->ID);
-	pthread_create(&tpid_envia, NULL, EnvioServidor, &socketPartida->ID);
+	///////////////////////////////////////////////////////////////////////////////
 
 	//Lanzo el thread que va a estar a la escucha de las teclas que se presionan.
 	pthread_create(&tpid_teclas, NULL, EscuchaTeclas, NULL);
 
 	unsigned short int fila, columna;
 	unsigned short int ventana_x, ventana_y;
-
+	bool auxSolicitudDeNuevaPartida;
+	bool auxTorneoFinalizado;
 	while (salir == 'N') {
+		pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
+		auxSolicitudDeNuevaPartida = solicitudDeNuevaParitda;
+		pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
+		pthread_mutex_lock(&mutex_torneoFinalizado);
+		auxTorneoFinalizado = torneoFinalizado;
+		pthread_mutex_unlock(&mutex_torneoFinalizado);
+		if (auxSolicitudDeNuevaPartida && !auxTorneoFinalizado) {
+			inicializarNuevaPartida();
+			pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
+			solicitudDeNuevaParitda = false;
+			pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
+		}
+
 		pantalla_juego.x = 0;
 		pantalla_juego.y = 0;
 		pantalla_juego.w = ANCHO_PANTALLA;
@@ -493,14 +468,14 @@ int main(int argc, char *argv[]) {
 					felix1_inicial = false;
 				} else {
 					if (!cola_felix1.empty()) {
-						cout<<"Entro a la cola de felix movimiento"<<endl;
+						cout << "Entro a la cola de felix movimiento" << endl;
 						felix1_inicial = false;
 						string msj = cola_felix1.front();
 						cola_felix1.pop();
 						felix1_posicion.columna = atoi(msj.substr(5, 1).c_str());
-						cout<<"Nueva posicion columna de felix1"<<felix1_posicion.columna<<endl;
+						cout << "Nueva posicion columna de felix1" << felix1_posicion.columna << endl;
 						felix1_posicion.fila = atoi(msj.substr(6, 1).c_str());
-						cout<<"Nueva posicion fila de felix1: "<<felix1_posicion.fila<<endl;
+						cout << "Nueva posicion fila de felix1: " << felix1_posicion.fila << endl;
 					}
 					Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
 				}
@@ -743,13 +718,10 @@ void* EscuchaServidor(void *arg) {
 			if (!torneoFin) {
 				//mostrar pantalla Esperando partida
 				mostrarPantalla("waitmatch");
-
+				pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
+				solicitudDeNuevaParitda = true;
+				pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
 			}
-
-			//busco en una  nueva partida (que me la da el torneo)
-
-			//pthread_exit(0);
-			//salir='S';
 		}
 		//sleep(1);
 		usleep(10000);
@@ -867,16 +839,16 @@ void* EscuchaTeclas(void *arg) {
 		case SDL_KEYDOWN:
 			if (evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo) {
 				/*if ((felix1_posicion.fila - 1) >= 0)
-					if ((felix1_posicion.fila - 1) != 0)
-						f1_colu = felix1_posicion.fila - 1;
-					else if ((felix1_posicion.columna) != 2)
-						f1_colu = felix1_posicion.fila - 1;*/
+				 if ((felix1_posicion.fila - 1) != 0)
+				 f1_colu = felix1_posicion.fila - 1;
+				 else if ((felix1_posicion.columna) != 2)
+				 f1_colu = felix1_posicion.fila - 1;*/
 				felix1_reparar = 'N';
 
 				ostringstream ss1;
 				ostringstream ss2;
 				ss1 << felix1_posicion.columna;
-				ss2 << felix1_posicion.fila-1;
+				ss2 << felix1_posicion.fila - 1;
 				string aux(ss1.str() + ss2.str());
 				string message(CD_MOVIMIENTO_FELIX);
 				message.append(fillMessage(aux));
@@ -885,17 +857,17 @@ void* EscuchaTeclas(void *arg) {
 
 			} else if (evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba) {
 				/*if (felix1_posicion.columna == 99) {
-					f1_fila = 0;
-					f1_colu = 0;
-				} else if ((felix1_posicion.fila + 1) < 3)
-					f1_fila = felix1_posicion.fila +1;*/
-					//f1_colu = felix1_posicion.fila + 1;
+				 f1_fila = 0;
+				 f1_colu = 0;
+				 } else if ((felix1_posicion.fila + 1) < 3)
+				 f1_fila = felix1_posicion.fila +1;*/
+				//f1_colu = felix1_posicion.fila + 1;
 				felix1_reparar = 'N';
 
 				ostringstream ss1;
 				ostringstream ss2;
 				ss1 << felix1_posicion.columna;
-				ss2 << felix1_posicion.fila+1;
+				ss2 << felix1_posicion.fila + 1;
 				//ss1 << felix1_posicion.fila;
 				//ss2 << felix1_posicion.columna;
 				string aux(ss1.str() + ss2.str());
@@ -907,18 +879,18 @@ void* EscuchaTeclas(void *arg) {
 			} else if (evento.key.keysym.sym == SDLK_RIGHT || evento.key.keysym.sym == key_derecha) {
 				felix1 = felix_d1;
 				/*if (felix1_posicion.fila == 99) {
-					f1_fila = 0;
-					f1_colu = 0;
-				} else if ((felix1_posicion.columna + 1) < 5)
-					if ((felix1_posicion.columna + 1) != 2)
-						f1_colu = felix1_posicion.columna + 1;
-					else if ((felix1_posicion.fila) != 0)
-						f1_colu = felix1_posicion.columna + 1;*/
+				 f1_fila = 0;
+				 f1_colu = 0;
+				 } else if ((felix1_posicion.columna + 1) < 5)
+				 if ((felix1_posicion.columna + 1) != 2)
+				 f1_colu = felix1_posicion.columna + 1;
+				 else if ((felix1_posicion.fila) != 0)
+				 f1_colu = felix1_posicion.columna + 1;*/
 				felix1_reparar = 'N';
 
 				ostringstream ss1;
 				ostringstream ss2;
-				ss1 << felix1_posicion.columna+1;
+				ss1 << felix1_posicion.columna + 1;
 				ss2 << felix1_posicion.fila;
 				string aux(ss1.str() + ss2.str());
 				string message(CD_MOVIMIENTO_FELIX);
@@ -929,15 +901,15 @@ void* EscuchaTeclas(void *arg) {
 			} else if (evento.key.keysym.sym == SDLK_LEFT || evento.key.keysym.sym == key_izquierda) {
 				felix1 = felix_i1;
 				/*if ((felix1_posicion.columna - 1) >= 0)
-					if ((felix1_posicion.columna - 1) != 2)
-						f1_colu = felix1_posicion.columna - 1;
-					else if ((felix1_posicion.fila) != 0)
-						f1_colu = felix1_posicion.columna - 1;*/
+				 if ((felix1_posicion.columna - 1) != 2)
+				 f1_colu = felix1_posicion.columna - 1;
+				 else if ((felix1_posicion.fila) != 0)
+				 f1_colu = felix1_posicion.columna - 1;*/
 				felix1_reparar = 'N';
 
 				ostringstream ss1;
 				ostringstream ss2;
-				ss1 << felix1_posicion.columna-1;
+				ss1 << felix1_posicion.columna - 1;
 				ss2 << felix1_posicion.fila;
 				string aux(ss1.str() + ss2.str());
 				string message(CD_MOVIMIENTO_FELIX);
@@ -1158,7 +1130,89 @@ void mostrarRanking(const char* ranking) {
 	SDL_Flip(superficie);
 }
 
+void inicializarNuevaPartida() {
+	//Espero que el servidor de Torneo me envie el puerto para conectarme al servidor de partida.
+	esperarPuertoPartida();
+
+	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
+	esperarNombreOponente();
+
+	//Me conecto al servidor de partida.
+	cout << "Socket Partida:" << puertoServidorPartida << endl;
+	socketPartida = new CommunicationSocket(puertoServidorPartida, (char*) ip.c_str());
+
+	//mando mi ID
+	string message(CD_ID_JUGADOR);
+	message.append(fillMessage(mi_id));
+	socketPartida->SendBloq(message.c_str(), message.length());
+
+	//Empiezo a tirar Thread para comunicarme con el servidor de partida.
+	vaciarColas();
+	pthread_create(&tpid_teclas, NULL, EscuchaServidor, &socketPartida->ID);
+	pthread_create(&tpid_envia, NULL, EnvioServidor, &socketPartida->ID);
+}
+
+void esperarPuertoPartida() {
+	bool msjPuerto = false;
+	while (true) {
+		pthread_mutex_lock(&mutex_msjPuertoRecibido);
+		msjPuerto = msjPuertoRecibido;
+		pthread_mutex_unlock(&mutex_msjPuertoRecibido);
+
+		if (msjPuerto == true) {
+			break;
+		}
+		usleep(10000);
+	}
+	msjPuertoRecibido = false;
+}
+
+void esperarNombreOponente() {
+	int recibioNombreOponente = false;
+	pthread_mutex_lock(&mutex_nombreOponente);
+	nombreOponente = "";
+	pthread_mutex_unlock(&mutex_nombreOponente);
+	while (!recibioNombreOponente) {
+		pthread_mutex_lock(&mutex_nombreOponente);
+		if (nombreOponente.length() > 0) {
+			felix2_nombre = nombreOponente;
+			recibioNombreOponente = true;
+		}
+		pthread_mutex_unlock(&mutex_nombreOponente);
+		usleep(10000);
+	}
+	cout << "recibo el nombre de mi oponente:" << felix2_nombre << endl;
+}
+
+void vaciarColas() {
+	while (!cola_grafico.empty()) {
+		cola_grafico.pop();
+	}
+	while (!cola_ralph.empty()) {
+		cola_ralph.pop();
+	}
+	while (!cola_pajaro.empty()) {
+		cola_pajaro.pop();
+	}
+	while (!cola_torta.empty()) {
+		cola_torta.pop();
+	}
+	while (!cola_mensajes_enviar.empty()) {
+		cola_mensajes_enviar.pop();
+	}
+	while (!cola_felix1.empty()) {
+		cola_felix1.pop();
+	}
+	while (!cola_felix2.empty()) {
+		cola_felix2.pop();
+	}
+}
+
 void liberarRecursos() {
+	//SOCKET
+	delete(socketTorneo);
+	delete(socketPartida);
+
 	//SEM
 	pthread_mutex_destroy(&mutex_msjPuertoRecibido);
 	pthread_mutex_destroy(&mutex_cola_grafico);
