@@ -1,7 +1,7 @@
 #include "Support/ConstantesServidorTorneo.h"
 #include "../Servidor Partida/FuncionesServidorPartida.h"
 #include "Clases/CommunicationSocket.h"
-#include "Jugador.h"
+#include "Clases/Jugador.h"
 #include "FuncionesServidorTorneo.h"
 #include <string.h>
 #include <pthread.h>

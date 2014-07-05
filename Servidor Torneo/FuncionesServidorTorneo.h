@@ -2,7 +2,7 @@
 #define FUNCIONESSERVIDORTORNEO_H_
 
 #include "Support/ConstantesServidorTorneo.h"
-#include "Jugador.h"
+#include "Clases/Jugador.h"
 #include <pthread.h>
 #include <list>
 #include <semaphore.h>
@@ -26,6 +26,7 @@ void quitarJugador(int id);
 bool torneoFinalizado();
 void mandarPuntajes();
 void liberarRecursos();
+void mostrarPantalla(const char*);
 //THREADS
 void* temporizadorTorneo(void* data);
 void* keepAliveJugadores(void*);

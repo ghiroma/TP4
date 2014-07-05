@@ -50,6 +50,7 @@ static const int ANCHO_PANTALLA_SERVIDOR = 700;
 static const int ALTO_PANTALLA_SERVIDOR = 500;
 static const int BPP_SERVIDOR = 16;
 static const int MAX_LENGT_TXT_INFO_JUGADOR = 50;
-
+static const int TIEMPO_DE_REDIBUJADO = 1000000;
+static const int TIEMPO_DE_KEEPALIVEJUGADORES = 100000;
 
 #endif /* CONSTANTESSERVIDORTORNEO_H_ */

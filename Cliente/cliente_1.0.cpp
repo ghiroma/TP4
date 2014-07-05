@@ -97,7 +97,7 @@ SDL_Surface *superficie,
 struct ventana ventanas_tramo1[3][5];
 /* ALMACENO FILA y COLUMNA -- pienso el edificio como una matriz */
 
-struct posicion felix1_posicion = { 99, 99 };
+struct posicion felix1_posicion = { 1, 1 };
 struct posicion ralph_posicion = { 3, 2 };
 struct posicion torta_posicion;
 struct desplazamiento pajaro_desplazamiento = { -1, -1 };
@@ -552,8 +552,8 @@ int main(int argc, char *argv[]) {
 		//Ojo, hay que poner el delay porque sino el proceso no tiene tiempos muertos y
 		// el uso del procesador se me va al chori.
 		if (hayChoque()) {
-			felix1_posicion.fila = 99;
-			felix1_posicion.columna = 99;
+			felix1_posicion.fila = 1;
+			felix1_posicion.columna = 1;
 
 			string message(CD_PERDIDA_VIDA);
 			message.append(fillMessage("0"));

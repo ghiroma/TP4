@@ -9,8 +9,8 @@ ServidorTorneo.o:ServidorTorneo.cpp
 	$(CC) $(CFLAGS) -c ServidorTorneo.cpp $(LIBS)
 FuncionesServidorTorneo.o:FuncionesServidorTorneo.cpp
 	$(CC) $(CFLAGS) -c FuncionesServidorTorneo.cpp $(LIBS)
-Jugador.o:Jugador.cpp
-	$(CC) $(CFLAGS) -c Jugador.cpp $(LIBS)
+Jugador.o:Clases/Jugador.cpp
+	$(CC) $(CFLAGS) -c Clases/Jugador.cpp $(LIBS)
 CommunicationSocket.o:Clases/CommunicationSocket.cpp
 	$(CC) $(CFLAGS) -c Clases/CommunicationSocket.cpp $(LIBS)
 ServerSocket.o:Clases/ServerSocket.cpp

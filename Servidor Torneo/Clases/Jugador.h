@@ -8,7 +8,7 @@
 #ifndef JUGADOR_H_
 #define JUGADOR_H_
 
-#include "Clases/CommunicationSocket.h"
+#include "CommunicationSocket.h"
 #include <string>
 #include <map>
 #include <iostream>

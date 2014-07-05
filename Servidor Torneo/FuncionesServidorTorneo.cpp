@@ -37,6 +37,7 @@ extern unsigned int puertoPartida;
 extern int cantVidas;
 
 SDL_Surface *screen, *background, *tiempo, *jugadores, *infoJugador_part1, *infoJugador_part2;
+SDL_Rect posDestino, posBackground, posTiempo, posJugadores;
 TTF_Font *font;
 
 struct puntajesPartida {
@@ -93,7 +94,7 @@ void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* 
  * Manejador de señales
  */
 void SIG_Handler(int inum) {
-	//cout << "Señal Handler" << endl;
+	cout << "Señal Handler" << endl;
 	liberarRecursos();
 	exit(1);
 }
@@ -293,7 +294,6 @@ void* modoGrafico(void* data) {
 	struct thModoGrafico_data *torneo;
 	torneo = (struct thModoGrafico_data *) data;
 
-	SDL_Rect posDestino, posBackground, posTiempo, posJugadores;
 	SDL_Color colorNegro, colorBlanco;
 
 	//Colores
@@ -439,7 +439,7 @@ void* modoGrafico(void* data) {
 		if (minutos == 0 && segundos == 0) {
 			break;
 		}
-		usleep(1000000);
+		usleep(TIEMPO_DE_REDIBUJADO);
 	}
 
 	//esperar que todas las partidas finalicen
@@ -552,7 +552,7 @@ void* keepAliveJugadores(void*) {
 		 }*/
 		pthread_mutex_unlock(&mutex_listJugadores);
 		//cout << "unmutex1 keepAliveJugadores listJugadores" << endl;
-		usleep(100000);
+		usleep(TIEMPO_DE_KEEPALIVEJUGADORES);
 		pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
 		//cout << "mutex2 keepAliveJugadores todasLasPartidasFinalizadas" << endl;
 		partidasTerminadas = todasLasPartidasFinalizadas;
@@ -570,14 +570,14 @@ void* aceptarJugadores(void* data) {
 	cout << "Thread aceptarJugadores - PID:" << getpid() << endl;
 	int clientId = 0;
 	//Crear Socket del Servidor
-	cout << "aceptar jugadpres" << endl;
-
 	try {
 		sSocket = new ServerSocket(puertoTorneo);
 	} catch (...) {
 		cout << "No se pudo conectar a la IP solicitada. Pruebe otra." << endl;
 		exit(1);
 	}
+
+	cout<<sSocket->ShowHostName()<<endl;
 
 	char nombreJugador[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 
@@ -767,6 +767,21 @@ void liberarRecursos() {
 	TTF_CloseFont(font);
 	TTF_Quit();
 	SDL_Quit();
+}
+
+void mostrarPantalla(const char* nombrPantalla) {
+	posBackground.x = 0;
+	posBackground.y = 0;
+	string dir = "Img/";
+	dir += nombrPantalla;
+	dir += ".bmp";
+	background = SDL_LoadBMP(dir.c_str());
+	if (background == NULL) {
+		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
+		exit(1);
+	}
+	SDL_BlitSurface(background, NULL, screen, &posBackground);
+	SDL_Flip(screen);
 }
 
 //AUXILIARES
