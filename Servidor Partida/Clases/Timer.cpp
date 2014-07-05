@@ -67,6 +67,7 @@ string Timer::keepAlive() {
 	if (TimeDifference(INTERVALOS_KEEPALIVE, this->startingTimeKeepAlive)) {
 		message.append(CD_ACK);
 		message.append(Helper::fillMessage("0"));
+		this->startingTimeKeepAlive = time(0);
 	}
 
 	return message;
