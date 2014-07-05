@@ -126,7 +126,6 @@ void SIG_CHLD(int inum) {
 	//////cambiar,,,,,
 	//////agregar a la estructura  j1terminoOK y j2terminoOK
 
-
 	pthread_mutex_lock(&mutex_listJugadores);
 	//si el torneo termino ok Grabo los puntajes
 	if (resumenPartida->partidaFinalizadaOK == true) {
@@ -278,7 +277,7 @@ temporizadorTorneo(void* data) {
 		string message(CD_FIN_TORNEO);
 		message.append(fillMessage("1"));
 		it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
-		cout<<"mande CD_FIN_TORNEO a"<<it->second->Id<<" . Nombre:"<<it->second->Nombre<<endl;
+		cout << "mande CD_FIN_TORNEO a" << it->second->Id << " . Nombre:" << it->second->Nombre << endl;
 	}
 	pthread_mutex_unlock(&mutex_listJugadores);
 
@@ -584,10 +583,8 @@ void* aceptarJugadores(void* data) {
 
 	while (true) {
 		cout << "va a bloquearse esperando al JUGADOR" << endl;
-		cout << "_____________________" << endl;
 		CommunicationSocket * cSocket = sSocket->Accept();
 		cout << "va a bloquearse esperando mensaje" << endl;
-		cout << "_____________________" << endl;
 		cSocket->ReceiveBloq(nombreJugador, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
 		cout << "se conecto:" << nombreJugador << endl;
 		clientId++;
@@ -595,7 +592,6 @@ void* aceptarJugadores(void* data) {
 		agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
 		pthread_mutex_unlock(&mutex_listJugadores);
 		cout << "Se agrega el jugador NRO:" << clientId << " NOMBRE: " << nombreJugador << endl;
-		cout << "______________________________________________________________________________" << endl;
 		//mandarle el ID al Jugador
 		char aux[LONGITUD_CONTENIDO];
 		string message(CD_ID_JUGADOR);
@@ -641,44 +637,63 @@ establecerPartidas(void* data) {
 				puertoPartida++;
 				key_t key = ftok("/bin/ls", puertoPartida);
 				if (key == -1) {
-					//cout << "Error al generar clave de memoria compartida" << endl;
+					cout << "Error al generar clave de memoria compartida" << endl;
 					break;
 				}
 				//cout << "ftok key generada: " << key << endl;
 				int idShm = shmget(key, sizeof(struct puntajesPartida) * 1,
 				IPC_CREAT | PERMISOS_SHM);
 				if (idShm == -1) {
-					//cout << "Error al obtener memoria compartida" << endl;
+					cout << "Error al obtener memoria compartida" << endl;
 					break;
 				}
-				//cout << "SERV TORNEO Partida: " << puertoPartida << "  ID SHM: " << idShm << endl;
 
 				//Le mando a los jugadores el nro de Puerto en el que comenzara la partida
 				char auxPuertoNuevaPartida[LONGITUD_CONTENIDO];
 				sprintf(auxPuertoNuevaPartida, "%d", puertoPartida);
 				string message(CD_PUERTO_PARTIDA);
 				message.append(fillMessage(auxPuertoNuevaPartida));
-
-				//cout << "Puerto para partida " << message << endl;
 				listJugadores[idJugador]->SocketAsociado->SendNoBloq(message.c_str(), message.length());
 				listJugadores[idOponente]->SocketAsociado->SendNoBloq(message.c_str(), message.length());
 
+				//Les mando el nombre de su oponente
+				/*string nombreOponente1 = listJugadores[idOponente]->Nombre;
+				 string nombreOponente2 = listJugadores[idJugador]->Nombre;
+				 fill(nombreOponente1.begin(), nombreOponente1.begin() + (LONGITUD_CONTENIDO - nombreOponente1.length()), ' ');
+				 fill(nombreOponente2.begin(), nombreOponente2.begin() + (LONGITUD_CONTENIDO - nombreOponente2.length()), ' ');
+				 nombreOponente1 = CD_NOMBRE + nombreOponente1;
+				 nombreOponente2 = CD_NOMBRE + nombreOponente2;
+				 */
+				char auxnombreOponente1[LONGITUD_CONTENIDO];
+				sprintf(auxnombreOponente1, "%s", listJugadores[idOponente]->Nombre.c_str());
+				string nombreOponente1(CD_NOMBRE);
+				nombreOponente1.append(fillMessage(auxnombreOponente1));
+
+				char auxnombreOponente2[LONGITUD_CONTENIDO];
+				sprintf(auxnombreOponente2, "%s", listJugadores[idJugador]->Nombre.c_str());
+				string nombreOponente2(CD_NOMBRE);
+				nombreOponente2.append(fillMessage(auxnombreOponente2));
+
+				cout << "mando nombre1: " << nombreOponente1.c_str() << endl;
+				cout << "mando nombre2: " << nombreOponente2.c_str() << endl;
+
+				listJugadores[idJugador]->SocketAsociado->SendNoBloq(nombreOponente1.c_str(), nombreOponente1.length());
+				listJugadores[idOponente]->SocketAsociado->SendNoBloq(nombreOponente2.c_str(), nombreOponente2.length());
+
 				if ((pid = fork()) == 0) {
-					cout << "Thread establecerPartidas FORK - PID:" << getpid() << endl;
-					//cout << "partida nro: " << nroPartida << " FORK- PID:" << getpid() << endl;
-					//Proceso hijo. Hacer exec
-					//cout << "J" << idJugador << " Crear Partida en el puerto: " << (puertoPartida - 1) << " (" << idJugador << "vs" << idOponente << ")" << endl;
+					//Proceso hijo
+					cout << "Thread establecerPartidas FORK - PID:" << getpid() << " (" << idJugador << "vs" << idOponente << ")" << endl;
 
 					char auxCantVidas[2];
 					sprintf(auxCantVidas, "%d", cantVidas);
 
 					char *argumentos[] = { auxPuertoNuevaPartida, auxCantVidas, NULL };
 					execv("../Servidor Partida/Debug/Servidor Partida", argumentos);
-					//cout << "ERROR al ejecutar execv Nueva Partida" << endl;
+					cout << "ERROR al ejecutar execv Nueva Partida" << endl;
 					exit(1);
 				} else if (pid < 0) {
 					//Hubo error
-					//cout << "Error al forkear" << endl;
+					cout << "Error al forkear" << endl;
 				} else {
 					//Soy el padre.
 					//inicializo el BLOQUE DE SHM

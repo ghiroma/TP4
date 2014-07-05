@@ -13,6 +13,7 @@
 #include <string>
 #include <queue>
 #include "Support/Constantes.h"
+#include <algorithm>
 
 #define ANCHO_PANTALLA	640
 #define ALTO_PANTALLA 480
@@ -26,6 +27,7 @@ using namespace std;
 bool msjPuertoRecibido = false;
 pthread_mutex_t mutex_msjPuertoRecibido = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cola_grafico = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_nombreOponente = PTHREAD_MUTEX_INITIALIZER;
 
 struct ventana {
 
@@ -118,8 +120,6 @@ char ventanas_cargadas = 'N';
 char torta_aparece = 'N';
 char felix_cartel_puntos[10] = { 0 };
 char felix_cartel_vidas[10] = { 0 };
-//string felix1_nombre[10] = { ' ' };
-//string felix2_nombre[10] = { "Player 2" };
 string felix1_nombre = "";
 string felix2_nombre = "";
 short int felix1_puntos = 0;
@@ -151,6 +151,7 @@ const char* ranking;
 bool torneoFinalizado = false;
 bool showWindowRanking = false;
 bool murioServidorTorneo = false;
+string nombreOponente;
 
 int main(int argc, char *argv[]) {
 	CommunicationSocket * socketTorneo;
@@ -272,8 +273,29 @@ int main(int argc, char *argv[]) {
 	string mi_id = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO);
 	cout << "Mi id: " << mi_id << endl;
 
+	//mando mi nombre de jugador
+	string messageNombre(CD_NOMBRE);
+	messageNombre.append(fillMessage(felix1_nombre));
+	socketTorneo->SendBloq(messageNombre.c_str(), messageNombre.length());
+
 	//Thread para escuchar al servidor de Torneo.
 	pthread_create(&tpid_escuchar_torneo, NULL, EscuchaTorneo, &socketTorneo->ID);
+
+	//recibo el nombre de mi oponente (me lo manda el servTorneo)
+	int recibioNombreOponente = false;
+	nombreOponente = "";
+	while (!recibioNombreOponente) {
+		pthread_mutex_lock(&mutex_nombreOponente);
+		if (nombreOponente.length() > 0) {
+			felix2_nombre = nombreOponente;
+			recibioNombreOponente = true;
+		}
+		pthread_mutex_unlock(&mutex_nombreOponente);
+		sleep(1);
+	}
+	//felix2_nombre = nombreOponente;
+	cout << "recibo el nombre de mi oponente:" << felix2_nombre << endl;
+	//felix2_nombre = "Jugador 2";
 
 	//Espero que el servidor de Torneo me envie el puerto para conectarme al servidor de partida.
 	bool msjPuerto = false;
@@ -296,18 +318,6 @@ int main(int argc, char *argv[]) {
 	string message(CD_ID_JUGADOR);
 	message.append(fillMessage(mi_id));
 	socketPartida->SendBloq(message.c_str(), message.length());
-
-	//mando mi nombre de jugador
-	string messageNombre(CD_NOMBRE);
-	messageNombre.append(fillMessage(felix1_nombre));
-	socketPartida->SendBloq(messageNombre.c_str(), messageNombre.length());
-
-	//recibo el nombre de mi oponente
-	/*char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
-	 socketPartida->ReceiveBloq(buffer, sizeof(buffer));
-	 string aux_buffer(buffer);
-	 felix2_nombre = aux_buffer;*/
-	felix2_nombre = "Jugador 2";
 
 	//Empiezo a tirar Thread para comunicarme con el servidor de partida.
 	pthread_create(&tpid_teclas, NULL, EscuchaServidor, &socketPartida->ID);
@@ -755,6 +765,8 @@ void * EnvioServidor(void * arg) {
 void* EscuchaTorneo(void *arg) {
 	int fd = *(int *) arg;
 	int readData = 0;
+	const char* mensajeNombre;
+	string auxNombreOponente;
 	cout << "FD: " << fd << endl;
 	CommunicationSocket cSocket(fd);
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
@@ -791,6 +803,20 @@ void* EscuchaTorneo(void *arg) {
 				showWindowRanking = true;
 				//salgo del thread porque este el ultimo mensaje que me interesa
 				pthread_exit(NULL);
+				break;
+			case CD_NOMBRE_I:
+				//recibo y limpio el nombre
+				mensajeNombre = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str();
+				auxNombreOponente = "";
+				int caracterNomb;
+				for (caracterNomb = 0; caracterNomb < LONGITUD_CONTENIDO; caracterNomb++) {
+					if (mensajeNombre[caracterNomb] != '0') {
+						auxNombreOponente += mensajeNombre[caracterNomb];
+					}
+				}
+				pthread_mutex_lock(&mutex_nombreOponente);
+				nombreOponente = auxNombreOponente;
+				pthread_mutex_unlock(&mutex_nombreOponente);
 				break;
 			case CD_FIN_TORNEO_I:
 				//que no busque mas establecer partidas
@@ -1116,6 +1142,12 @@ void mostrarRanking(const char* ranking) {
 }
 
 void liberarRecursos() {
+	//SEM
+	pthread_mutex_destroy(&mutex_msjPuertoRecibido);
+	pthread_mutex_destroy(&mutex_cola_grafico);
+	pthread_mutex_destroy(&mutex_nombreOponente);
+
+	//SDL
 	SDL_FreeSurface(superficie);
 	SDL_FreeSurface(backgroundImg);
 	SDL_FreeSurface(pared_tramo1n1);

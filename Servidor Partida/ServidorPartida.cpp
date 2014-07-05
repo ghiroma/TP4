@@ -62,8 +62,9 @@ int main(int argc, char * argv[]) {
 
 	srand(time(NULL));
 
-	ppid = getppid();
-	cout<<"PARTIDA -> getppid() = "<<ppid<<endl;
+	pid = getpid();
+	cout<<"PARTIDA -> getppid() = "<<getppid<<endl;
+	cout<<"PARTIDA -> getpid() = "<<getpid()<<endl;
 
 	/*
 	 * Obtengo puertos y cantidad de vidas de felix por parametros.

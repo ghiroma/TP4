@@ -18,7 +18,7 @@
 
 using namespace std;
 
-extern pid_t ppid;
+extern pid_t pid;
 
 extern CommunicationSocket * cSocket1;
 extern CommunicationSocket * cSocket2;

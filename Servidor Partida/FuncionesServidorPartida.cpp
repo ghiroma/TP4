@@ -28,7 +28,7 @@
 
 using namespace std;
 
-pid_t ppid;
+pid_t pid;
 
 int filaPreviaPersiana = 0;
 int columnaPreviaPersiana = 0;
@@ -322,7 +322,7 @@ sharedMemory_thread(void * arguments) {
 	while (stop == false) {
 
 		//Verifico si el padre esta vivo
-		if (kill(ppid, 0) == -1) {
+		if (kill(pid, 0) == -1) {
 			stop = true;
 		}
 
