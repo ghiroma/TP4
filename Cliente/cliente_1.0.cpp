@@ -486,11 +486,14 @@ int main(int argc, char *argv[]) {
 					felix1_inicial = false;
 				} else {
 					if (!cola_felix1.empty()) {
+						cout<<"Entro a la cola de felix movimiento"<<endl;
 						felix1_inicial = false;
 						string msj = cola_felix1.front();
 						cola_felix1.pop();
-						felix1_posicion.fila = atoi(msj.substr(5, 1).c_str());
-						felix1_posicion.columna = atoi(msj.substr(6, 1).c_str());
+						felix1_posicion.columna = atoi(msj.substr(5, 1).c_str());
+						cout<<"Nueva posicion columna de felix1"<<felix1_posicion.columna<<endl;
+						felix1_posicion.fila = atoi(msj.substr(6, 1).c_str());
+						cout<<"Nueva posicion fila de felix1: "<<felix1_posicion.fila<<endl;
 					}
 					Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
 				}
@@ -704,7 +707,7 @@ void* EscuchaServidor(void *arg) {
 			case CD_PERSIANA_I:
 				break;
 			case CD_MOVIMIENTO_FELIX_I:
-				if (buffer[2] == '1') {
+				if (buffer[4] == '1') {
 					cola_felix1.push(aux_buffer);
 				} else
 					cola_felix2.push(aux_buffer);
@@ -849,17 +852,17 @@ void* EscuchaTeclas(void *arg) {
 
 		case SDL_KEYDOWN:
 			if (evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo) {
-				if ((felix1_posicion.fila - 1) >= 0)
+				/*if ((felix1_posicion.fila - 1) >= 0)
 					if ((felix1_posicion.fila - 1) != 0)
 						f1_colu = felix1_posicion.fila - 1;
 					else if ((felix1_posicion.columna) != 2)
-						f1_colu = felix1_posicion.fila - 1;
+						f1_colu = felix1_posicion.fila - 1;*/
 				felix1_reparar = 'N';
 
 				ostringstream ss1;
 				ostringstream ss2;
-				ss1 << f1_fila;
-				ss2 << f1_colu;
+				ss1 << felix1_posicion.columna;
+				ss2 << felix1_posicion.fila-1;
 				string aux(ss1.str() + ss2.str());
 				string message(CD_MOVIMIENTO_FELIX);
 				message.append(fillMessage(aux));
@@ -867,17 +870,20 @@ void* EscuchaTeclas(void *arg) {
 				cola_grafico.push(message);
 
 			} else if (evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba) {
-				if (felix1_posicion.columna == 99) {
+				/*if (felix1_posicion.columna == 99) {
 					f1_fila = 0;
 					f1_colu = 0;
 				} else if ((felix1_posicion.fila + 1) < 3)
-					f1_colu = felix1_posicion.fila + 1;
+					f1_fila = felix1_posicion.fila +1;*/
+					//f1_colu = felix1_posicion.fila + 1;
 				felix1_reparar = 'N';
 
 				ostringstream ss1;
 				ostringstream ss2;
-				ss1 << f1_fila;
-				ss2 << f1_colu;
+				ss1 << felix1_posicion.columna;
+				ss2 << felix1_posicion.fila+1;
+				//ss1 << felix1_posicion.fila;
+				//ss2 << felix1_posicion.columna;
 				string aux(ss1.str() + ss2.str());
 				string message(CD_MOVIMIENTO_FELIX);
 				message.append(fillMessage(aux));
@@ -886,20 +892,20 @@ void* EscuchaTeclas(void *arg) {
 
 			} else if (evento.key.keysym.sym == SDLK_RIGHT || evento.key.keysym.sym == key_derecha) {
 				felix1 = felix_d1;
-				if (felix1_posicion.fila == 99) {
+				/*if (felix1_posicion.fila == 99) {
 					f1_fila = 0;
 					f1_colu = 0;
 				} else if ((felix1_posicion.columna + 1) < 5)
 					if ((felix1_posicion.columna + 1) != 2)
 						f1_colu = felix1_posicion.columna + 1;
 					else if ((felix1_posicion.fila) != 0)
-						f1_colu = felix1_posicion.columna + 1;
+						f1_colu = felix1_posicion.columna + 1;*/
 				felix1_reparar = 'N';
 
 				ostringstream ss1;
 				ostringstream ss2;
-				ss1 << f1_fila;
-				ss2 << f1_colu;
+				ss1 << felix1_posicion.columna+1;
+				ss2 << felix1_posicion.fila;
 				string aux(ss1.str() + ss2.str());
 				string message(CD_MOVIMIENTO_FELIX);
 				message.append(fillMessage(aux));
@@ -908,17 +914,17 @@ void* EscuchaTeclas(void *arg) {
 
 			} else if (evento.key.keysym.sym == SDLK_LEFT || evento.key.keysym.sym == key_izquierda) {
 				felix1 = felix_i1;
-				if ((felix1_posicion.columna - 1) >= 0)
+				/*if ((felix1_posicion.columna - 1) >= 0)
 					if ((felix1_posicion.columna - 1) != 2)
 						f1_colu = felix1_posicion.columna - 1;
 					else if ((felix1_posicion.fila) != 0)
-						f1_colu = felix1_posicion.columna - 1;
+						f1_colu = felix1_posicion.columna - 1;*/
 				felix1_reparar = 'N';
 
 				ostringstream ss1;
 				ostringstream ss2;
-				ss1 << f1_fila;
-				ss2 << f1_colu;
+				ss1 << felix1_posicion.columna-1;
+				ss2 << felix1_posicion.fila;
 				string aux(ss1.str() + ss2.str());
 				string message(CD_MOVIMIENTO_FELIX);
 				message.append(fillMessage(aux));
