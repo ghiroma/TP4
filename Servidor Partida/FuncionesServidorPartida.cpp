@@ -161,6 +161,7 @@ receiver1_thread(void * fd) {
 		} else if (readDataCode == 0) {
 			//TODO decirle al jugador nro2 que el cliente 1 se desconecto.
 			cliente1_conectado = false;
+			cliente1_jugando = false;
 			delete (cSocket1);
 		}
 		usleep(POOLING_DEADTIME);
@@ -187,6 +188,7 @@ receiver2_thread(void * fd) {
 			Helper::encolar(&mensaje, &receiver2_queue, &mutex_receiver2);
 		} else if (readDataCode == 0) {
 			cliente2_conectado = false;
+			cliente2_jugando = false;
 			delete (cSocket2);
 		}
 
