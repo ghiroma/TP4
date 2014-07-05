@@ -28,6 +28,7 @@ bool msjPuertoRecibido = false;
 pthread_mutex_t mutex_msjPuertoRecibido = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cola_grafico = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_nombreOponente = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_torneoFinalizado = PTHREAD_MUTEX_INITIALIZER;
 
 struct ventana {
 
@@ -232,10 +233,10 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	//Conexion con el servidor de torneo.
 	//Muestro pantalla de "esperando al servidor por nueva partida"
 	mostrarPantalla("waitmatch");
 
+	//Conexion con el servidor de torneo.
 	cout << "Intentando conectarme al torneo" << endl;
 	bool error = true;
 	do {
@@ -250,10 +251,12 @@ int main(int argc, char *argv[]) {
 			usleep(1000000);
 		}
 	} while (error == true);
-
 	cout << "Conectado" << endl;
 
+	//Le mando mi nombre
 	socketTorneo->SendNoBloq(felix1_nombre.c_str(), sizeof(felix1_nombre));
+
+	//Recibo el ID que me asigna el Torneo
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
 	socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
@@ -269,17 +272,21 @@ int main(int argc, char *argv[]) {
 	//Thread para escuchar al servidor de Torneo.
 	pthread_create(&tpid_escuchar_torneo, NULL, EscuchaTorneo, &socketTorneo->ID);
 
-	//recibo el nombre de mi oponente (me lo manda el servTorneo)
+	//me quedo esperando a recibir el nombre de mi oponente (me lo manda el servTorneo)
 	int recibioNombreOponente = false;
+	pthread_mutex_lock(&mutex_nombreOponente);
 	nombreOponente = "";
+	pthread_mutex_unlock(&mutex_nombreOponente);
 	while (!recibioNombreOponente) {
 		pthread_mutex_lock(&mutex_nombreOponente);
 		if (nombreOponente.length() > 0) {
+			pthread_mutex_lock(&mutex_nombreOponente);
 			felix2_nombre = nombreOponente;
+			pthread_mutex_unlock(&mutex_nombreOponente);
 			recibioNombreOponente = true;
 		}
 		pthread_mutex_unlock(&mutex_nombreOponente);
-		sleep(1);
+		usleep(10000);
 	}
 	//felix2_nombre = nombreOponente;
 	cout << "recibo el nombre de mi oponente:" << felix2_nombre << endl;
@@ -673,6 +680,9 @@ void DibujarVentanas(struct ventana ventanas[][5], unsigned short int cant_filas
 	}
 }
 
+/**
+ * THREAD -> Escucha mensajes del servidor de Partida
+ */
 void* EscuchaServidor(void *arg) {
 	int fd = *(int *) arg;
 	int readData = 0;
@@ -724,8 +734,16 @@ void* EscuchaServidor(void *arg) {
 			cout << "Murio el servidor de partida" << endl;
 
 			//si no se llego a fin del torneo
-			//busco en una  nueva partida (que me la del torneo)
+			pthread_mutex_lock(&mutex_torneoFinalizado);
+			bool torneoFin = torneoFinalizado;
+			pthread_mutex_unlock(&mutex_torneoFinalizado);
+			if (!torneoFin) {
+				//mostrar pantalla Esperando partida
+				mostrarPantalla("waitmatch");
 
+			}
+
+			//busco en una  nueva partida (que me la da el torneo)
 
 			//pthread_exit(0);
 			//salir='S';
@@ -784,11 +802,7 @@ void* EscuchaTorneo(void *arg) {
 			case CD_RANKING_I:
 				cout << "RANKING #" << aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str() << endl;
 				ranking = aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str();
-
-				//ESTO NO DEBERIA SER ASI, EL JUGADOR TIENE QUE RECONOCER QUE SE TERMINO LA PARTIDA
-				//HARCODEADO PARA PROBAR LA PANTALLA DE RANKING
 				salir = 'S';
-
 				showWindowRanking = true;
 				//salgo del thread porque este el ultimo mensaje que me interesa
 				pthread_exit(NULL);
@@ -826,7 +840,7 @@ void* EscuchaTorneo(void *arg) {
 
 			murioServidorTorneo = true;
 		}
-		usleep(5000);
+		usleep(10000);
 	}
 
 	pthread_exit(NULL);
@@ -1142,6 +1156,7 @@ void liberarRecursos() {
 	//SEM
 	pthread_mutex_destroy(&mutex_msjPuertoRecibido);
 	pthread_mutex_destroy(&mutex_cola_grafico);
+	pthread_mutex_destroy(&mutex_torneoFinalizado);
 	pthread_mutex_destroy(&mutex_nombreOponente);
 
 	//SDL
