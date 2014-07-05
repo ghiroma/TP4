@@ -8,8 +8,6 @@
 #ifndef VENTANA_H_
 #define VENTANA_H_
 
-#include "Felix.h"
-
 /*
  * Representa las ventanas del edificio.
  * felix: Puntero a objeto de clase Felix.
@@ -22,14 +20,14 @@
 class Ventana {
 
 public:
-	Felix * felix;
+	bool ocupado;
 	bool torta;
 	bool marquesina;
 	bool persiana;
 	int ventanaRota;
 
 	Ventana();
-	Ventana(Felix * felix, bool torta, bool marquesina,
+	Ventana(bool ocupado, bool torta, bool marquesina,
 			int rota);
 	Ventana(bool torta, bool marquesina, int rota);
 	Ventana(int rota);

@@ -9,16 +9,16 @@
 
 Ventana::Ventana() {
 	// TODO Auto-generated constructor stub
-	this->felix = NULL;
+	this->ocupado = false;
 	this->marquesina = false;
 	this->torta = false;
 	this->persiana = false;
 	this->ventanaRota = 0;
 }
 
-Ventana::Ventana(Felix * felix, bool torta, bool marquesina, int rota)
+Ventana::Ventana(bool  ocupado, bool torta, bool marquesina, int rota)
 {
-	this->felix = felix;
+	this->ocupado = false;
 	this->torta = torta;
 	this->marquesina = marquesina;
 	this->persiana = false;
@@ -27,7 +27,7 @@ Ventana::Ventana(Felix * felix, bool torta, bool marquesina, int rota)
 
 Ventana::Ventana(bool torta,bool marquesina,int rota)
 {
-	this->felix = NULL;
+	this->ocupado = false;
 	this->torta = torta;
 	this->marquesina = marquesina;
 	this->persiana = false;
@@ -36,7 +36,7 @@ Ventana::Ventana(bool torta,bool marquesina,int rota)
 
 Ventana::Ventana(int rota)
 {
-	this->felix = NULL;
+	this->ocupado = false;
 	this->marquesina = false;
 	this->torta = false;
 	this->persiana = false;

@@ -11,6 +11,7 @@
 using namespace std;
 
 #include <string>
+#include "Edificio.h"
 
 class Felix {
 public:
@@ -22,6 +23,9 @@ public:
 
 	Felix(int cantVidas);
 	Felix(int cantVidas,int id);
+	bool mover(int fila, int columna, Edificio * edificio);
+	bool reparar(Edificio * edificio);
+	bool perderVida();
 	virtual ~Felix();
 };
 

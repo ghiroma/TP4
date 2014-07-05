@@ -35,7 +35,6 @@ extern pthread_mutex_t mutex_sender2;
 
 extern struct idsSharedResources shmIds;
 
-bool TimeDifference(int timeDifference, time_t startingTime);
 void* timer_thread(void* argument);
 void* receiver1_thread(void * argument);
 void* receiver2_thread(void * argument);
@@ -43,12 +42,6 @@ void* sender1_thread(void * arguments);
 void* sender2_thread(void * arguments);
 void* validator_thread(void * argument);
 void* sharedMemory_thread(void * arguments);
-int randomRalphMovement();
-int randomPaloma(int nivel);
-char* randomTorta();
-bool validateMovement(Felix * felix,int fila, int columna, Edificio * edificio);
-bool validateWindowFix(Felix * felix,Edificio * edificio);
-bool validateLives(Felix * felix);
 void caseMovimientoFelix (int jugador, string *message);
 void casePerdidaVida(int nroJugador);
 void caseVentanaArreglada(int nroJugador);
