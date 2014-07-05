@@ -331,10 +331,10 @@ void caseMovimientoFelix(int jugador, string *message) {
 
 		cout << "Por concatenar" << endl;
 
-		strcat(aux1, auxFila);
 		strcat(aux1, auxColumna);
-		strcat(aux2, auxFila);
+		strcat(aux1, auxFila);
 		strcat(aux2, auxColumna);
+		strcat(aux2, auxFila);
 
 		cout << "mensaje movimiento a enviar: " << aux1 << endl;
 
@@ -364,10 +364,10 @@ void caseMovimientoFelix(int jugador, string *message) {
 		sprintf(auxFila, "%d", fila);
 		sprintf(auxColumna, "%d", columna);
 
-		strcat(aux1, auxFila);
 		strcat(aux1, auxColumna);
-		strcat(aux2, auxFila);
+		strcat(aux1, auxFila);
 		strcat(aux2, auxColumna);
+		strcat(aux2, auxFila);
 
 		cout << "mensaje movimiento a enviar: " << aux1 << endl;
 
