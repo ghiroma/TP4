@@ -97,7 +97,7 @@ SDL_Surface *superficie,
 struct ventana ventanas_tramo1[3][5];
 /* ALMACENO FILA y COLUMNA -- pienso el edificio como una matriz */
 
-struct posicion felix1_posicion = { 1, 1 };
+struct posicion felix1_posicion = { 0, 0 };
 struct posicion ralph_posicion = { 3, 2 };
 struct posicion torta_posicion;
 struct desplazamiento pajaro_desplazamiento = { -1, -1 };
@@ -297,6 +297,7 @@ int main(int argc, char *argv[]) {
 		}
 		usleep(1000000);
 	}
+	msjPuertoRecibido = false;
 
 	//Me conecto al servidor de partida.
 	cout << "Antes de inicializar el socketPartida " << puertoServidorPartida << endl;
@@ -477,13 +478,13 @@ int main(int argc, char *argv[]) {
 		if (felix1_reparar == 'N') {
 			if (felix1 == NULL)
 				felix1 = felix_d1;
-			if (felix1_posicion.fila == 99)
-				Dibujar(110, 405, felix1, superficie);
-			else {
-
-				if (felix1_inicial == true)
-					Dibujar(110, 405, felix1, superficie);
-				else {
+			if (felix1_posicion.fila == 99) {
+				Dibujar(110, 400, felix1, superficie);
+			} else {
+				if (felix1_inicial == true) {
+					Dibujar(120, 350, felix1, superficie);
+					felix1_inicial = false;
+				} else {
 					if (!cola_felix1.empty()) {
 						felix1_inicial = false;
 						string msj = cola_felix1.front();
@@ -535,6 +536,7 @@ int main(int argc, char *argv[]) {
 
 		if (felix2_inicial == true)
 			Dibujar(120, 405, felix2, superficie);
+
 		//Dibujo las rocas
 		roca = roca1;
 		for (int i = 0; i < cant_rocas; i++) {
@@ -552,15 +554,17 @@ int main(int argc, char *argv[]) {
 		//Ojo, hay que poner el delay porque sino el proceso no tiene tiempos muertos y
 		// el uso del procesador se me va al chori.
 		if (hayChoque()) {
-			felix1_posicion.fila = 1;
-			felix1_posicion.columna = 1;
+			felix1_posicion.fila = 0;
+			felix1_posicion.columna = 0;
 
 			string message(CD_PERDIDA_VIDA);
 			message.append(fillMessage("0"));
 			cola_grafico.push(message);
 
-			felix1_puntos--;
-			felix1_vidas--;
+			if (felix1_vidas > 0) {
+				felix1_vidas--;
+				felix1_inicial = true;
+			}
 		}
 
 		if (ventanas_reparadas == 11) {
@@ -672,6 +676,7 @@ void DibujarVentanas(struct ventana ventanas[][5], unsigned short int cant_filas
 void* EscuchaServidor(void *arg) {
 	int fd = *(int *) arg;
 	int readData = 0;
+	int codigo;
 	CommunicationSocket cSocket(fd);
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
@@ -680,49 +685,49 @@ void* EscuchaServidor(void *arg) {
 		readData = cSocket.ReceiveBloq(buffer, sizeof(buffer));
 		if (strlen(buffer) > 0) {
 			string aux_buffer(buffer);
+			codigo = atoi(aux_buffer.substr(0, LONGITUD_CODIGO).c_str());
 
 			if (aux_buffer.compare("9900000") != 0) {
 				cout << "Recibi: " << buffer << endl;
 			}
 
-			if (buffer[0] == '0') {
-				switch (buffer[1]) {
-				case '0':
-					cola_ralph.push(aux_buffer);
-					break;
-				case '1':
-					cola_pajaro.push(aux_buffer);
-					break;
-				case '2':
-//						cola_torta.push(aux_buffer);			
-					break;
-				case '3':
-					break;
-				case '4':
-					if (buffer[2] == '1') {
-						cola_felix1.push(aux_buffer);
-					} else
-						cola_felix2.push(aux_buffer);
-					break;
-
-				case '5':
-					//TODO Perdida vida.
-					break;
-				}
-			}
-			if (buffer[0] == '9') {
-				switch (buffer[1]) {
-				case '9':
-					string message(CD_ACK);
-					message.append(fillMessage("0"));
-					//TODO Agregar mutex.
-					cola_grafico.push(message);
-					break;
-				}
+			switch (codigo) {
+			case CD_MOVIMIENTO_RALPH_I:
+				cola_ralph.push(aux_buffer);
+				break;
+			case CD_PALOMA_I:
+				cola_pajaro.push(aux_buffer);
+				break;
+			case CD_TORTA_I:
+				//cola_torta.push(aux_buffer);
+				break;
+			case CD_PERSIANA_I:
+				break;
+			case CD_MOVIMIENTO_FELIX_I:
+				if (buffer[2] == '1') {
+					cola_felix1.push(aux_buffer);
+				} else
+					cola_felix2.push(aux_buffer);
+				break;
+			case CD_PERDIDA_VIDA_I:
+				break;
+			case CD_ID_JUGADOR_I:
+				break;
+			case CD_ACK_I:
+				string message(CD_ACK);
+				message.append(fillMessage("0"));
+				//TODO Agregar mutex.
+				cola_grafico.push(message);
+				break;
 			}
 		} else if (readData == 0) {
 			cout << "Murio el servidor de partida" << endl;
-			pthread_exit(0);
+
+			//si no se llego a fin del torneo
+			//busco en una  nueva partida (que me la del torneo)
+
+
+			//pthread_exit(0);
 			//salir='S';
 		}
 		//sleep(1);
@@ -738,11 +743,12 @@ void * EnvioServidor(void * arg) {
 		if (!cola_grafico.empty()) {
 			string mensaje = cola_grafico.front();
 			cola_grafico.pop();
-			cout << "Mensaje a enviar: " << mensaje.c_str() << " tamanio: " << mensaje.length() << " caracteres" << endl;
+			cout << "Mensaje a enviar al servPartida: " << mensaje.c_str() << endl;
 			cSocket.SendBloq(mensaje.c_str(), mensaje.length());
 		}
-		sleep(1);
+		usleep(10000);
 	}
+	pthread_exit(NULL);
 }
 
 void* EscuchaTorneo(void *arg) {
@@ -857,7 +863,7 @@ void* EscuchaTeclas(void *arg) {
 				string aux(ss1.str() + ss2.str());
 				string message(CD_MOVIMIENTO_FELIX);
 				message.append(fillMessage(aux));
-				cout << "MENSAJE: " << message << endl;
+				//cout << "MENSAJE: " << message << endl;
 				cola_grafico.push(message);
 
 			} else if (evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba) {
