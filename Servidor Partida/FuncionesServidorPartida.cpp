@@ -62,17 +62,6 @@ struct puntajes * puntaje;
 struct idsSharedResources shmIds;
 
 /*
- * Retorna true si la diferencia de tiempo se da.
- */
-bool TimeDifference(int timeDifference, time_t startingTime) {
-	if ((time(0) - startingTime) > timeDifference) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
-/*
  * Thread encargado de enviar los mensajes de los sucesos del juego no pertenecientes
  * a ninguno de los dos jugadores, siendo movimiento ralph, paloma,etc.
  */
