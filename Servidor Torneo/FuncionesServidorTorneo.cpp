@@ -669,6 +669,7 @@ establecerPartidas(void* data) {
 				listJugadores[idJugador]->SocketAsociado->SendBloq(nombreOponente1.c_str(), nombreOponente1.length());
 				cout << "le mando a ID: " << idOponente << " - el nombre oponente:" << nombreOponente2 << endl;
 				listJugadores[idOponente]->SocketAsociado->SendBloq(nombreOponente2.c_str(), nombreOponente2.length());
+				cout<<"Termino de mandar los nombres de oponentes"<<endl;
 
 				if ((pid = fork()) == 0) {
 					//Proceso hijo
