@@ -61,6 +61,7 @@ bool Felix::reparar(Edificio * edificio) {
 
 		if (edificio->ventanas[this->fila][this->columna].ventanaRota > 0) {
 			edificio->ventanas[this->fila][this->columna].ventanaRota--;
+			this->puntaje_parcial=this->puntaje_parcial +10;
 			return true;
 		}
 	}

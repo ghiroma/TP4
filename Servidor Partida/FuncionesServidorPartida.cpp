@@ -217,7 +217,10 @@ void *validator_thread(void * argument) {
 				casePerdidaVida(1);
 				break;
 			case CD_VENTANA_ARREGLADA_I:
-				caseVentanaArreglada(2);
+				caseVentanaArreglada(1);
+				break;
+			case CD_VENTANA_ARREGLANDO_I:
+				caseVentanaArreglando(1);
 				break;
 			}
 
@@ -239,6 +242,9 @@ void *validator_thread(void * argument) {
 
 			case CD_VENTANA_ARREGLADA_I:
 				caseVentanaArreglada(2);
+				break;
+			case CD_VENTANA_ARREGLANDO_I:
+				caseVentanaArreglando(2);
 				break;
 			}
 		}
@@ -334,20 +340,14 @@ void caseMovimientoFelix(int jugador, string *message) {
 
 			cout << "mensaje movimiento a enviar: " << aux1 << endl;
 
-			string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO)
-					+ Helper::fillMessage(aux1);
-			string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO)
-					+ Helper::fillMessage(aux2);
+			string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO) + Helper::fillMessage(aux1);
+			string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO) + Helper::fillMessage(aux2);
 
-			cout << "Mensaje de movimiento armado1: " << mensaje_movimiento1
-					<< endl;
-			cout << "Mensaje de movimiento armado2: " << mensaje_movimiento2
-					<< endl;
+			cout << "Mensaje de movimiento armado1: " << mensaje_movimiento1 << endl;
+			cout << "Mensaje de movimiento armado2: " << mensaje_movimiento2 << endl;
 
-			Helper::encolar(&mensaje_movimiento1, &sender1_queue,
-					&mutex_sender1);
-			Helper::encolar(&mensaje_movimiento2, &sender2_queue,
-					&mutex_sender2);
+			Helper::encolar(&mensaje_movimiento1, &sender1_queue, &mutex_sender1);
+			Helper::encolar(&mensaje_movimiento2, &sender2_queue, &mutex_sender2);
 			cout << "Mensaje encolado: " << mensaje_movimiento1 << endl;
 			cout << "Encole mensaje de movimiento felix" << endl;
 		}
@@ -369,14 +369,10 @@ void caseMovimientoFelix(int jugador, string *message) {
 
 			cout << "mensaje movimiento a enviar: " << aux1 << endl;
 
-			string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO)
-					+ Helper::fillMessage(aux1);
-			string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO)
-					+ Helper::fillMessage(aux2);
-			Helper::encolar(&mensaje_movimiento1, &sender1_queue,
-					&mutex_sender1);
-			Helper::encolar(&mensaje_movimiento2, &sender2_queue,
-					&mutex_sender2);
+			string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO) + Helper::fillMessage(aux1);
+			string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO) + Helper::fillMessage(aux2);
+			Helper::encolar(&mensaje_movimiento1, &sender1_queue, &mutex_sender1);
+			Helper::encolar(&mensaje_movimiento2, &sender2_queue, &mutex_sender2);
 		}
 
 	}
@@ -397,7 +393,7 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("200"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
-			felix1->mover(0,0,edificio);
+			felix1->mover(0, 0, edificio);
 		} else {
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
@@ -417,7 +413,7 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("140"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
-			felix2->mover(0,EDIFICIO_COLUMNAS-1,edificio);
+			felix2->mover(0, EDIFICIO_COLUMNAS - 1, edificio);
 		} else {
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
@@ -456,6 +452,16 @@ void caseVentanaArreglada(int jugador) {
 	}
 }
 
+void caseVentanaArreglando(int jugador) {
+	string message(CD_VENTANA_ARREGLANDO);
+	message.append(Helper::fillMessage("0"));
+	if (jugador == 1) {
+		Helper::encolar(&message, &sender2_queue, &mutex_sender2);
+	} else {
+		Helper::encolar(&message, &sender1_queue, &mutex_sender1);
+	}
+}
+
 void SIGINT_Handler(int inum) {
 	stop = true;
 }
@@ -487,18 +493,18 @@ string posicionInicial1() {
 
 string posicionInicial2() {
 	string message(CD_POSICION_INICIAL);
-		int fila = 0;
-		int columna = EDIFICIO_COLUMNAS-1;
-		char cFila[2];
-		char cColumna[2];
-		char cPos[3];
-		sprintf(cFila,"%d",fila);
-		sprintf(cColumna,"%d",columna);
-		strcpy(cPos,cColumna);
-		strcat(cPos,cFila);
-		message.append(Helper::fillMessage(cPos));
-		felix2->fila = fila;
-		felix2->columna = columna;
-		cout<<"Posicion inicial del jugadoro 2"<<message<<endl;
-		return message;
+	int fila = 0;
+	int columna = EDIFICIO_COLUMNAS - 1;
+	char cFila[2];
+	char cColumna[2];
+	char cPos[3];
+	sprintf(cFila, "%d", fila);
+	sprintf(cColumna, "%d", columna);
+	strcpy(cPos, cColumna);
+	strcat(cPos, cFila);
+	message.append(Helper::fillMessage(cPos));
+	felix2->fila = fila;
+	felix2->columna = columna;
+	cout << "Posicion inicial del jugadoro 2" << message << endl;
+	return message;
 }
