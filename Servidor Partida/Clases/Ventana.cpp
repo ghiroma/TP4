@@ -13,7 +13,7 @@ Ventana::Ventana() {
 	this->marquesina = false;
 	this->torta = false;
 	this->persiana = false;
-	this->ventanaRota = 3;
+	this->ventanaRota = 1;
 }
 
 Ventana::Ventana(bool  ocupado, bool torta, bool marquesina, int rota)

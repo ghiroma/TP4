@@ -45,6 +45,7 @@ void* sharedMemory_thread(void * arguments);
 void caseMovimientoFelix (int jugador, string *message);
 void casePerdidaVida(int nroJugador);
 void caseVentanaArreglada(int nroJugador);
+void caseVentanaArreglando(int jugador);
 void SIGINT_Handler(int inum);
 void liberarRecursos();
 string posicionInicial1();

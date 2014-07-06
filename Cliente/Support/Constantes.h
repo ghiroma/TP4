@@ -29,6 +29,7 @@ static const char* CD_PERSIANA = "03";
 static const char* CD_MOVIMIENTO_FELIX = "04";
 static const char* CD_PERDIDA_VIDA = "05";
 static const char* CD_VENTANA_ARREGLADA = "08";
+static const char* CD_VENTANA_ARREGLANDO = "12";
 
 static const char* CD_ACK = "99";
 
@@ -47,6 +48,8 @@ static const int CD_MOVIMIENTO_FELIX_I = 4;
 static const int CD_PERDIDA_VIDA_I = 5;
 static const int CD_ID_JUGADOR_I = 6;
 static const int CD_PUERTO_PARTIDA_I = 7;
+static const int CD_VENTANA_ARREGLADA_I = 8;
+static const int CD_VENTANA_ARREGLANDO_I = 12;
 static const int CD_NOMBRE_I = 50;
 static const int CD_RANKING_I = 80;
 static const int CD_FIN_TORNEO_I = 81;

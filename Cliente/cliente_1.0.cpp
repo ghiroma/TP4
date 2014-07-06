@@ -95,8 +95,17 @@ void inicializarNuevaPartida();
  */
 
 SDL_Surface *superficie,
-*backgroundImg, *pared_tramo1n1, *pared_tramo2n1, *pared_tramo3n1, *pared, *ventana_sana, *ventana_rota1, *ventana_rota2, *ventana_rota3, *ventana_rota4, *ventana, *puerta, *felix_d1, *felix_i1, *felix_r11, *felix_r21, *felix_r31, *felix_r41, *felix_r51, *felix_d2, *felix_i2, *felix1, *felix2,
-		*ralph_1, *ralph_2, *ralph_3, *ralph_4, *ralph_5, *ralph_6, *ralph, *roca1, *roca2, *roca, *pajaro_1, *pajaro_2, *pajaro, *texto, *puntos, *vidas, *torta;
+*backgroundImg,
+*pared_tramo1n1, *pared_tramo2n1, *pared_tramo3n1, *pared,
+*ventana_sana, *ventana_rota1, *ventana_rota2, *ventana_rota3, *ventana_rota4, *ventana, *puerta,
+*felix_d1, *felix_i1,
+*felix_r11, *felix_r21, *felix_r31, *felix_r41, *felix_r51,
+*felix_d2, *felix_i2,
+*felix_r12, *felix_r22, *felix_r32, *felix_r42, *felix_r52,
+*felix1, *felix2,
+		*ralph_1, *ralph_2, *ralph_3, *ralph_4, *ralph_5, *ralph_6, *ralph,
+		*roca1, *roca2, *roca,
+		*pajaro_1, *pajaro_2, *pajaro, *texto, *puntos, *vidas, *torta;
 
 struct ventana ventanas_tramo1[3][5];
 /* ALMACENO FILA y COLUMNA -- pienso el edificio como una matriz */
@@ -122,6 +131,7 @@ char ralph_moverse = 'N';
 char pajaro_moverse = 'N';
 char ralph_sentido;
 char felix1_reparar = 'N';
+char felix2_reparar = 'N';
 char ventanas_cargadas = 'N';
 char torta_aparece = 'N';
 char felix_cartel_puntos[10] = { 0 };
@@ -167,9 +177,31 @@ CommunicationSocket * socketPartida;
 int main(int argc, char *argv[]) {
 	atexit(liberarRecursos);
 
-	const char pared_tramo1n1_bmp[] = "Sprites/pared_tramo1n1.bmp", pared_tramo2n1_bmp[] = "Sprites/pared_tramo2n1.bmp", pared_tramo3n1_bmp[] = "Sprites/pared_tramo3n1.bmp", ventana_sana_bmp[] = "Sprites/ventana_sana.bmp", ventana_rota1_bmp[] = "Sprites/ventana_rota1.bmp", ventana_rota2_bmp[] =
-			"Sprites/ventana_rota2.bmp", ventana_rota3_bmp[] = "Sprites/ventana_rota3.bmp", ventana_rota4_bmp[] = "Sprites/ventana_rota4.bmp", puerta_bmp[] = "Sprites/puerta_grande.bmp", felixd1_bmp[] = "Sprites/felix_d1.bmp", felixi1_bmp[] = "Sprites/felix_i1.bmp", felixr11_bmp[] =
-			"Sprites/felix_r11.bmp", felixr21_bmp[] = "Sprites/felix_r21.bmp", felixr31_bmp[] = "Sprites/felix_r31.bmp", felixr41_bmp[] = "Sprites/felix_r41.bmp", felixr51_bmp[] = "Sprites/felix_r51.bmp", felixd2_bmp[] = "Sprites/felix_d2.bmp", felixi2_bmp[] = "Sprites/felix_i2.bmp", ralph1_bmp[] =
+	const char
+	pared_tramo1n1_bmp[] = "Sprites/pared_tramo1n1.bmp",
+	pared_tramo2n1_bmp[] = "Sprites/pared_tramo2n1.bmp",
+	pared_tramo3n1_bmp[] = "Sprites/pared_tramo3n1.bmp",
+	ventana_sana_bmp[] = "Sprites/ventana_sana.bmp",
+	ventana_rota1_bmp[] = "Sprites/ventana_rota1.bmp",
+	ventana_rota2_bmp[] ="Sprites/ventana_rota2.bmp",
+	ventana_rota3_bmp[] = "Sprites/ventana_rota3.bmp",
+	ventana_rota4_bmp[] = "Sprites/ventana_rota4.bmp",
+	puerta_bmp[] = "Sprites/puerta_grande.bmp",
+	felixd1_bmp[] = "Sprites/felix_d1.bmp",
+	felixi1_bmp[] = "Sprites/felix_i1.bmp",
+	felixr11_bmp[] = "Sprites/felix_r11.bmp",
+	felixr21_bmp[] = "Sprites/felix_r21.bmp",
+	felixr31_bmp[] = "Sprites/felix_r31.bmp",
+	felixr41_bmp[] = "Sprites/felix_r41.bmp",
+	felixr51_bmp[] = "Sprites/felix_r51.bmp",
+
+	felixr12_bmp[] ="Sprites/felix_r12.bmp",
+		felixr22_bmp[] = "Sprites/felix_r22.bmp",
+		felixr32_bmp[] = "Sprites/felix_r32.bmp",
+		felixr42_bmp[] = "Sprites/felix_r42.bmp",
+		felixr52_bmp[] = "Sprites/felix_r52.bmp",
+
+	felixd2_bmp[] = "Sprites/felix_d2.bmp", felixi2_bmp[] = "Sprites/felix_i2.bmp", ralph1_bmp[] =
 			"Sprites/rahlp_1.bmp", ralph2_bmp[] = "Sprites/rahlp_2.bmp", ralph3_bmp[] = "Sprites/rahlp_3.bmp", ralph4_bmp[] = "Sprites/rahlp_4.bmp", ralph5_bmp[] = "Sprites/rahlp_5.bmp", ralph6_bmp[] = "Sprites/rahlp_6.bmp", pajaro1_bmp[] = "Sprites/pajaro_1.bmp", pajaro2_bmp[] =
 			"Sprites/pajaro_2.bmp", roca1_bmp[] = "Sprites/roca1.bmp", roca2_bmp[] = "Sprites/roca2.bmp", torta_bmp[] = "Sprites/torta.bmp";
 
@@ -184,11 +216,19 @@ int main(int argc, char *argv[]) {
 	puerta = SDL_LoadBMP(puerta_bmp);
 	felix_d1 = SDL_LoadBMP(felixd1_bmp);
 	felix_i1 = SDL_LoadBMP(felixi1_bmp);
+
 	felix_r11 = SDL_LoadBMP(felixr11_bmp);
 	felix_r21 = SDL_LoadBMP(felixr21_bmp);
 	felix_r31 = SDL_LoadBMP(felixr31_bmp);
 	felix_r41 = SDL_LoadBMP(felixr41_bmp);
 	felix_r51 = SDL_LoadBMP(felixr51_bmp);
+
+	felix_r12 = SDL_LoadBMP(felixr12_bmp);
+	felix_r22 = SDL_LoadBMP(felixr22_bmp);
+	felix_r32 = SDL_LoadBMP(felixr32_bmp);
+	felix_r42 = SDL_LoadBMP(felixr42_bmp);
+	felix_r52 = SDL_LoadBMP(felixr52_bmp);
+
 	felix_d2 = SDL_LoadBMP(felixd2_bmp);
 	felix_i2 = SDL_LoadBMP(felixi2_bmp);
 	ralph_1 = SDL_LoadBMP(ralph1_bmp);
@@ -499,10 +539,15 @@ int main(int argc, char *argv[]) {
 					felix1 = felix_r51;
 				else if (felix1 == felix_r51) {
 					felix1 = felix_d1;
-					if (ventana_reparada(&felix1_posicion) == 'S') {
-						felix1_puntos++;
-						ventanas_reparadas++;
-					}
+
+					string message(CD_VENTANA_ARREGLADA);
+					message.append(fillMessage("0"));
+					cola_grafico.push(message);
+					ventana_reparada(&felix1_posicion);
+					/*if (ventana_reparada(&felix1_posicion) == 'S') {
+					 felix1_puntos++;
+					 ventanas_reparadas++;
+					 }*/
 					felix1_reparar = 'N';
 				}
 				cout << "casi termina repara ventana" << endl;
@@ -515,17 +560,42 @@ int main(int argc, char *argv[]) {
 
 		//Mueveo a felix2, salvo que este en la posicion inicial
 		if (felix2_vidas > 0) {
-			if (!cola_felix2.empty()) {
-				felix2_inicial = false;
-				string msj = cola_felix2.front();
-				cola_felix2.pop();
-				felix2_posicion.columna = atoi(msj.substr(5, 1).c_str());
-				felix2_posicion.fila = atoi(msj.substr(6, 1).c_str());
-			}
-			Dibujar(ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].x, ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].y, felix2, superficie);
+			if (felix2_reparar == 'N') {
+				if (!cola_felix2.empty()) {
+					felix2_inicial = false;
+					string msj = cola_felix2.front();
+					cola_felix2.pop();
+					felix2_posicion.columna = atoi(msj.substr(5, 1).c_str());
+					felix2_posicion.fila = atoi(msj.substr(6, 1).c_str());
+				}
+				Dibujar(ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].x, ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].y, felix2, superficie);
 
-			if (felix2_inicial == true)
-				Dibujar(120, 405, felix2, superficie);
+				if (felix2_inicial == true)
+					Dibujar(120, 405, felix2, superficie);
+			} else {
+				if (felix2 == felix_d2 || felix2 == felix_i2)
+					felix2 = felix_r12;
+				else if (felix2 == felix_r12)
+					felix2 = felix_r22;
+				else if (felix2 == felix_r22)
+					felix2 = felix_r32;
+				else if (felix2 == felix_r32)
+					felix2 = felix_r42;
+				else if (felix2 == felix_r42)
+					felix2 = felix_r52;
+				else if (felix2 == felix_r52) {
+					felix2 = felix_d2;
+
+					string message(CD_VENTANA_ARREGLADA);
+					message.append(fillMessage("0"));
+					cola_grafico.push(message);
+					ventana_reparada(&felix2_posicion);
+					felix2_reparar = 'N';
+				}
+				cout << "casi termina repara ventana" << endl;
+				Dibujar(ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].x, ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].y, felix2, superficie);
+				cout << "termino repara ventana" << endl;
+			}
 		}
 		//Dibujo las rocas
 		roca = roca1;
@@ -706,14 +776,30 @@ void* EscuchaServidor(void *arg) {
 			case CD_PERDIDA_VIDA_I:
 				if (buffer[4] == '1') {
 					cola_felix1.push(aux_buffer);
-					if (felix1_vidas - 1 > 0) {
+					if (felix1_vidas > 0) {
 						felix1_vidas--;
+						felix1_reparar = 'N';
 					}
 				} else if (buffer[4] == '2') {
 					cola_felix2.push(aux_buffer);
-					if (felix2_vidas - 1 > 0) {
+					if (felix2_vidas > 0) {
 						felix2_vidas--;
 					}
+				}
+				break;
+			case CD_VENTANA_ARREGLANDO_I:
+				//TODO grafico la otra ventana arreglada.
+				felix2_reparar='S';
+				//TODO grafico al otro jugador arreglando la ventana.
+				break;
+			case CD_VENTANA_ARREGLADA_I:
+				if (buffer[6] == '1') {
+					felix1_puntos += 10;
+				} else if (buffer[6] == '2') {
+					felix2_puntos += 10;
+					ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].tipo_ventana = '0';
+					ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].sana = 1;
+					felix2_reparar = 'N';
 				}
 				break;
 			case CD_ID_JUGADOR_I:
@@ -859,8 +945,8 @@ void* EscuchaTeclas(void *arg) {
 
 		case SDL_KEYDOWN:
 			if (evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo) {
-				felix1_reparar = 'N';
-				if ((felix1_posicion.fila - 1) >= 0) {
+				//felix1_reparar = 'N';
+				if ((felix1_posicion.fila - 1) >= 0 && felix1_reparar != 'S') {
 					ostringstream ss1;
 					ostringstream ss2;
 					ss1 << felix1_posicion.columna;
@@ -872,8 +958,8 @@ void* EscuchaTeclas(void *arg) {
 					cola_grafico.push(message);
 				}
 			} else if (evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba) {
-				felix1_reparar = 'N';
-				if ((felix1_posicion.fila + 1) < 3) {
+				//felix1_reparar = 'N';
+				if ((felix1_posicion.fila + 1) < 3 && felix1_reparar != 'S') {
 					ostringstream ss1;
 					ostringstream ss2;
 					ss1 << felix1_posicion.columna;
@@ -886,8 +972,8 @@ void* EscuchaTeclas(void *arg) {
 				}
 			} else if (evento.key.keysym.sym == SDLK_RIGHT || evento.key.keysym.sym == key_derecha) {
 				felix1 = felix_d1;
-				felix1_reparar = 'N';
-				if ((felix1_posicion.columna + 1) < 5) {
+				//felix1_reparar = 'N';
+				if ((felix1_posicion.columna + 1) < 5 && felix1_reparar != 'S') {
 					ostringstream ss1;
 					ostringstream ss2;
 					ss1 << felix1_posicion.columna + 1;
@@ -900,8 +986,8 @@ void* EscuchaTeclas(void *arg) {
 				}
 			} else if (evento.key.keysym.sym == SDLK_LEFT || evento.key.keysym.sym == key_izquierda) {
 				felix1 = felix_i1;
-				felix1_reparar = 'N';
-				if ((felix1_posicion.columna - 1) >= 0) {
+				//felix1_reparar = 'N';
+				if ((felix1_posicion.columna - 1) >= 0 && felix1_reparar != 'S') {
 					ostringstream ss1;
 					ostringstream ss2;
 					ss1 << felix1_posicion.columna - 1;
@@ -913,10 +999,10 @@ void* EscuchaTeclas(void *arg) {
 					cola_grafico.push(message);
 				}
 			} else if (evento.key.keysym.sym == SDLK_SPACE || evento.key.keysym.sym == key_accion) {
-				felix1_reparar = 'S';
-				string message(CD_VENTANA_ARREGLADA);
+				string message(CD_VENTANA_ARREGLANDO);
 				message.append(fillMessage("0"));
 				cola_grafico.push(message);
+				felix1_reparar = 'S';
 			} else if (evento.key.keysym.sym == key_salir) {
 				salir = 'S';
 			}
@@ -936,9 +1022,9 @@ char ventana_reparada(struct posicion *felix_posicion) {
 
 	cout << "Ventana Sana valor " << ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana << endl;
 	if (ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].tipo_ventana != 0) {
-		if (ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana < 3) {
+		if (ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana < 1) {
 			ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana++;
-			if (ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana == 3) {
+			if (ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana == 1) {
 				ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].tipo_ventana = 0;
 				cout << "Ventana reparada " << felix_posicion->fila << ":" << felix_posicion->columna << endl;
 				return 'S';
