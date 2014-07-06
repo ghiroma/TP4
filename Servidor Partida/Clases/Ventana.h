@@ -20,6 +20,7 @@
 class Ventana {
 
 public:
+	char value;
 	bool ocupado;
 	bool torta;
 	bool marquesina;

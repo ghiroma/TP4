@@ -58,13 +58,13 @@ int main(int argc, char * argv[]) {
 	pthread_t thread_sharedMemory;
 
 	signal(SIGINT, SIGINT_Handler);
-	signal(SIGTERM,SIGINT_Handler);
+	signal(SIGTERM, SIGINT_Handler);
 
 	srand(time(NULL));
 
 	pid = getpid();
-	cout<<"PARTIDA -> getppid() = "<<getppid<<endl;
-	cout<<"PARTIDA -> getpid() = "<<getpid()<<endl;
+	cout << "PARTIDA -> getppid() = " << getppid << endl;
+	cout << "PARTIDA -> getpid() = " << getpid() << endl;
 
 	/*
 	 * Obtengo puertos y cantidad de vidas de felix por parametros.
@@ -98,8 +98,7 @@ int main(int argc, char * argv[]) {
 	 * si no se conectan, cierra lo partida.
 	 */
 	do {
-		if (int response = select(sSocket.ID + 1, &fds, NULL, NULL, &timeout)
-				> 0) {
+		if (int response = select(sSocket.ID + 1, &fds, NULL, NULL, &timeout) > 0) {
 			if (cSocket1 == NULL) {
 				cSocket1 = sSocket.Accept();
 			} else {
@@ -124,29 +123,20 @@ int main(int argc, char * argv[]) {
 		cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
 		string message(buffer);
 		if (message.substr(0, LONGITUD_CODIGO) == CD_ID_JUGADOR)
-			felix1 =
-					new Felix(cantClientes,
-							atoi(
-									message.substr(LONGITUD_CODIGO,
-											LONGITUD_CONTENIDO).c_str()));
+			felix1 = new Felix(cantClientes, atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str()));
 		cSocket2->ReceiveBloq(buffer, sizeof(buffer));
 		string message2(buffer);
 		if (message2.substr(0, LONGITUD_CODIGO) == CD_ID_JUGADOR)
-			felix2 =
-					new Felix(cantClientes,
-							atoi(
-									message2.substr(LONGITUD_CODIGO,
-											LONGITUD_CONTENIDO).c_str()));
+			felix2 = new Felix(cantClientes, atoi(message2.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str()));
 	}
 
 	/*
 	 * Envio las posiciones iniciales a cada jugador.
 	 */
-	cSocket1->SendNoBloq(posicionInicial1().c_str(),LONGITUD_CODIGO + LONGITUD_CONTENIDO);
-	cSocket2->SendNoBloq(posicionInicial2().c_str(),LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+	cSocket1->SendNoBloq(posicionInicial1().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+	cSocket2->SendNoBloq(posicionInicial2().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
 
 	edificio = new Edificio(EDIFICIO_FILAS_1, EDIFICIO_COLUMNAS, 0);
-
 //Creo los 4 thread.
 	pthread_create(&thread_timer, NULL, timer_thread, NULL);
 	pthread_create(&thread_receiver1, NULL, receiver1_thread, NULL);

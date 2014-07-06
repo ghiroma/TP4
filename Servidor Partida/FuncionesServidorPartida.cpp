@@ -392,10 +392,12 @@ void casePerdidaVida(int jugador) {
 		if (!felix1->perderVida()) {
 			string message1(CD_PERDIDA_VIDA);
 			string message2(CD_PERDIDA_VIDA);
-			message1.append(Helper::fillMessage("1"));
-			message2.append(Helper::fillMessage("2"));
+			//TODO Corregir hardcodeo.
+			message1.append(Helper::fillMessage("100"));
+			message2.append(Helper::fillMessage("200"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
+			felix1->mover(0,0,edificio);
 		} else {
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
@@ -408,12 +410,14 @@ void casePerdidaVida(int jugador) {
 	} else {
 		//cout << "Perdieron vida" << endl;
 		if (!felix2->perderVida()) {
+			//TODO Sacar harcodeo.
 			string message1(CD_PERDIDA_VIDA);
 			string message2(CD_PERDIDA_VIDA);
-			message1.append(Helper::fillMessage("2"));
-			message2.append(Helper::fillMessage("1"));
+			message1.append(Helper::fillMessage("240"));
+			message2.append(Helper::fillMessage("140"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
+			felix2->mover(0,EDIFICIO_COLUMNAS-1,edificio);
 		} else {
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
@@ -473,8 +477,8 @@ string posicionInicial1() {
 	char cPos[3];
 	sprintf(cFila, "%d", fila);
 	sprintf(cColumna, "%d", columna);
-	strcpy(cPos, cFila);
-	strcat(cPos, cColumna);
+	strcpy(cPos, cColumna);
+	strcat(cPos, cFila);
 	message.append(Helper::fillMessage(cPos));
 	felix1->fila = fila;
 	felix1->columna = columna;
@@ -490,10 +494,11 @@ string posicionInicial2() {
 		char cPos[3];
 		sprintf(cFila,"%d",fila);
 		sprintf(cColumna,"%d",columna);
-		strcpy(cPos,cFila);
-		strcat(cPos,cColumna);
+		strcpy(cPos,cColumna);
+		strcat(cPos,cFila);
 		message.append(Helper::fillMessage(cPos));
 		felix2->fila = fila;
 		felix2->columna = columna;
+		cout<<"Posicion inicial del jugadoro 2"<<message<<endl;
 		return message;
 }

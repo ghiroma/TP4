@@ -38,23 +38,26 @@ bool Felix::mover(int columna, int fila, Edificio * edificio) {
 	 && !edificio->ventanas[fila][columna].ocupado
 	 && !edificio->ventanas[fila][columna].persiana) {*/
 
-	if (fila < edificio->filas && fila >= 0 && columna < edificio->columnas
-			&& columna >= 0) {
-		edificio->ventanas[this->fila][this->columna].ocupado = false;
-		edificio->ventanas[fila][columna].ocupado = true;
-		this->columna = columna;
-		this->fila = fila;
+	if (fila < edificio->filas && fila >= 0 && columna < edificio->columnas && columna >= 0) {
+		cout << "Rango valido de movimiento" << endl;
+		cout<<" La ventana de fila: "<<fila<<" columna:"<<columna<<" se encuentra "<<edificio->ventanas[fila][columna].ocupado<<endl;
+		if (edificio->ventanas[fila][columna].ocupado == false) {
+			cout<<"Esta desocupado"<<endl;
+			edificio->ventanas[this->fila][this->columna].ocupado = false;
+			edificio->ventanas[fila][columna].ocupado = true;
+			this->columna = columna;
+			this->fila = fila;
 
-		cout << "Salgo validacion movimiento true" << endl;
-		return true;
+			cout << "Salgo validacion movimiento true" << endl;
+			return true;
+		}
 	}
 	cout << "Salgo validacion movimiento false" << endl;
 	return false;
 }
 
 bool Felix::reparar(Edificio * edificio) {
-	if (this->fila < edificio->filas && this->fila >= 0
-			&& this->columna < edificio->columnas && this->columna >= 0) {
+	if (this->fila < edificio->filas && this->fila >= 0 && this->columna < edificio->columnas && this->columna >= 0) {
 
 		if (edificio->ventanas[this->fila][this->columna].ventanaRota > 0) {
 			edificio->ventanas[this->fila][this->columna].ventanaRota--;
