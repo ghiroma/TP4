@@ -223,10 +223,12 @@ int main(int argc, char *argv[]) {
 	roca2 = SDL_LoadBMP(roca2_bmp);
 	torta = SDL_LoadBMP(torta_bmp);
 
-	for (int i = 0; i < 20; i++) {
-		rocas_desplazamiento[i].x = 0;
-		rocas_desplazamiento[i].y = 0;
-	}
+	/* lo puse en inicializaPartida
+	 for (int i = 0; i < 20; i++) {
+	 rocas_desplazamiento[i].x = 0;
+	 rocas_desplazamiento[i].y = 0;
+	 }
+	 */
 
 	//Inicio modo video
 	SDL_Init(SDL_INIT_VIDEO);
@@ -325,6 +327,7 @@ int main(int argc, char *argv[]) {
 			cout << "bloqueado en el join esperando el th enviarServidoPartida" << endl;
 			pthread_join(tpid_enviar_partida, NULL);
 			cout << "DEEEESbloqueado en el join esperando el th enviarServidoPartida" << endl;
+			sleep(3);
 			inicializarNuevaPartida();
 			pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
 			solicitudDeNuevaParitda = false;
@@ -789,6 +792,11 @@ void* EscuchaServidor(void *arg) {
 				break;
 			}
 		} else if (readData == 0) {
+			//reseteo el nombre del oponente para que espero que se lo envien
+			pthread_mutex_lock(&mutex_nombreOponente);
+			nombreOponente = "";
+			pthread_mutex_unlock(&mutex_nombreOponente);
+
 			cout << "Murio el servidor de partida" << endl;
 
 			//si no se llego a fin del torneo
@@ -798,12 +806,11 @@ void* EscuchaServidor(void *arg) {
 			if (!torneoFin) {
 				//mostrar pantalla Esperando partida
 				mostrarPantalla("waitmatch");
+
 				pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
 				solicitudDeNuevaParitda = true;
 				pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
 
-				//termino la partida hago que termine el thread y seteo una variable para que tambine finalize el thread de EnviarServidor de la partida
-				//pthread_cancel(tpid_enviar_partida);
 				break;
 			}
 		}
@@ -879,14 +886,15 @@ void* EscuchaTorneo(void *arg) {
 				pthread_exit(NULL);
 				break;
 			case CD_NOMBRE_I:
-				//recibo y limpio el nombre
-				cout << "recibo el nombre de mi oponente:" << aux_buffer << endl;
+				//recibo y limpio el nombre de ceros
+				cout << "th ESCUCHAR TORNEO -> recibo el nombre de mi oponente:" << aux_buffer << endl;
 				mensajeNombre = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str();
 				auxNombreOponente = "";
-				int caracterNomb;
-				for (caracterNomb = 0; caracterNomb < LONGITUD_CONTENIDO; caracterNomb++) {
-					if (mensajeNombre[caracterNomb] != '0') {
-						auxNombreOponente += mensajeNombre[caracterNomb];
+				int indice;
+				for (indice = 0; indice < LONGITUD_CONTENIDO; indice++) {
+					if (mensajeNombre[indice] != '0') {
+						cout << "Agrego al nombre, la letra: " << mensajeNombre[indice] << endl;
+						auxNombreOponente += mensajeNombre[indice];
 					}
 				}
 				pthread_mutex_lock(&mutex_nombreOponente);
@@ -937,21 +945,21 @@ void* EscuchaTeclas(void *arg) {
 		case SDL_KEYDOWN:
 			if (evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo) {
 				//felix1_reparar = 'N';
-				if ((felix1_posicion.fila - 1) >= 0 && felix1_reparar != 'S' && felix1_vidas >0) {
-						ostringstream ss1;
-						ostringstream ss2;
-						ss1 << felix1_posicion.columna;
-						ss2 << felix1_posicion.fila - 1;
-						string aux(ss1.str() + ss2.str());
-						string message(CD_MOVIMIENTO_FELIX);
-						message.append(fillMessage(aux));
-						//cout << "MENSAJE: " << message << endl;
-						cola_grafico.push(message);
+				if ((felix1_posicion.fila - 1) >= 0 && felix1_reparar != 'S' && felix1_vidas > 0) {
+					ostringstream ss1;
+					ostringstream ss2;
+					ss1 << felix1_posicion.columna;
+					ss2 << felix1_posicion.fila - 1;
+					string aux(ss1.str() + ss2.str());
+					string message(CD_MOVIMIENTO_FELIX);
+					message.append(fillMessage(aux));
+					//cout << "MENSAJE: " << message << endl;
+					cola_grafico.push(message);
 
 				}
 			} else if (evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba) {
 				//felix1_reparar = 'N';
-				if ((felix1_posicion.fila + 1) < 3 && felix1_reparar != 'S' && felix1_vidas >0) {
+				if ((felix1_posicion.fila + 1) < 3 && felix1_reparar != 'S' && felix1_vidas > 0) {
 					ostringstream ss1;
 					ostringstream ss2;
 					ss1 << felix1_posicion.columna;
@@ -965,32 +973,32 @@ void* EscuchaTeclas(void *arg) {
 			} else if (evento.key.keysym.sym == SDLK_RIGHT || evento.key.keysym.sym == key_derecha) {
 				felix1 = felix_d1;
 				//felix1_reparar = 'N';
-				if ((felix1_posicion.columna + 1) < 5 && felix1_reparar != 'S' && felix1_vidas >0) {
-						ostringstream ss1;
-						ostringstream ss2;
-						ss1 << felix1_posicion.columna + 1;
-						ss2 << felix1_posicion.fila;
-						string aux(ss1.str() + ss2.str());
-						string message(CD_MOVIMIENTO_FELIX);
-						message.append(fillMessage(aux));
-						cout << "MENSAJE: " << message << endl;
-						cola_grafico.push(message);
-					}
+				if ((felix1_posicion.columna + 1) < 5 && felix1_reparar != 'S' && felix1_vidas > 0) {
+					ostringstream ss1;
+					ostringstream ss2;
+					ss1 << felix1_posicion.columna + 1;
+					ss2 << felix1_posicion.fila;
+					string aux(ss1.str() + ss2.str());
+					string message(CD_MOVIMIENTO_FELIX);
+					message.append(fillMessage(aux));
+					cout << "MENSAJE: " << message << endl;
+					cola_grafico.push(message);
+				}
 			} else if (evento.key.keysym.sym == SDLK_LEFT || evento.key.keysym.sym == key_izquierda) {
 				felix1 = felix_i1;
 				//felix1_reparar = 'N';
-				if ((felix1_posicion.columna - 1) >= 0 && felix1_reparar != 'S' && felix1_vidas >0) {
-						ostringstream ss1;
-						ostringstream ss2;
-						ss1 << felix1_posicion.columna - 1;
-						ss2 << felix1_posicion.fila;
-						string aux(ss1.str() + ss2.str());
-						string message(CD_MOVIMIENTO_FELIX);
-						message.append(fillMessage(aux));
-						cout << "MENSAJE: " << message << endl;
-						cola_grafico.push(message);
+				if ((felix1_posicion.columna - 1) >= 0 && felix1_reparar != 'S' && felix1_vidas > 0) {
+					ostringstream ss1;
+					ostringstream ss2;
+					ss1 << felix1_posicion.columna - 1;
+					ss2 << felix1_posicion.fila;
+					string aux(ss1.str() + ss2.str());
+					string message(CD_MOVIMIENTO_FELIX);
+					message.append(fillMessage(aux));
+					cout << "MENSAJE: " << message << endl;
+					cola_grafico.push(message);
 				}
-			} else if (evento.key.keysym.sym == SDLK_SPACE || evento.key.keysym.sym == key_accion && felix1_vidas >0) {
+			} else if ((evento.key.keysym.sym == SDLK_SPACE || evento.key.keysym.sym == key_accion) && felix1_vidas > 0) {
 				string message(CD_VENTANA_ARREGLANDO);
 				message.append(fillMessage("0"));
 				cola_grafico.push(message);
@@ -1212,6 +1220,45 @@ void inicializarNuevaPartida() {
 	esperarNombreOponente();
 	cout << "nombre oponente:" << nombreOponente << endl;
 
+	//////////////////////////////////////
+	//inicializacion de variables
+	felix1_posicion = {0, 0};
+	felix2_posicion = {0, (EDIFICIO_COLUMNAS-1)};
+	ralph_posicion = {3, 2};
+	pajaro_desplazamiento = {-1, -1};
+
+	rahlp_x = PARED_X + 200;
+	rahlp_y = PARED_Y;
+	roca_siguiente = 0;
+	cant_rocas = 0;
+	ralph_destino = 0;
+	tramo = 1;
+	nivel = 1;
+	salir = 'N';
+	ralph_moverse = 'N';
+	pajaro_moverse = 'N';
+	felix1_reparar = 'N';
+	felix2_reparar = 'N';
+	ventanas_cargadas = 'N';
+	torta_aparece = 'N';
+	felix_cartel_puntos[10] = {'0'};
+	felix_cartel_vidas[10] = {'0'};
+	//felix1_nombre = ""; NO CAMBIA
+	//felix2_nombre = ""; LO RECIBO ARRIBA (me lo manda el servTorneo)
+	felix1_puntos = 0;
+	felix2_puntos = 0;
+	felix1_vidas = 3;
+	felix2_vidas = 3;
+	ventanas_reparadas = 10;
+	felix2_inicial = true;
+	felix1_inicial = true;
+
+	for (int i = 0; i < 20; i++) {
+		rocas_desplazamiento[i].x = 0;
+		rocas_desplazamiento[i].y = 0;
+	}
+	//////////////////////////////////////
+
 	//Me conecto al servidor de partida.
 	socketPartida = new CommunicationSocket(puertoServidorPartida, (char*) ip.c_str());
 
@@ -1230,22 +1277,23 @@ void inicializarNuevaPartida() {
 	} //while(atoi(message.substr(0,LONGITUD_CODIGO).c_str())!=CD_POSICION_INICIAL_I);
 	while (strcmp(messagePosicion.substr(0, LONGITUD_CODIGO).c_str(), "46") != 0);
 
-	cout<<"Codigo encontrado, valor mensake "<<messagePosicion<<endl;
-	felix1_posicion.columna = atoi(messagePosicion.substr(5,1).c_str());
-	felix1_posicion.fila = atoi(messagePosicion.substr(6,1).c_str());
+	cout << "Codigo encontrado, valor mensake " << messagePosicion << endl;
+	felix1_posicion.columna = atoi(messagePosicion.substr(5, 1).c_str());
+	felix1_posicion.fila = atoi(messagePosicion.substr(6, 1).c_str());
 
-	cout<<"Posicion inicial de felix: columna "<<felix1_posicion.columna<<" fila "<<felix1_posicion.fila<<endl;
+	cout << "Posicion inicial de felix: columna " << felix1_posicion.columna << " fila " << felix1_posicion.fila << endl;
 
-	if (felix1_posicion.columna==0) {
-		felix2_posicion.columna = EDIFICIO_COLUMNAS-1;
-	}
-	else
-	{
+	if (felix1_posicion.columna == 0) {
+		felix2_posicion.columna = EDIFICIO_COLUMNAS - 1;
+	} else {
 		felix2_posicion.columna = 0;
 	}
 
 	felix2_posicion.fila = 0;
 	cout << "Recibi mi posicion inicial" << endl;
+
+	//inicializo la cantida de vidas
+
 	//Empiezo a tirar Thread para comunicarme con el servidor de partida.
 	vaciarColas();
 	pthread_create(&tpid_escuchar_partida, NULL, EscuchaServidor, &socketPartida->ID);
@@ -1272,12 +1320,9 @@ void esperarPuertoPartida() {
 void esperarNombreOponente() {
 	cout << "comienza while de espera de nombre de oponente" << endl;
 	int recibioNombreOponente = false;
-	pthread_mutex_lock(&mutex_nombreOponente);
-	nombreOponente = "";
-	pthread_mutex_unlock(&mutex_nombreOponente);
 	while (!recibioNombreOponente) {
-		cout << "dentro del while esperarndo nombre oponentne" << endl;
 		pthread_mutex_lock(&mutex_nombreOponente);
+		cout << "nombreOponente:" << nombreOponente << " - Lenght:" << nombreOponente.length() << endl;
 		if (nombreOponente.length() > 0) {
 			felix2_nombre = nombreOponente;
 			recibioNombreOponente = true;
@@ -1285,7 +1330,7 @@ void esperarNombreOponente() {
 		pthread_mutex_unlock(&mutex_nombreOponente);
 		usleep(10000);
 	}
-	cout << "recibo el nombre de mi oponente:" << felix2_nombre << endl;
+	cout << "f esperarNombreOponente ->recibo el nombre de mi oponente:" << felix2_nombre << endl;
 }
 
 void vaciarColas() {
@@ -1314,19 +1359,13 @@ void vaciarColas() {
 
 void liberarRecursos() {
 	//SOCKET
-	cout << "delete socket torneo" << endl;
 	delete (socketTorneo);
-	cout << "delete socket partida" << endl;
 	delete (socketPartida);
 
 	//SEM
-	cout << "delete mutex 1" << endl;
 	pthread_mutex_destroy(&mutex_msjPuertoRecibido);
-	cout << "delete mutex 2" << endl;
 	pthread_mutex_destroy(&mutex_cola_grafico);
-	cout << "delete mutex 3" << endl;
 	pthread_mutex_destroy(&mutex_torneoFinalizado);
-	cout << "delete mutex 4" << endl;
 	pthread_mutex_destroy(&mutex_nombreOponente);
 
 	//SDL
