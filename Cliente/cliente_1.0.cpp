@@ -280,9 +280,9 @@ int main(int argc, char *argv[]) {
 	cout << "Mi id: " << mi_id << endl;
 
 	//mando mi nombre de jugador
-	string messageNombre(CD_NOMBRE);
+	/*string messageNombre(CD_NOMBRE);
 	messageNombre.append(fillMessage(felix1_nombre));
-	socketTorneo->SendBloq(messageNombre.c_str(), messageNombre.length());
+	socketTorneo->SendBloq(messageNombre.c_str(), messageNombre.length());*/
 
 	//Thread para escuchar al servidor de Torneo.
 	pthread_create(&tpid_escuchar_torneo, NULL, EscuchaTorneo, &socketTorneo->ID);
@@ -761,7 +761,7 @@ void* EscuchaServidor(void *arg) {
 			}
 		}
 
-		usleep(20000);
+		usleep(10000);
 	}
 	cout << "sale el thread de escucharServidor" << endl;
 	pthread_exit(NULL);
@@ -770,7 +770,7 @@ void* EscuchaServidor(void *arg) {
 void * EnvioServidor(void * arg) {
 	int fd = *(int *) arg;
 	CommunicationSocket cSocket(fd);
-	bool murioServTorneo = false;
+	bool auxSolicitudDeNuevaParitda = false;
 	cout << "inicia th EnviaServidor" << endl;
 	while (true) {
 		if (!cola_grafico.empty()) {
@@ -782,12 +782,12 @@ void * EnvioServidor(void * arg) {
 
 		//si murio la partida salgo de este thread (me doy cuenta cuando solicitan una nueva partida)
 		pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
-		murioServTorneo = solicitudDeNuevaParitda;
+		auxSolicitudDeNuevaParitda = solicitudDeNuevaParitda;
 		pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
-		if (murioServTorneo) {
+		if (auxSolicitudDeNuevaParitda) {
 			break;
 		}
-		usleep(20000);
+		usleep(10000);
 	}
 	cout << "sale el thread de EnvioServidor" << endl;
 	pthread_exit(NULL);
@@ -833,6 +833,7 @@ void* EscuchaTorneo(void *arg) {
 				break;
 			case CD_NOMBRE_I:
 				//recibo y limpio el nombre
+				cout<<"recibo el nombre de mi oponente:"<<aux_buffer<<endl;
 				mensajeNombre = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str();
 				auxNombreOponente = "";
 				int caracterNomb;
@@ -1205,6 +1206,7 @@ void esperarNombreOponente() {
 	nombreOponente = "";
 	pthread_mutex_unlock(&mutex_nombreOponente);
 	while (!recibioNombreOponente) {
+		cout<<"dentro del while esperarndo nombre oponentne"<<endl;
 		pthread_mutex_lock(&mutex_nombreOponente);
 		if (nombreOponente.length() > 0) {
 			felix2_nombre = nombreOponente;
