@@ -28,6 +28,7 @@ static const char* CD_TORTA = "02";
 static const char* CD_PERSIANA = "03";
 static const char* CD_MOVIMIENTO_FELIX = "04";
 static const char* CD_PERDIDA_VIDA = "05";
+static const char* CD_VENTANA_ARREGLADA = "08";
 
 static const char* CD_ACK = "99";
 

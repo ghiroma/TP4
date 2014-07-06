@@ -25,6 +25,7 @@
 using namespace std;
 
 bool msjPuertoRecibido = false;
+<<<<<<< HEAD
 pthread_mutex_t mutex_msjPuertoRecibido = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_nombreOponente = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_torneoFinalizado = PTHREAD_MUTEX_INITIALIZER;
@@ -38,6 +39,14 @@ pthread_mutex_t mutex_cola_torta = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cola_mensajes_enviar = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cola_felix1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cola_felix2 = PTHREAD_MUTEX_INITIALIZER;
+=======
+pthread_mutex_t mutex_msjPuertoRecibido =
+PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_cola_grafico = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_nombreOponente = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_torneoFinalizado = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_solicitudDeNuevaParitda = PTHREAD_MUTEX_INITIALIZER;
+>>>>>>> 2c0f802db900c7e32e498e58828f8daabbf32098
 
 struct ventana {
 	short int x;
@@ -90,11 +99,18 @@ void liberarRecursos();
 void mostrarPantalla(const char*);
 void esperarNombreOponente();
 void esperarPuertoPartida();
+<<<<<<< HEAD
 void esperarPosicionesIniciales();
 void vaciarColas();
 void inicializarNuevaPartida();
 
 /* 
+=======
+void vaciarColas();
+void inicializarNuevaPartida();
+
+/*
+>>>>>>> 2c0f802db900c7e32e498e58828f8daabbf32098
 
  0 - Pantalla intermedia para ingresar el nombre.
  1 - Pantalla intermedia de cambio de tramo.
@@ -110,7 +126,7 @@ struct ventana ventanas_tramo1[3][5];
 /* ALMACENO FILA y COLUMNA -- pienso el edificio como una matriz */
 
 struct posicion felix1_posicion = { 0, 0 };
-struct posicion felix2_posicion = {0,0};
+struct posicion felix2_posicion = { 0, 0 };
 struct posicion ralph_posicion = { 3, 2 };
 struct posicion torta_posicion;
 struct desplazamiento pajaro_desplazamiento = { -1, -1 };
@@ -222,7 +238,12 @@ int main(int argc, char *argv[]) {
 	TTF_Init();
 	signal(SIGINT, handler);
 	//Defino las propiedades de la pantalla del juego
+<<<<<<< HEAD
 	superficie = SDL_SetVideoMode(ANCHO_PANTALLA, ALTO_PANTALLA, BPP, SDL_HWSURFACE);
+=======
+	superficie = SDL_SetVideoMode(ANCHO_PANTALLA, ALTO_PANTALLA, BPP,
+	SDL_HWSURFACE);
+>>>>>>> 2c0f802db900c7e32e498e58828f8daabbf32098
 	//Seteo el titulo de la pantalla
 	SDL_WM_SetCaption("Rahlp Tournament", NULL);
 	//Cargo la fuente
@@ -318,7 +339,6 @@ int main(int argc, char *argv[]) {
 			solicitudDeNuevaParitda = false;
 			pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
 		}
-
 
 		pantalla_juego.x = 0;
 		pantalla_juego.y = 0;
@@ -486,6 +506,16 @@ int main(int argc, char *argv[]) {
 					if (felix1_inicial == true) {
 						Dibujar(120, 350, felix1, superficie);
 						felix1_inicial = false;
+<<<<<<< HEAD
+						string msj = cola_felix1.front();
+						cola_felix1.pop();
+						felix1_posicion.columna = atoi(msj.substr(5, 1).c_str());
+						cout << "Nueva posicion columna de felix1" << felix1_posicion.columna << endl;
+						felix1_posicion.fila = atoi(msj.substr(6, 1).c_str());
+						cout << "Nueva posicion fila de felix1: " << felix1_posicion.fila << endl;
+					}
+					Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
+=======
 					} else {
 						if (!cola_felix1.empty()) {
 							cout << "Entro a la cola de felix movimiento" << endl;
@@ -499,6 +529,7 @@ int main(int argc, char *argv[]) {
 						}
 						Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
 					}
+>>>>>>> 2c0f802db900c7e32e498e58828f8daabbf32098
 				}
 			} else {
 				cout << "inicia repara ventana" << endl;
@@ -524,6 +555,12 @@ int main(int argc, char *argv[]) {
 				Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
 				cout << "termino repara ventana" << endl;
 			}
+<<<<<<< HEAD
+			cout << "casi termina repara ventana" << endl;
+			Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
+			cout << "termino repara ventana" << endl;
+=======
+>>>>>>> 2c0f802db900c7e32e498e58828f8daabbf32098
 		}
 		if (felix2 == NULL)
 			felix2 = felix_d2;
@@ -1168,6 +1205,10 @@ void inicializarNuevaPartida() {
 	cout << "nombre oponente:" << nombreOponente << endl;
 
 	//Me conecto al servidor de partida.
+<<<<<<< HEAD
+=======
+	cout << "Socket Partida:" << puertoServidorPartida << endl;
+>>>>>>> 2c0f802db900c7e32e498e58828f8daabbf32098
 	socketPartida = new CommunicationSocket(puertoServidorPartida, (char*) ip.c_str());
 
 	//mando mi ID
