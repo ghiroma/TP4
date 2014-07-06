@@ -74,8 +74,8 @@ int main(int argc, char * argv[]) {
 		cantVidas = atoi(argv[1]);
 		shmIds.shmId = ftok("/bin/ls", puerto);
 		if (shmIds.shmId == -1) {
-			/*cout << "Error al generar el shmId el error es: " << endl;
-			 if (errno == EACCES)
+			cout << "Error al generar el shmId el error es: " << endl;
+			/* if (errno == EACCES)
 			 cout << "Error de permisos" << endl;
 			 if (errno == ENOENT)
 			 cout << "Path inexistente" << endl;*/
@@ -98,7 +98,7 @@ int main(int argc, char * argv[]) {
 	 * si no se conectan, cierra lo partida.
 	 */
 
-
+	cout<<"espero conexion de los clientes"<<endl;
 	do {
 		if (int response = select(sSocket.ID + 1, &fds, NULL, NULL, &timeout)
 				> 0) {
@@ -122,7 +122,7 @@ int main(int argc, char * argv[]) {
 	/*
 	 * Estoy a la espera de que los clientes me envien sus ids.
 	 */
-
+	cout<<"Espero IDs de los clientes"<<endl;
 	while (felix1 == NULL && felix2 == NULL) {
 		cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
 		string message(buffer);
@@ -141,6 +141,11 @@ int main(int argc, char * argv[]) {
 									message2.substr(LONGITUD_CODIGO,
 											LONGITUD_CONTENIDO).c_str()));
 	}
+
+	//Envio las posiciones iniciales a cada jugador.
+	cout<<"Envio las posiciones iniciales a cada jugador"<<endl;
+	cSocket1->SendNoBloq(posicionInicial1().c_str(),LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+	cSocket2->SendNoBloq(posicionInicial2().c_str(),LONGITUD_CODIGO + LONGITUD_CONTENIDO);
 
 	edificio = new Edificio(EDIFICIO_FILAS_1, EDIFICIO_COLUMNAS, 0);
 

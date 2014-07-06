@@ -670,7 +670,7 @@ establecerPartidas(void* data) {
 
 				if ((pid = fork()) == 0) {
 					//Proceso hijo
-					cout << "Thread establecerPartidas FORK - PID:" << getpid() << " (" << idJugador << "vs" << idOponente << ")" << endl;
+					cout << "Thread establecerPartidas FORK - PID:" << getpid() << " (" << idJugador << "vs" << idOponente << ") socket:"<<auxPuertoNuevaPartida<< endl;
 
 					char auxCantVidas[2];
 					sprintf(auxCantVidas, "%d", cantVidas);
@@ -731,9 +731,11 @@ void mandarPuntajes() {
 
 void liberarRecursos() {
 	//SOCKETS
+	cout<<"delete socket sSocket"<<endl;
 	delete (sSocket);
 	pthread_mutex_lock(&mutex_listJugadores);
 	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
+		cout<<"delete socket del jugador:"<<it->second->Nombre<<" ID:"<<it->second->Id<<endl;
 		delete (it->second->SocketAsociado);
 	}
 	pthread_mutex_unlock(&mutex_listJugadores);
@@ -741,6 +743,7 @@ void liberarRecursos() {
 	//SHM
 	pthread_mutex_lock(&mutex_partidasActivas);
 	for (list<datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
+		cout<<"borro las SHM"<<endl;
 		struct puntajesPartida* resumenPartida = (struct puntajesPartida *) shmat(it->idShm, (char *) 0, 0);
 		shmdt((struct puntajesPartida*) resumenPartida);
 		shmctl(it->idShm, IPC_RMID, (struct shmid_ds *) NULL);
@@ -748,9 +751,11 @@ void liberarRecursos() {
 	pthread_mutex_unlock(&mutex_partidasActivas);
 
 	//Semaphores
+	cout<<"cierro semaforo"<<endl;
 	sem_inicializarTemporizador.close();
 
 	//Mutex
+	cout<<"cierro mutex"<<endl;
 	pthread_mutex_destroy(&mutex_timeIsUp);
 	pthread_mutex_destroy(&mutex_comenzoConteo);
 	pthread_mutex_destroy(&mutex_todasLasPartidasFinalizadas);

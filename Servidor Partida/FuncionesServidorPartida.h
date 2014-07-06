@@ -47,5 +47,7 @@ void casePerdidaVida(int nroJugador);
 void caseVentanaArreglada(int nroJugador);
 void SIGINT_Handler(int inum);
 void liberarRecursos();
+string posicionInicial1();
+string posicionInicial2();
 
 #endif /* FUNCIONESSERVIDORPARTIDA_H_ */

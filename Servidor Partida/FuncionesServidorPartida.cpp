@@ -73,24 +73,21 @@ timer_thread(void* arg) {
 	while (!stop && (cliente1_conectado || cliente2_conectado)) {
 
 		message = timer.keepAlive();
-		if(message.length()>0)
-		{
-			Helper::encolar(&message,&sender1_queue,&mutex_sender1);
-			Helper::encolar(&message,&sender2_queue,&mutex_sender2);
+		if (message.length() > 0) {
+			Helper::encolar(&message, &sender1_queue, &mutex_sender1);
+			Helper::encolar(&message, &sender2_queue, &mutex_sender2);
 		}
 
 		message = timer.ralph(edificio->nivel);
-		if(message.length()>0)
-		{
-			Helper::encolar(&message,&sender1_queue,&mutex_sender1);
-			Helper::encolar(&message,&sender2_queue,&mutex_sender2);
+		if (message.length() > 0) {
+			Helper::encolar(&message, &sender1_queue, &mutex_sender1);
+			Helper::encolar(&message, &sender2_queue, &mutex_sender2);
 		}
 
 		message = timer.paloma(edificio->nivel);
-		if(message.length()>0)
-		{
-			Helper::encolar(&message,&sender1_queue,&mutex_sender1);
-			Helper::encolar(&message,&sender2_queue,&mutex_sender2);
+		if (message.length() > 0) {
+			Helper::encolar(&message, &sender1_queue, &mutex_sender1);
+			Helper::encolar(&message, &sender2_queue, &mutex_sender2);
 		}
 
 		usleep(POOLING_DEADTIME);
@@ -258,47 +255,46 @@ void *validator_thread(void * argument) {
  */
 void*
 sharedMemory_thread(void * arguments) {
-	try{
-	int shmId = shmget(shmIds.shmId, sizeof(struct puntajes), PERMISOS_SHM);
-	if (shmId < 0) {
-		throw "Error al obtener memoria compartida";
-	}
-	puntaje = (struct puntajes *) shmat(shmId, (void *) 0, 0);
-	if (puntaje == (void *) -1) {
-		throw "Error al mapear la memoria compartida";
-	}
-
-	while (stop == false) {
-
-		//Verifico si el padre esta vivo
-		if (kill(pid, 0) == -1) {
-			stop = true;
+	try {
+		int shmId = shmget(shmIds.shmId, sizeof(struct puntajes), PERMISOS_SHM);
+		if (shmId < 0) {
+			throw "Error al obtener memoria compartida";
+		}
+		puntaje = (struct puntajes *) shmat(shmId, (void *) 0, 0);
+		if (puntaje == (void *) -1) {
+			throw "Error al mapear la memoria compartida";
 		}
 
-		//Perdieron ambos, asi que finalmente cierro.
-		if (!cliente1_jugando && !cliente2_jugando){
+		while (stop == false) {
 
-		//if (cliente1_jugando && cliente2_jugando) {
+			//Verifico si el padre esta vivo
+			if (kill(pid, 0) == -1) {
+				stop = true;
+			}
 
-			//sleep (5);/////////////////////
+			//Perdieron ambos, asi que finalmente cierro.
+			if (!cliente1_jugando && !cliente2_jugando) {
 
-			puntaje->idJugador1 = felix1->id;
-			puntaje->idJugador2 = felix2->id;
-			//puntaje->puntajeJugador1 = felix1->puntaje_parcial;
-			puntaje->puntajeJugador1 = 500;
-			puntaje->puntajeJugador2 = 750;
-			//puntaje->puntajeJugador2 = felix2->puntaje_parcial;
-			puntaje->partidaFinalizadaOk = true;
+				//if (cliente1_jugando && cliente2_jugando) {
 
-			//exit(1);///////////////
-			stop = true;
+				//sleep (5);/////////////////////
+
+				puntaje->idJugador1 = felix1->id;
+				puntaje->idJugador2 = felix2->id;
+				//puntaje->puntajeJugador1 = felix1->puntaje_parcial;
+				puntaje->puntajeJugador1 = 500;
+				puntaje->puntajeJugador2 = 750;
+				//puntaje->puntajeJugador2 = felix2->puntaje_parcial;
+				puntaje->partidaFinalizadaOk = true;
+
+				//exit(1);///////////////
+				stop = true;
+			}
+
+			usleep(POOLING_DEADTIME);
 		}
-
-		usleep(POOLING_DEADTIME);
-	}
-	}catch(const char * err)
-	{
-		cout<<"Error inesperado: "<<err<<endl;
+	} catch (const char * err) {
+		cout << "Error inesperado: " << err << endl;
 		exit(1);
 	}
 	pthread_exit(0);
@@ -318,65 +314,69 @@ void caseMovimientoFelix(int jugador, string *message) {
 
 	if (jugador == 1) {
 		//if (validateMovement(felix1, fila, columna, edificio)) {
-				if(felix1->mover(columna,fila, edificio)){
-		char auxFila[2];
-		char auxColumna[2];
-		char aux1[5] = { "1" };
-		char aux2[5] = { "2" };
+		if (felix1->mover(columna, fila, edificio)) {
+			char auxFila[2];
+			char auxColumna[2];
+			char aux1[5] = { "1" };
+			char aux2[5] = { "2" };
 
-		cout << "Por guardar auxfila y auxcoluna" << endl;
+			cout << "Por guardar auxfila y auxcoluna" << endl;
 
-		sprintf(auxFila, "%d", fila);
-		sprintf(auxColumna, "%d", columna);
+			sprintf(auxFila, "%d", fila);
+			sprintf(auxColumna, "%d", columna);
 
-		cout << "Por concatenar" << endl;
+			cout << "Por concatenar" << endl;
 
-		strcat(aux1, auxColumna);
-		strcat(aux1, auxFila);
-		strcat(aux2, auxColumna);
-		strcat(aux2, auxFila);
+			strcat(aux1, auxColumna);
+			strcat(aux1, auxFila);
+			strcat(aux2, auxColumna);
+			strcat(aux2, auxFila);
 
-		cout << "mensaje movimiento a enviar: " << aux1 << endl;
+			cout << "mensaje movimiento a enviar: " << aux1 << endl;
 
-		string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO)
-				+ Helper::fillMessage(aux1);
-		string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO)
-				+ Helper::fillMessage(aux2);
+			string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO)
+					+ Helper::fillMessage(aux1);
+			string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO)
+					+ Helper::fillMessage(aux2);
 
-		cout << "Mensaje de movimiento armado1: " << mensaje_movimiento1
-				<< endl;
-		cout << "Mensaje de movimiento armado2: " << mensaje_movimiento2
-				<< endl;
+			cout << "Mensaje de movimiento armado1: " << mensaje_movimiento1
+					<< endl;
+			cout << "Mensaje de movimiento armado2: " << mensaje_movimiento2
+					<< endl;
 
-		Helper::encolar(&mensaje_movimiento1, &sender1_queue, &mutex_sender1);
-		Helper::encolar(&mensaje_movimiento2, &sender2_queue, &mutex_sender2);
-		cout << "Mensaje encolado: " << mensaje_movimiento1 << endl;
-		cout << "Encole mensaje de movimiento felix" << endl;
+			Helper::encolar(&mensaje_movimiento1, &sender1_queue,
+					&mutex_sender1);
+			Helper::encolar(&mensaje_movimiento2, &sender2_queue,
+					&mutex_sender2);
+			cout << "Mensaje encolado: " << mensaje_movimiento1 << endl;
+			cout << "Encole mensaje de movimiento felix" << endl;
 		}
 	} else {
 		//if (validateMovement(felix2, fila, columna, edificio)) {
-		if(felix2->mover(columna,fila,edificio)){
-		char auxFila[2];
-		char auxColumna[2];
-		char aux1[5] = { "2" };
-		char aux2[5] = { "1" };
+		if (felix2->mover(columna, fila, edificio)) {
+			char auxFila[2];
+			char auxColumna[2];
+			char aux1[5] = { "2" };
+			char aux2[5] = { "1" };
 
-		sprintf(auxFila, "%d", fila);
-		sprintf(auxColumna, "%d", columna);
+			sprintf(auxFila, "%d", fila);
+			sprintf(auxColumna, "%d", columna);
 
-		strcat(aux1, auxColumna);
-		strcat(aux1, auxFila);
-		strcat(aux2, auxColumna);
-		strcat(aux2, auxFila);
+			strcat(aux1, auxColumna);
+			strcat(aux1, auxFila);
+			strcat(aux2, auxColumna);
+			strcat(aux2, auxFila);
 
-		cout << "mensaje movimiento a enviar: " << aux1 << endl;
+			cout << "mensaje movimiento a enviar: " << aux1 << endl;
 
-		string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO)
-				+ Helper::fillMessage(aux1);
-		string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO)
-				+ Helper::fillMessage(aux2);
-		Helper::encolar(&mensaje_movimiento1, &sender1_queue, &mutex_sender1);
-		Helper::encolar(&mensaje_movimiento2, &sender2_queue, &mutex_sender2);
+			string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO)
+					+ Helper::fillMessage(aux1);
+			string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO)
+					+ Helper::fillMessage(aux2);
+			Helper::encolar(&mensaje_movimiento1, &sender1_queue,
+					&mutex_sender1);
+			Helper::encolar(&mensaje_movimiento2, &sender2_queue,
+					&mutex_sender2);
 		}
 
 	}
@@ -462,4 +462,38 @@ void liberarRecursos() {
 	shmctl(shmIds.shmId, IPC_RMID, 0);
 	delete (cSocket1);
 	delete (cSocket2);
+}
+
+string posicionInicial1() {
+	string message(CD_POSICION_INICIAL);
+	int fila = 0;
+	int columna = 0;
+	char cFila[2];
+	char cColumna[2];
+	char cPos[3];
+	sprintf(cFila, "%d", fila);
+	sprintf(cColumna, "%d", columna);
+	strcpy(cPos, cFila);
+	strcat(cPos, cColumna);
+	message.append(Helper::fillMessage(cPos));
+	felix1->fila = fila;
+	felix1->columna = columna;
+	return message;
+}
+
+string posicionInicial2() {
+	string message(CD_POSICION_INICIAL);
+		int fila = 0;
+		int columna = EDIFICIO_COLUMNAS-1;
+		char cFila[2];
+		char cColumna[2];
+		char cPos[3];
+		sprintf(cFila,"%d",fila);
+		sprintf(cColumna,"%d",columna);
+		strcpy(cPos,cFila);
+		strcat(cPos,cColumna);
+		message.append(Helper::fillMessage(cPos));
+		felix2->fila = fila;
+		felix2->columna = columna;
+		return message;
 }

@@ -110,6 +110,7 @@ struct ventana ventanas_tramo1[3][5];
 /* ALMACENO FILA y COLUMNA -- pienso el edificio como una matriz */
 
 struct posicion felix1_posicion = { 0, 0 };
+struct posicion felix2_posicion = {0,0};
 struct posicion ralph_posicion = { 3, 2 };
 struct posicion torta_posicion;
 struct desplazamiento pajaro_desplazamiento = { -1, -1 };
@@ -310,7 +311,8 @@ int main(int argc, char *argv[]) {
 		if (auxSolicitudDeNuevaPartida && !auxTorneoFinalizado) {
 			//espero a que se cierre el ultimo thread de la partida anterior
 			cout << "bloqueado en el join esperando el th enviarServidoPartida" << endl;
-			///pthread_join(tpid_enviar_partida, NULL);
+			pthread_join(tpid_enviar_partida, NULL);
+			cout << "DEEEESbloqueado en el join esperando el th enviarServidoPartida" << endl;
 			inicializarNuevaPartida();
 			pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
 			solicitudDeNuevaParitda = false;
@@ -529,11 +531,11 @@ int main(int argc, char *argv[]) {
 			felix2_inicial = false;
 			string msj = cola_felix2.front();
 			cola_felix2.pop();
-			short int f2_fila = atoi(msj.substr(5, 1).c_str());
-			short int f2_colu = atoi(msj.substr(6, 1).c_str());
-
-			Dibujar(ventanas_tramo1[f2_fila][f2_colu].x, ventanas_tramo1[f2_fila][f2_colu].y, felix2, superficie);
+			felix2_posicion.columna = atoi(msj.substr(5, 1).c_str());
+			felix2_posicion.fila = atoi(msj.substr(6, 1).c_str());
 		}
+			Dibujar(ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].x,
+					ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].y, felix2, superficie);
 
 		if (felix2_inicial == true)
 			Dibujar(120, 405, felix2, superficie);
@@ -711,8 +713,9 @@ void* EscuchaServidor(void *arg) {
 			case CD_MOVIMIENTO_FELIX_I:
 				if (buffer[4] == '1') {
 					cola_felix1.push(aux_buffer);
-				} else
+				} else if (buffer[4] == '2') {
 					cola_felix2.push(aux_buffer);
+				}
 				break;
 			case CD_PERDIDA_VIDA_I:
 				break;
@@ -740,7 +743,7 @@ void* EscuchaServidor(void *arg) {
 				pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
 
 				//termino la partida hago que termine el thread y seteo una variable para que tambine finalize el thread de EnviarServidor de la partida
-				pthread_cancel(tpid_enviar_partida);
+				//pthread_cancel(tpid_enviar_partida);
 				break;
 			}
 		}
@@ -765,12 +768,12 @@ void * EnvioServidor(void * arg) {
 		}
 
 		//si murio la partida salgo de este thread (me doy cuenta cuando solicitan una nueva partida)
-		/*pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
+		pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
 		murioServTorneo = solicitudDeNuevaParitda;
 		pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
 		if (murioServTorneo) {
 			break;
-		}*/
+		}
 		usleep(20000);
 	}
 	cout << "sale el thread de EnvioServidor" << endl;
@@ -1142,12 +1145,13 @@ void mostrarRanking(const char* ranking) {
 void inicializarNuevaPartida() {
 	//Espero que el servidor de Torneo me envie el puerto para conectarme al servidor de partida.
 	esperarPuertoPartida();
+	cout << "Socket Partida:" << puertoServidorPartida << endl;
+
 	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
 	esperarNombreOponente();
 	cout << "nombre oponente:" << nombreOponente << endl;
 
 	//Me conecto al servidor de partida.
-	cout << "Socket Partida:" << puertoServidorPartida << endl;
 	socketPartida = new CommunicationSocket(puertoServidorPartida, (char*) ip.c_str());
 
 	//mando mi ID
@@ -1163,6 +1167,7 @@ void inicializarNuevaPartida() {
 
 void esperarPuertoPartida() {
 	bool msjPuerto = false;
+	cout<<"comienza while de espera de puerto de partida"<<endl;
 	while (true) {
 		pthread_mutex_lock(&mutex_msjPuertoRecibido);
 		msjPuerto = msjPuertoRecibido;
@@ -1174,9 +1179,11 @@ void esperarPuertoPartida() {
 		usleep(10000);
 	}
 	msjPuertoRecibido = false;
+	cout<<"recibio el puerto:"<<puertoServidorPartida<<endl;
 }
 
 void esperarNombreOponente() {
+	cout<<"comienza while de espera de nombre de oponente"<<endl;
 	int recibioNombreOponente = false;
 	pthread_mutex_lock(&mutex_nombreOponente);
 	nombreOponente = "";
@@ -1223,13 +1230,19 @@ void vaciarColas() {
 
 void liberarRecursos() {
 	//SOCKET
+	cout<<"delete socket torneo"<<endl;
 	delete (socketTorneo);
+	cout<<"delete socket partida"<<endl;
 	delete (socketPartida);
 
 	//SEM
+	cout<<"delete mutex 1"<<endl;
 	pthread_mutex_destroy(&mutex_msjPuertoRecibido);
+	cout<<"delete mutex 2"<<endl;
 	pthread_mutex_destroy(&mutex_cola_grafico);
+	cout<<"delete mutex 3"<<endl;
 	pthread_mutex_destroy(&mutex_torneoFinalizado);
+	cout<<"delete mutex 4"<<endl;
 	pthread_mutex_destroy(&mutex_nombreOponente);
 
 	//SDL

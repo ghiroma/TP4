@@ -99,7 +99,6 @@ int main(int argc, char * argv[]) {
 		cout << "Error no se pudo crear el thread de temporizacion del torneo" << endl;
 		exit(1);
 	}
-
 	pthread_join(thModoGrafico, NULL);
 
 	//mandar a cada cliente su puntaje y ranking
