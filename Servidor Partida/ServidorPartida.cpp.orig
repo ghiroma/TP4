@@ -35,6 +35,8 @@ struct args_struct {
 };
 
 int main(int argc, char * argv[]) {
+	atexit(liberarRecursos);
+
 	unsigned int puerto;
 	int cantVidas;
 	int cantClientes = 0;
@@ -98,13 +100,17 @@ int main(int argc, char * argv[]) {
 	 * si no se conectan, cierra lo partida.
 	 */
 
-	cout<<"espero conexion de los clientes"<<endl;
+	cout << "espero conexion de los clientes" << endl;
 	do {
 		if (int response = select(sSocket.ID + 1, &fds, NULL, NULL, &timeout) > 0) {
 			if (cSocket1 == NULL) {
+				cout<<"espero la conexion del primer cliente"<<endl;
 				cSocket1 = sSocket.Accept();
+				cout<<"ACEPTO la conexion del primer cliente"<<endl;
 			} else {
+				cout<<"espero la conexion del segundo cliente"<<endl;
 				cSocket2 = sSocket.Accept();
+				cout<<"ACEPTO la conexion del segundo cliente"<<endl;
 			}
 			cantClientes++;
 		} else if (response == 0) {
@@ -112,6 +118,7 @@ int main(int argc, char * argv[]) {
 			if (cSocket1 != NULL) {
 				delete (cSocket1);
 			}
+			cout<<"se acabo el tiempo de eseperar clientes, salgo"<<endl;
 			exit(1);
 		}
 	} while (cantClientes < 2);
@@ -121,32 +128,34 @@ int main(int argc, char * argv[]) {
 	/*
 	 * Estoy a la espera de que los clientes me envien sus ids.
 	 */
-	cout<<"Espero IDs de los clientes"<<endl;
+	cout << "Espero IDs de los clientes" << endl;
 	while (felix1 == NULL && felix2 == NULL) {
 		cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
 		string message(buffer);
 		if (message.substr(0, LONGITUD_CODIGO) == CD_ID_JUGADOR)
-			felix1 = new Felix(cantClientes, atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str()));
+			felix1 = new Felix(cantVidas, atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str()));
+<<<<<<< HEAD
 		cSocket2->ReceiveBloq(buffer, sizeof(buffer));
+=======
+		cSocket2->ReceiveNoBloq(buffer, sizeof(buffer));
+>>>>>>> 8149da615eb181044d2a3c26eca3bea459bc9f76
 		string message2(buffer);
 		if (message2.substr(0, LONGITUD_CODIGO) == CD_ID_JUGADOR)
-			felix2 = new Felix(cantClientes, atoi(message2.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str()));
+			felix2 = new Felix(cantVidas, atoi(message2.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str()));
 	}
 
-<<<<<<< HEAD
 	//Envio las posiciones iniciales a cada jugador.
-	cout<<"Envio las posiciones iniciales a cada jugador"<<endl;
-	cSocket1->SendNoBloq(posicionInicial1().c_str(),LONGITUD_CODIGO + LONGITUD_CONTENIDO);
-	cSocket2->SendNoBloq(posicionInicial2().c_str(),LONGITUD_CODIGO + LONGITUD_CONTENIDO);
-=======
-	/*
-	 * Envio las posiciones iniciales a cada jugador.
-	 */
+	cout << "Envio las posiciones iniciales a cada jugador" << endl;
+<<<<<<< HEAD
 	cSocket1->SendNoBloq(posicionInicial1().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
 	cSocket2->SendNoBloq(posicionInicial2().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
->>>>>>> 2c0f802db900c7e32e498e58828f8daabbf32098
+=======
+	cSocket1->SendBloq(posicionInicial1().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+	cSocket2->SendBloq(posicionInicial2().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+>>>>>>> 8149da615eb181044d2a3c26eca3bea459bc9f76
 
 	edificio = new Edificio(EDIFICIO_FILAS_1, EDIFICIO_COLUMNAS, 0);
+
 //Creo los 4 thread.
 	pthread_create(&thread_timer, NULL, timer_thread, NULL);
 	pthread_create(&thread_receiver1, NULL, receiver1_thread, NULL);
@@ -171,7 +180,9 @@ int main(int argc, char * argv[]) {
 	pthread_mutex_destroy(&mutex_sender1);
 	pthread_mutex_destroy(&mutex_sender2);
 
-	atexit(liberarRecursos);
+	cout << "finalizando partida ->liberarRecursos" << endl;
+
+	cout << " partida finalizanda " << endl;
 	return 0;
 }
 

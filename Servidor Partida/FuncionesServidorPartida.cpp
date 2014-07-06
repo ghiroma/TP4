@@ -403,6 +403,8 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("2"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
+			edificio->ventanas[felix1->fila][felix1->columna].ocupado = false;
+			cout<<"Jugador 1 muerto, posicion liberada"<<endl;
 			cliente1_jugando = false;
 		}
 	} else {
@@ -425,6 +427,8 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("1"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
+			edificio->ventanas[felix2->fila][felix2->columna].ocupado = false;
+			cout<<"Jugador 2 muerto, posicion liberada"<<endl;
 			cliente2_jugando = false;
 		}
 	}

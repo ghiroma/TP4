@@ -134,7 +134,7 @@ int main(int argc, char * argv[]) {
 		string message(buffer);
 		if (message.substr(0, LONGITUD_CODIGO) == CD_ID_JUGADOR)
 			felix1 = new Felix(cantVidas, atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str()));
-		cSocket2->ReceiveBloq(buffer, sizeof(buffer));
+		cSocket2->ReceiveNoBloq(buffer, sizeof(buffer));
 		string message2(buffer);
 		if (message2.substr(0, LONGITUD_CODIGO) == CD_ID_JUGADOR)
 			felix2 = new Felix(cantVidas, atoi(message2.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str()));
@@ -142,8 +142,8 @@ int main(int argc, char * argv[]) {
 
 	//Envio las posiciones iniciales a cada jugador.
 	cout << "Envio las posiciones iniciales a cada jugador" << endl;
-	cSocket1->SendNoBloq(posicionInicial1().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
-	cSocket2->SendNoBloq(posicionInicial2().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+	cSocket1->SendBloq(posicionInicial1().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+	cSocket2->SendBloq(posicionInicial2().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
 
 	edificio = new Edificio(EDIFICIO_FILAS_1, EDIFICIO_COLUMNAS, 0);
 
@@ -170,8 +170,6 @@ int main(int argc, char * argv[]) {
 	pthread_mutex_destroy(&mutex_receiver2);
 	pthread_mutex_destroy(&mutex_sender1);
 	pthread_mutex_destroy(&mutex_sender2);
-
-	cout << "finalizando partida ->liberarRecursos" << endl;
 
 	cout << " partida finalizanda " << endl;
 	return 0;

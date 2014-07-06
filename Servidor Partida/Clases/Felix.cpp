@@ -39,10 +39,7 @@ bool Felix::mover(int columna, int fila, Edificio * edificio) {
 	 && !edificio->ventanas[fila][columna].persiana) {*/
 
 	if (fila < edificio->filas && fila >= 0 && columna < edificio->columnas && columna >= 0) {
-		cout << "Rango valido de movimiento" << endl;
-		cout<<" La ventana de fila: "<<fila<<" columna:"<<columna<<" se encuentra "<<edificio->ventanas[fila][columna].ocupado<<endl;
-		if (edificio->ventanas[fila][columna].ocupado == false) {
-			cout<<"Esta desocupado"<<endl;
+		if (edificio->ventanas[fila][columna].ocupado == false && !(fila==0 && columna==2)) {
 			edificio->ventanas[this->fila][this->columna].ocupado = false;
 			edificio->ventanas[fila][columna].ocupado = true;
 			this->columna = columna;

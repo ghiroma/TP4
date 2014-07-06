@@ -491,26 +491,17 @@ int main(int argc, char *argv[]) {
 			if (felix1_reparar == 'N') {
 				if (felix1 == NULL)
 					felix1 = felix_d1;
-				if (felix1_posicion.fila == 99) {
-					Dibujar(110, 400, felix1, superficie);
-				} else {
-					if (felix1_inicial == true) {
-						Dibujar(120, 350, felix1, superficie);
-						felix1_inicial = false;
-					} else {
-						if (!cola_felix1.empty()) {
-							cout << "Entro a la cola de felix movimiento" << endl;
-							felix1_inicial = false;
-							string msj = cola_felix1.front();
-							cola_felix1.pop();
-							felix1_posicion.columna = atoi(msj.substr(5, 1).c_str());
-							cout << "Nueva posicion columna de felix1" << felix1_posicion.columna << endl;
-							felix1_posicion.fila = atoi(msj.substr(6, 1).c_str());
-							cout << "Nueva posicion fila de felix1: " << felix1_posicion.fila << endl;
-						}
-						Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
-					}
+				if (!cola_felix1.empty()) {
+					cout << "Entro a la cola de felix movimiento" << endl;
+					felix1_inicial = false;
+					string msj = cola_felix1.front();
+					cola_felix1.pop();
+					felix1_posicion.columna = atoi(msj.substr(5, 1).c_str());
+					cout << "Nueva posicion columna de felix1" << felix1_posicion.columna << endl;
+					felix1_posicion.fila = atoi(msj.substr(6, 1).c_str());
+					cout << "Nueva posicion fila de felix1: " << felix1_posicion.fila << endl;
 				}
+				Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
 			} else {
 				cout << "inicia repara ventana" << endl;
 				if (felix1 == felix_d1 || felix1 == felix_i1)
@@ -548,7 +539,6 @@ int main(int argc, char *argv[]) {
 		if (felix2_vidas > 0) {
 			if (felix2_reparar == 'N') {
 				if (!cola_felix2.empty()) {
-					felix2_inicial = false;
 					string msj = cola_felix2.front();
 					cola_felix2.pop();
 					felix2_posicion.columna = atoi(msj.substr(5, 1).c_str());
@@ -556,8 +546,6 @@ int main(int argc, char *argv[]) {
 				}
 				Dibujar(ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].x, ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].y, felix2, superficie);
 
-				if (felix2_inicial == true)
-					Dibujar(120, 405, felix2, superficie);
 			} else {
 				if (felix2 == felix_d2 || felix2 == felix_i2)
 					felix2 = felix_r12;
@@ -576,7 +564,7 @@ int main(int argc, char *argv[]) {
 					message.append(fillMessage("0"));
 					cola_grafico.push(message);
 					ventana_reparada(&felix2_posicion);
-					felix2_reparar = 'N';
+					//felix2_reparar = 'N';
 				}
 				cout << "casi termina repara ventana" << endl;
 				Dibujar(ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].x, ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].y, felix2, superficie);
@@ -784,7 +772,9 @@ void* EscuchaServidor(void *arg) {
 					felix1_puntos += 10;
 				} else if (buffer[6] == '2') {
 					felix2_puntos += 10;
-					ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].tipo_ventana = '0';
+					felix2 = felix_d2;
+					cout << "Posicion felix2, fila: " << felix2_posicion.fila << " columna: " << felix2_posicion.columna << endl;
+					ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].tipo_ventana = 0;
 					ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].sana = 1;
 					felix2_reparar = 'N';
 				}
@@ -947,20 +937,21 @@ void* EscuchaTeclas(void *arg) {
 		case SDL_KEYDOWN:
 			if (evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo) {
 				//felix1_reparar = 'N';
-				if ((felix1_posicion.fila - 1) >= 0 && felix1_reparar != 'S') {
-					ostringstream ss1;
-					ostringstream ss2;
-					ss1 << felix1_posicion.columna;
-					ss2 << felix1_posicion.fila - 1;
-					string aux(ss1.str() + ss2.str());
-					string message(CD_MOVIMIENTO_FELIX);
-					message.append(fillMessage(aux));
-					//cout << "MENSAJE: " << message << endl;
-					cola_grafico.push(message);
+				if ((felix1_posicion.fila - 1) >= 0 && felix1_reparar != 'S' && felix1_vidas >0) {
+						ostringstream ss1;
+						ostringstream ss2;
+						ss1 << felix1_posicion.columna;
+						ss2 << felix1_posicion.fila - 1;
+						string aux(ss1.str() + ss2.str());
+						string message(CD_MOVIMIENTO_FELIX);
+						message.append(fillMessage(aux));
+						//cout << "MENSAJE: " << message << endl;
+						cola_grafico.push(message);
+
 				}
 			} else if (evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba) {
 				//felix1_reparar = 'N';
-				if ((felix1_posicion.fila + 1) < 3 && felix1_reparar != 'S') {
+				if ((felix1_posicion.fila + 1) < 3 && felix1_reparar != 'S' && felix1_vidas >0) {
 					ostringstream ss1;
 					ostringstream ss2;
 					ss1 << felix1_posicion.columna;
@@ -974,32 +965,32 @@ void* EscuchaTeclas(void *arg) {
 			} else if (evento.key.keysym.sym == SDLK_RIGHT || evento.key.keysym.sym == key_derecha) {
 				felix1 = felix_d1;
 				//felix1_reparar = 'N';
-				if ((felix1_posicion.columna + 1) < 5 && felix1_reparar != 'S') {
-					ostringstream ss1;
-					ostringstream ss2;
-					ss1 << felix1_posicion.columna + 1;
-					ss2 << felix1_posicion.fila;
-					string aux(ss1.str() + ss2.str());
-					string message(CD_MOVIMIENTO_FELIX);
-					message.append(fillMessage(aux));
-					cout << "MENSAJE: " << message << endl;
-					cola_grafico.push(message);
-				}
+				if ((felix1_posicion.columna + 1) < 5 && felix1_reparar != 'S' && felix1_vidas >0) {
+						ostringstream ss1;
+						ostringstream ss2;
+						ss1 << felix1_posicion.columna + 1;
+						ss2 << felix1_posicion.fila;
+						string aux(ss1.str() + ss2.str());
+						string message(CD_MOVIMIENTO_FELIX);
+						message.append(fillMessage(aux));
+						cout << "MENSAJE: " << message << endl;
+						cola_grafico.push(message);
+					}
 			} else if (evento.key.keysym.sym == SDLK_LEFT || evento.key.keysym.sym == key_izquierda) {
 				felix1 = felix_i1;
 				//felix1_reparar = 'N';
-				if ((felix1_posicion.columna - 1) >= 0 && felix1_reparar != 'S') {
-					ostringstream ss1;
-					ostringstream ss2;
-					ss1 << felix1_posicion.columna - 1;
-					ss2 << felix1_posicion.fila;
-					string aux(ss1.str() + ss2.str());
-					string message(CD_MOVIMIENTO_FELIX);
-					message.append(fillMessage(aux));
-					cout << "MENSAJE: " << message << endl;
-					cola_grafico.push(message);
+				if ((felix1_posicion.columna - 1) >= 0 && felix1_reparar != 'S' && felix1_vidas >0) {
+						ostringstream ss1;
+						ostringstream ss2;
+						ss1 << felix1_posicion.columna - 1;
+						ss2 << felix1_posicion.fila;
+						string aux(ss1.str() + ss2.str());
+						string message(CD_MOVIMIENTO_FELIX);
+						message.append(fillMessage(aux));
+						cout << "MENSAJE: " << message << endl;
+						cola_grafico.push(message);
 				}
-			} else if (evento.key.keysym.sym == SDLK_SPACE || evento.key.keysym.sym == key_accion) {
+			} else if (evento.key.keysym.sym == SDLK_SPACE || evento.key.keysym.sym == key_accion && felix1_vidas >0) {
 				string message(CD_VENTANA_ARREGLANDO);
 				message.append(fillMessage("0"));
 				cola_grafico.push(message);
@@ -1008,12 +999,10 @@ void* EscuchaTeclas(void *arg) {
 				exit(1);
 			}
 			break;
-		case SDLK_ESCAPE:
-			break;
 		case SDL_QUIT:
 			exit(1);
 		}
-		usleep(100000);
+		usleep(1000);
 	}
 	pthread_exit(NULL);
 }
@@ -1231,6 +1220,32 @@ void inicializarNuevaPartida() {
 	message.append(fillMessage(mi_id));
 	socketPartida->SendBloq(message.c_str(), message.length());
 
+	//espero mi posicion inicial;
+	cout << "Esperando mi posicion inicial" << endl;
+	char bufferPosicion[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
+	string messagePosicion;
+	do {
+		socketPartida->ReceiveBloq(bufferPosicion, sizeof(bufferPosicion));
+		messagePosicion = bufferPosicion;
+	} //while(atoi(message.substr(0,LONGITUD_CODIGO).c_str())!=CD_POSICION_INICIAL_I);
+	while (strcmp(messagePosicion.substr(0, LONGITUD_CODIGO).c_str(), "46") != 0);
+
+	cout<<"Codigo encontrado, valor mensake "<<messagePosicion<<endl;
+	felix1_posicion.columna = atoi(messagePosicion.substr(5,1).c_str());
+	felix1_posicion.fila = atoi(messagePosicion.substr(6,1).c_str());
+
+	cout<<"Posicion inicial de felix: columna "<<felix1_posicion.columna<<" fila "<<felix1_posicion.fila<<endl;
+
+	if (felix1_posicion.columna==0) {
+		felix2_posicion.columna = EDIFICIO_COLUMNAS-1;
+	}
+	else
+	{
+		felix2_posicion.columna = 0;
+	}
+
+	felix2_posicion.fila = 0;
+	cout << "Recibi mi posicion inicial" << endl;
 	//Empiezo a tirar Thread para comunicarme con el servidor de partida.
 	vaciarColas();
 	pthread_create(&tpid_escuchar_partida, NULL, EscuchaServidor, &socketPartida->ID);
@@ -1255,12 +1270,13 @@ void esperarPuertoPartida() {
 }
 
 void esperarNombreOponente() {
+	cout << "comienza while de espera de nombre de oponente" << endl;
 	int recibioNombreOponente = false;
 	pthread_mutex_lock(&mutex_nombreOponente);
 	nombreOponente = "";
 	pthread_mutex_unlock(&mutex_nombreOponente);
-	cout << "comienza while de espera de nombre de oponente" << endl;
 	while (!recibioNombreOponente) {
+		cout << "dentro del while esperarndo nombre oponentne" << endl;
 		pthread_mutex_lock(&mutex_nombreOponente);
 		if (nombreOponente.length() > 0) {
 			felix2_nombre = nombreOponente;
@@ -1270,25 +1286,6 @@ void esperarNombreOponente() {
 		usleep(10000);
 	}
 	cout << "recibo el nombre de mi oponente:" << felix2_nombre << endl;
-}
-
-void esperarPosicionesIniciales() {
-	/*bool msjPuerto = false;
-	 cout << "comienza while de espera de posiciones iniciales" << endl;
-	 while (true) {
-	 pthread_mutex_lock(&mutex_msjPuertoRecibido);
-	 msjPuerto = msjPuertoRecibido;
-	 pthread_mutex_unlock(&mutex_msjPuertoRecibido);
-
-	 if (msjPuerto == true) {
-	 break;
-	 }
-	 usleep(10000);
-	 }
-	 msjPuertoRecibido = false;
-	 cout << "recibio el puerto:" << puertoServidorPartida << endl;
-	 */
-
 }
 
 void vaciarColas() {
@@ -1335,5 +1332,4 @@ void liberarRecursos() {
 	//SDL
 	SDL_Quit();
 	TTF_Quit();
-	cout << "free SDL total" << endl;
 }
