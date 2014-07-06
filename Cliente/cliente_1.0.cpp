@@ -103,23 +103,14 @@ void inicializarNuevaPartida();
  */
 
 SDL_Surface *superficie,
-*backgroundImg,
-*pared_tramo1n1, *pared_tramo2n1, *pared_tramo3n1, *pared,
-*ventana_sana, *ventana_rota1, *ventana_rota2, *ventana_rota3, *ventana_rota4, *ventana, *puerta,
-*felix_d1, *felix_i1,
-*felix_r11, *felix_r21, *felix_r31, *felix_r41, *felix_r51,
-*felix_d2, *felix_i2,
-*felix_r12, *felix_r22, *felix_r32, *felix_r42, *felix_r52,
-*felix1, *felix2,
-		*ralph_1, *ralph_2, *ralph_3, *ralph_4, *ralph_5, *ralph_6, *ralph,
-		*roca1, *roca2, *roca,
-		*pajaro_1, *pajaro_2, *pajaro, *texto, *puntos, *vidas, *torta;
+*backgroundImg, *pared_tramo1n1, *pared_tramo2n1, *pared_tramo3n1, *pared, *ventana_sana, *ventana_rota1, *ventana_rota2, *ventana_rota3, *ventana_rota4, *ventana, *puerta, *felix_d1, *felix_i1, *felix_r11, *felix_r21, *felix_r31, *felix_r41, *felix_r51, *felix_d2, *felix_i2, *felix_r12, *felix_r22,
+		*felix_r32, *felix_r42, *felix_r52, *felix1, *felix2, *ralph_1, *ralph_2, *ralph_3, *ralph_4, *ralph_5, *ralph_6, *ralph, *roca1, *roca2, *roca, *pajaro_1, *pajaro_2, *pajaro, *texto, *puntos, *vidas, *torta;
 
 struct ventana ventanas_tramo1[3][5];
 /* ALMACENO FILA y COLUMNA -- pienso el edificio como una matriz */
 
 struct posicion felix1_posicion = { 0, 0 };
-struct posicion felix2_posicion = {0,0};
+struct posicion felix2_posicion = { 0, 0 };
 struct posicion ralph_posicion = { 3, 2 };
 struct posicion torta_posicion;
 struct desplazamiento pajaro_desplazamiento = { -1, -1 };
@@ -185,33 +176,14 @@ CommunicationSocket * socketPartida;
 int main(int argc, char *argv[]) {
 	atexit(liberarRecursos);
 
-	const char
-	pared_tramo1n1_bmp[] = "Sprites/pared_tramo1n1.bmp",
-	pared_tramo2n1_bmp[] = "Sprites/pared_tramo2n1.bmp",
-	pared_tramo3n1_bmp[] = "Sprites/pared_tramo3n1.bmp",
-	ventana_sana_bmp[] = "Sprites/ventana_sana.bmp",
-	ventana_rota1_bmp[] = "Sprites/ventana_rota1.bmp",
-	ventana_rota2_bmp[] ="Sprites/ventana_rota2.bmp",
-	ventana_rota3_bmp[] = "Sprites/ventana_rota3.bmp",
-	ventana_rota4_bmp[] = "Sprites/ventana_rota4.bmp",
-	puerta_bmp[] = "Sprites/puerta_grande.bmp",
-	felixd1_bmp[] = "Sprites/felix_d1.bmp",
-	felixi1_bmp[] = "Sprites/felix_i1.bmp",
-	felixr11_bmp[] = "Sprites/felix_r11.bmp",
-	felixr21_bmp[] = "Sprites/felix_r21.bmp",
-	felixr31_bmp[] = "Sprites/felix_r31.bmp",
-	felixr41_bmp[] = "Sprites/felix_r41.bmp",
-	felixr51_bmp[] = "Sprites/felix_r51.bmp",
+	const char pared_tramo1n1_bmp[] = "Sprites/pared_tramo1n1.bmp", pared_tramo2n1_bmp[] = "Sprites/pared_tramo2n1.bmp", pared_tramo3n1_bmp[] = "Sprites/pared_tramo3n1.bmp", ventana_sana_bmp[] = "Sprites/ventana_sana.bmp", ventana_rota1_bmp[] = "Sprites/ventana_rota1.bmp", ventana_rota2_bmp[] =
+			"Sprites/ventana_rota2.bmp", ventana_rota3_bmp[] = "Sprites/ventana_rota3.bmp", ventana_rota4_bmp[] = "Sprites/ventana_rota4.bmp", puerta_bmp[] = "Sprites/puerta_grande.bmp", felixd1_bmp[] = "Sprites/felix_d1.bmp", felixi1_bmp[] = "Sprites/felix_i1.bmp", felixr11_bmp[] =
+			"Sprites/felix_r11.bmp", felixr21_bmp[] = "Sprites/felix_r21.bmp", felixr31_bmp[] = "Sprites/felix_r31.bmp", felixr41_bmp[] = "Sprites/felix_r41.bmp", felixr51_bmp[] = "Sprites/felix_r51.bmp",
 
-	felixr12_bmp[] ="Sprites/felix_r12.bmp",
-		felixr22_bmp[] = "Sprites/felix_r22.bmp",
-		felixr32_bmp[] = "Sprites/felix_r32.bmp",
-		felixr42_bmp[] = "Sprites/felix_r42.bmp",
-		felixr52_bmp[] = "Sprites/felix_r52.bmp",
+	felixr12_bmp[] = "Sprites/felix_r12.bmp", felixr22_bmp[] = "Sprites/felix_r22.bmp", felixr32_bmp[] = "Sprites/felix_r32.bmp", felixr42_bmp[] = "Sprites/felix_r42.bmp", felixr52_bmp[] = "Sprites/felix_r52.bmp",
 
-	felixd2_bmp[] = "Sprites/felix_d2.bmp", felixi2_bmp[] = "Sprites/felix_i2.bmp", ralph1_bmp[] =
-			"Sprites/rahlp_1.bmp", ralph2_bmp[] = "Sprites/rahlp_2.bmp", ralph3_bmp[] = "Sprites/rahlp_3.bmp", ralph4_bmp[] = "Sprites/rahlp_4.bmp", ralph5_bmp[] = "Sprites/rahlp_5.bmp", ralph6_bmp[] = "Sprites/rahlp_6.bmp", pajaro1_bmp[] = "Sprites/pajaro_1.bmp", pajaro2_bmp[] =
-			"Sprites/pajaro_2.bmp", roca1_bmp[] = "Sprites/roca1.bmp", roca2_bmp[] = "Sprites/roca2.bmp", torta_bmp[] = "Sprites/torta.bmp";
+	felixd2_bmp[] = "Sprites/felix_d2.bmp", felixi2_bmp[] = "Sprites/felix_i2.bmp", ralph1_bmp[] = "Sprites/rahlp_1.bmp", ralph2_bmp[] = "Sprites/rahlp_2.bmp", ralph3_bmp[] = "Sprites/rahlp_3.bmp", ralph4_bmp[] = "Sprites/rahlp_4.bmp", ralph5_bmp[] = "Sprites/rahlp_5.bmp", ralph6_bmp[] =
+			"Sprites/rahlp_6.bmp", pajaro1_bmp[] = "Sprites/pajaro_1.bmp", pajaro2_bmp[] = "Sprites/pajaro_2.bmp", roca1_bmp[] = "Sprites/roca1.bmp", roca2_bmp[] = "Sprites/roca2.bmp", torta_bmp[] = "Sprites/torta.bmp";
 
 	pared_tramo1n1 = SDL_LoadBMP(pared_tramo1n1_bmp);
 	pared_tramo2n1 = SDL_LoadBMP(pared_tramo2n1_bmp);
@@ -321,8 +293,8 @@ int main(int argc, char *argv[]) {
 
 	//mando mi nombre de jugador
 	/*string messageNombre(CD_NOMBRE);
-	messageNombre.append(fillMessage(felix1_nombre));
-	socketTorneo->SendBloq(messageNombre.c_str(), messageNombre.length());*/
+	 messageNombre.append(fillMessage(felix1_nombre));
+	 socketTorneo->SendBloq(messageNombre.c_str(), messageNombre.length());*/
 
 	//Thread para escuchar al servidor de Torneo.
 	pthread_create(&tpid_escuchar_torneo, NULL, EscuchaTorneo, &socketTorneo->ID);
@@ -358,7 +330,6 @@ int main(int argc, char *argv[]) {
 			solicitudDeNuevaParitda = false;
 			pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
 		}
-
 
 		pantalla_juego.x = 0;
 		pantalla_juego.y = 0;
@@ -805,7 +776,7 @@ void* EscuchaServidor(void *arg) {
 				break;
 			case CD_VENTANA_ARREGLANDO_I:
 				//TODO grafico la otra ventana arreglada.
-				felix2_reparar='S';
+				felix2_reparar = 'S';
 				//TODO grafico al otro jugador arreglando la ventana.
 				break;
 			case CD_VENTANA_ARREGLADA_I:
@@ -919,7 +890,7 @@ void* EscuchaTorneo(void *arg) {
 				break;
 			case CD_NOMBRE_I:
 				//recibo y limpio el nombre
-				cout<<"recibo el nombre de mi oponente:"<<aux_buffer<<endl;
+				cout << "recibo el nombre de mi oponente:" << aux_buffer << endl;
 				mensajeNombre = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str();
 				auxNombreOponente = "";
 				int caracterNomb;
@@ -1034,14 +1005,13 @@ void* EscuchaTeclas(void *arg) {
 				cola_grafico.push(message);
 				felix1_reparar = 'S';
 			} else if (evento.key.keysym.sym == key_salir) {
-				salir = 'S';
+				exit(1);
 			}
 			break;
 		case SDLK_ESCAPE:
 			break;
 		case SDL_QUIT:
-			salir = 'S';
-			break;
+			exit(1);
 		}
 		usleep(100000);
 	}
@@ -1070,7 +1040,6 @@ void handler(int senial) {
 
 	switch (senial) {
 	case SIGINT:
-		liberarRecursos();
 		break;
 	}
 
@@ -1270,7 +1239,7 @@ void inicializarNuevaPartida() {
 
 void esperarPuertoPartida() {
 	bool msjPuerto = false;
-	cout<<"comienza while de espera de puerto de partida"<<endl;
+	cout << "comienza while de espera de puerto de partida" << endl;
 	while (true) {
 		pthread_mutex_lock(&mutex_msjPuertoRecibido);
 		msjPuerto = msjPuertoRecibido;
@@ -1282,17 +1251,16 @@ void esperarPuertoPartida() {
 		usleep(10000);
 	}
 	msjPuertoRecibido = false;
-	cout<<"recibio el puerto:"<<puertoServidorPartida<<endl;
+	cout << "recibio el puerto:" << puertoServidorPartida << endl;
 }
 
 void esperarNombreOponente() {
-	cout<<"comienza while de espera de nombre de oponente"<<endl;
 	int recibioNombreOponente = false;
 	pthread_mutex_lock(&mutex_nombreOponente);
 	nombreOponente = "";
 	pthread_mutex_unlock(&mutex_nombreOponente);
+	cout << "comienza while de espera de nombre de oponente" << endl;
 	while (!recibioNombreOponente) {
-		cout<<"dentro del while esperarndo nombre oponentne"<<endl;
 		pthread_mutex_lock(&mutex_nombreOponente);
 		if (nombreOponente.length() > 0) {
 			felix2_nombre = nombreOponente;
@@ -1305,6 +1273,21 @@ void esperarNombreOponente() {
 }
 
 void esperarPosicionesIniciales() {
+	/*bool msjPuerto = false;
+	 cout << "comienza while de espera de posiciones iniciales" << endl;
+	 while (true) {
+	 pthread_mutex_lock(&mutex_msjPuertoRecibido);
+	 msjPuerto = msjPuertoRecibido;
+	 pthread_mutex_unlock(&mutex_msjPuertoRecibido);
+
+	 if (msjPuerto == true) {
+	 break;
+	 }
+	 usleep(10000);
+	 }
+	 msjPuertoRecibido = false;
+	 cout << "recibio el puerto:" << puertoServidorPartida << endl;
+	 */
 
 }
 
@@ -1334,64 +1317,23 @@ void vaciarColas() {
 
 void liberarRecursos() {
 	//SOCKET
-	cout<<"delete socket torneo"<<endl;
+	cout << "delete socket torneo" << endl;
 	delete (socketTorneo);
-	cout<<"delete socket partida"<<endl;
+	cout << "delete socket partida" << endl;
 	delete (socketPartida);
 
 	//SEM
-	cout<<"delete mutex 1"<<endl;
+	cout << "delete mutex 1" << endl;
 	pthread_mutex_destroy(&mutex_msjPuertoRecibido);
-	cout<<"delete mutex 2"<<endl;
+	cout << "delete mutex 2" << endl;
 	pthread_mutex_destroy(&mutex_cola_grafico);
-	cout<<"delete mutex 3"<<endl;
+	cout << "delete mutex 3" << endl;
 	pthread_mutex_destroy(&mutex_torneoFinalizado);
-	cout<<"delete mutex 4"<<endl;
+	cout << "delete mutex 4" << endl;
 	pthread_mutex_destroy(&mutex_nombreOponente);
 
 	//SDL
-	SDL_FreeSurface(superficie);
-	SDL_FreeSurface(backgroundImg);
-	SDL_FreeSurface(pared_tramo1n1);
-	SDL_FreeSurface(pared_tramo2n1);
-	SDL_FreeSurface(pared_tramo3n1);
-	SDL_FreeSurface(pared);
-	SDL_FreeSurface(ventana_sana);
-	SDL_FreeSurface(ventana_rota1);
-	SDL_FreeSurface(ventana_rota2);
-	SDL_FreeSurface(ventana_rota3);
-	SDL_FreeSurface(ventana_rota4);
-	SDL_FreeSurface(ventana);
-	SDL_FreeSurface(puerta);
-	SDL_FreeSurface(felix_d1);
-	SDL_FreeSurface(felix_i1);
-	SDL_FreeSurface(felix_r11);
-	SDL_FreeSurface(felix_r21);
-	SDL_FreeSurface(felix_r31);
-	SDL_FreeSurface(felix_r41);
-	SDL_FreeSurface(felix_r51);
-	SDL_FreeSurface(felix_d2);
-	SDL_FreeSurface(felix_i2);
-	SDL_FreeSurface(felix1);
-	SDL_FreeSurface(felix2);
-	SDL_FreeSurface(ralph_1);
-	SDL_FreeSurface(ralph_2);
-	SDL_FreeSurface(ralph_3);
-	SDL_FreeSurface(ralph_4);
-	SDL_FreeSurface(ralph_5);
-	SDL_FreeSurface(ralph_6);
-	SDL_FreeSurface(ralph);
-	SDL_FreeSurface(roca1);
-	SDL_FreeSurface(roca2);
-	SDL_FreeSurface(roca);
-	SDL_FreeSurface(pajaro_1);
-	SDL_FreeSurface(pajaro_2);
-	SDL_FreeSurface(pajaro);
-	SDL_FreeSurface(texto);
-	SDL_FreeSurface(puntos);
-	SDL_FreeSurface(vidas);
-	SDL_FreeSurface(torta);
 	SDL_Quit();
-	TTF_CloseFont(fuente);
 	TTF_Quit();
+	cout << "free SDL total" << endl;
 }

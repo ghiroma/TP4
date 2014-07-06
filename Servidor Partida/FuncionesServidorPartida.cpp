@@ -287,10 +287,10 @@ sharedMemory_thread(void * arguments) {
 
 				puntaje->idJugador1 = felix1->id;
 				puntaje->idJugador2 = felix2->id;
-				//puntaje->puntajeJugador1 = felix1->puntaje_parcial;
-				puntaje->puntajeJugador1 = 500;
-				puntaje->puntajeJugador2 = 750;
-				//puntaje->puntajeJugador2 = felix2->puntaje_parcial;
+				puntaje->puntajeJugador1 = felix1->puntaje_parcial;
+				puntaje->puntajeJugador2 = felix2->puntaje_parcial;
+				//puntaje->puntajeJugador1 = 500;
+				//puntaje->puntajeJugador2 = 750;
 				puntaje->partidaFinalizadaOk = true;
 
 				//exit(1);///////////////
@@ -386,6 +386,7 @@ void casePerdidaVida(int jugador) {
 	if (jugador == 1) {
 		//cout << "Perdieron vida" << endl;
 		if (!felix1->perderVida()) {
+			cout<<"Felix1 ID:"<< felix1->id<<"perdio vida, vidas actuales"<<felix1->cantidad_vidas<<endl;
 			string message1(CD_PERDIDA_VIDA);
 			string message2(CD_PERDIDA_VIDA);
 			//TODO Corregir hardcodeo.
@@ -395,6 +396,7 @@ void casePerdidaVida(int jugador) {
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
 			felix1->mover(0, 0, edificio);
 		} else {
+			cout<<"Felix1 ID:"<< felix1->id<<"perdio EL juego, vidas actuales"<<felix1->cantidad_vidas<<endl;
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
 			message1.append(Helper::fillMessage("1"));
@@ -406,6 +408,7 @@ void casePerdidaVida(int jugador) {
 	} else {
 		//cout << "Perdieron vida" << endl;
 		if (!felix2->perderVida()) {
+			cout<<"Felix2 ID:"<< felix2->id<<"perdio vida, vidas actuales"<<felix2->cantidad_vidas<<endl;
 			//TODO Sacar harcodeo.
 			string message1(CD_PERDIDA_VIDA);
 			string message2(CD_PERDIDA_VIDA);
@@ -415,6 +418,7 @@ void casePerdidaVida(int jugador) {
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
 			felix2->mover(0, EDIFICIO_COLUMNAS - 1, edificio);
 		} else {
+			cout<<"Felix2 ID:"<< felix2->id<<"perdio el Juego, vidas actuales"<<felix2->cantidad_vidas<<endl;
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
 			message1.append(Helper::fillMessage("2"));
@@ -472,6 +476,7 @@ void liberarRecursos() {
 	shmctl(shmIds.shmId, IPC_RMID, 0);
 	delete (cSocket1);
 	delete (cSocket2);
+	cout<<"Partida -> terimino liberrarRecursos"<<endl;
 }
 
 string posicionInicial1() {

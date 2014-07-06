@@ -23,8 +23,7 @@ bool timeIsUp = false;
 bool comenzoConteo = false;
 bool todasLasPartidasFinalizadas = false;
 Semaforo sem_inicializarTemporizador((char*) "/sem_inicializarTemporizador", 0);
-pthread_mutex_t mutex_listJugadores =
-PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_listJugadores = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_timeIsUp = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_comenzoConteo = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_todasLasPartidasFinalizadas = PTHREAD_MUTEX_INITIALIZER;
@@ -95,7 +94,6 @@ void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* 
  */
 void SIG_Handler(int inum) {
 	cout << "Señal Handler" << endl;
-	liberarRecursos();
 	exit(1);
 }
 
@@ -577,7 +575,7 @@ void* aceptarJugadores(void* data) {
 		exit(1);
 	}
 
-	cout<<sSocket->ShowHostName()<<endl;
+	cout << sSocket->ShowHostName() << endl;
 
 	char nombreJugador[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 
@@ -653,8 +651,10 @@ establecerPartidas(void* data) {
 				sprintf(auxPuertoNuevaPartida, "%d", puertoPartida);
 				string message(CD_PUERTO_PARTIDA);
 				message.append(fillMessage(auxPuertoNuevaPartida));
-				listJugadores[idJugador]->SocketAsociado->SendNoBloq(message.c_str(), message.length());
-				listJugadores[idOponente]->SocketAsociado->SendNoBloq(message.c_str(), message.length());
+				cout << "le mando a ID: " << idJugador << " - el socket:" << auxPuertoNuevaPartida << endl;
+				listJugadores[idJugador]->SocketAsociado->SendBloq(message.c_str(), message.length());
+				cout << "le mando a ID: " << idOponente << " - el socket:" << auxPuertoNuevaPartida << endl;
+				listJugadores[idOponente]->SocketAsociado->SendBloq(message.c_str(), message.length());
 
 				//Les mando el nombre de su oponente
 				char auxnombreOponente1[LONGITUD_CONTENIDO];
@@ -665,12 +665,14 @@ establecerPartidas(void* data) {
 				sprintf(auxnombreOponente2, "%s", listJugadores[idJugador]->Nombre.c_str());
 				string nombreOponente2(CD_NOMBRE);
 				nombreOponente2.append(fillMessage(auxnombreOponente2));
-				listJugadores[idJugador]->SocketAsociado->SendNoBloq(nombreOponente1.c_str(), nombreOponente1.length());
-				listJugadores[idOponente]->SocketAsociado->SendNoBloq(nombreOponente2.c_str(), nombreOponente2.length());
+				cout << "le mando a ID: " << idJugador << " - el nombre oponente:" << nombreOponente1 << endl;
+				listJugadores[idJugador]->SocketAsociado->SendBloq(nombreOponente1.c_str(), nombreOponente1.length());
+				cout << "le mando a ID: " << idOponente << " - el nombre oponente:" << nombreOponente2 << endl;
+				listJugadores[idOponente]->SocketAsociado->SendBloq(nombreOponente2.c_str(), nombreOponente2.length());
 
 				if ((pid = fork()) == 0) {
 					//Proceso hijo
-					cout << "Thread establecerPartidas FORK - PID:" << getpid() << " (" << idJugador << "vs" << idOponente << ") socket:"<<auxPuertoNuevaPartida<< endl;
+					cout << "Thread establecerPartidas FORK - PID:" << getpid() << " (" << idJugador << "vs" << idOponente << ") socket:" << auxPuertoNuevaPartida << endl;
 
 					char auxCantVidas[2];
 					sprintf(auxCantVidas, "%d", cantVidas);
@@ -731,45 +733,33 @@ void mandarPuntajes() {
 
 void liberarRecursos() {
 	//SOCKETS
-	cout<<"delete socket sSocket"<<endl;
-	delete (sSocket);
+	if(sSocket != NULL){
+		close(sSocket->ID);
+	}
+
 	pthread_mutex_lock(&mutex_listJugadores);
 	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
-		cout<<"delete socket del jugador:"<<it->second->Nombre<<" ID:"<<it->second->Id<<endl;
 		delete (it->second->SocketAsociado);
 	}
 	pthread_mutex_unlock(&mutex_listJugadores);
-
 	//SHM
 	pthread_mutex_lock(&mutex_partidasActivas);
 	for (list<datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
-		cout<<"borro las SHM"<<endl;
+		cout << "borro las SHM" << endl;
 		struct puntajesPartida* resumenPartida = (struct puntajesPartida *) shmat(it->idShm, (char *) 0, 0);
 		shmdt((struct puntajesPartida*) resumenPartida);
 		shmctl(it->idShm, IPC_RMID, (struct shmid_ds *) NULL);
 	}
 	pthread_mutex_unlock(&mutex_partidasActivas);
-
 	//Semaphores
-	cout<<"cierro semaforo"<<endl;
 	sem_inicializarTemporizador.close();
-
 	//Mutex
-	cout<<"cierro mutex"<<endl;
 	pthread_mutex_destroy(&mutex_timeIsUp);
 	pthread_mutex_destroy(&mutex_comenzoConteo);
 	pthread_mutex_destroy(&mutex_todasLasPartidasFinalizadas);
 	pthread_mutex_destroy(&mutex_partidasActivas);
 	pthread_mutex_destroy(&mutex_listJugadores);
-
 	//SDL
-	SDL_FreeSurface(screen);
-	SDL_FreeSurface(background);
-	SDL_FreeSurface(tiempo);
-	SDL_FreeSurface(jugadores);
-	SDL_FreeSurface(infoJugador_part1);
-	SDL_FreeSurface(infoJugador_part2);
-	TTF_CloseFont(font);
 	TTF_Quit();
 	SDL_Quit();
 }

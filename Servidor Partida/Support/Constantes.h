@@ -19,7 +19,7 @@ static const int LONGITUD_CONTENIDO = 5;
 
 static const int POOLING_DEADTIME = 10000; //Microsegundos
 static const int SEMAPHORE_TIMEOUT = 1; //Segundos
-static const int SERVERSOCKET_TIMEOUT = 8; //Segundos
+static const int SERVERSOCKET_TIMEOUT = 200; //Segundos
 static const int CLIENT_ID_TIMEOUT = 5000; //Milisegundos.
 
 //CD viene de codigo mensaje.
