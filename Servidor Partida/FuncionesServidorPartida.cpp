@@ -283,8 +283,6 @@ sharedMemory_thread(void * arguments) {
 
 				//if (cliente1_jugando && cliente2_jugando) {
 
-				//sleep (5);/////////////////////
-
 				puntaje->idJugador1 = felix1->id;
 				puntaje->idJugador2 = felix2->id;
 				puntaje->puntajeJugador1 = felix1->puntaje_parcial;
@@ -293,7 +291,8 @@ sharedMemory_thread(void * arguments) {
 				//puntaje->puntajeJugador2 = 750;
 				puntaje->partidaFinalizadaOk = true;
 
-				//exit(1);///////////////
+				cout<<"SRV PARTIDA: Puntajes escritos"<<endl;
+
 				stop = true;
 			}
 
@@ -313,7 +312,6 @@ sharedMemory_thread(void * arguments) {
 void caseMovimientoFelix(int jugador, string *message) {
 	int fila;
 	int columna;
-	cout << "Entro a movimiento felix, mensaje = " << *message << endl;
 	columna = atoi(message->substr(5, 1).c_str());
 	//columna = atoi(message->substr(4, 1).c_str());
 	fila = atoi(message->substr(6, 1).c_str());
@@ -326,30 +324,19 @@ void caseMovimientoFelix(int jugador, string *message) {
 			char aux1[5] = { "1" };
 			char aux2[5] = { "2" };
 
-			cout << "Por guardar auxfila y auxcoluna" << endl;
-
 			sprintf(auxFila, "%d", fila);
 			sprintf(auxColumna, "%d", columna);
-
-			cout << "Por concatenar" << endl;
 
 			strcat(aux1, auxColumna);
 			strcat(aux1, auxFila);
 			strcat(aux2, auxColumna);
 			strcat(aux2, auxFila);
 
-			cout << "mensaje movimiento a enviar: " << aux1 << endl;
-
 			string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO) + Helper::fillMessage(aux1);
 			string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO) + Helper::fillMessage(aux2);
 
-			cout << "Mensaje de movimiento armado1: " << mensaje_movimiento1 << endl;
-			cout << "Mensaje de movimiento armado2: " << mensaje_movimiento2 << endl;
-
 			Helper::encolar(&mensaje_movimiento1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&mensaje_movimiento2, &sender2_queue, &mutex_sender2);
-			cout << "Mensaje encolado: " << mensaje_movimiento1 << endl;
-			cout << "Encole mensaje de movimiento felix" << endl;
 		}
 	} else {
 		//if (validateMovement(felix2, fila, columna, edificio)) {
@@ -366,8 +353,6 @@ void caseMovimientoFelix(int jugador, string *message) {
 			strcat(aux1, auxFila);
 			strcat(aux2, auxColumna);
 			strcat(aux2, auxFila);
-
-			cout << "mensaje movimiento a enviar: " << aux1 << endl;
 
 			string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO) + Helper::fillMessage(aux1);
 			string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO) + Helper::fillMessage(aux2);
@@ -386,7 +371,7 @@ void casePerdidaVida(int jugador) {
 	if (jugador == 1) {
 		//cout << "Perdieron vida" << endl;
 		if (!felix1->perderVida()) {
-			cout<<"Felix1 ID:"<< felix1->id<<"perdio vida, vidas actuales"<<felix1->cantidad_vidas<<endl;
+			cout<<"Felix1 perdio vida, vidas actuales: "<<felix1->cantidad_vidas<<endl;
 			string message1(CD_PERDIDA_VIDA);
 			string message2(CD_PERDIDA_VIDA);
 			//TODO Corregir hardcodeo.
@@ -394,9 +379,10 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("200"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
+			cout<<"Encole mensaje perdida vida"<<endl;
 			felix1->mover(0, 0, edificio);
 		} else {
-			cout<<"Felix1 ID:"<< felix1->id<<"perdio EL juego, vidas actuales"<<felix1->cantidad_vidas<<endl;
+			cout<<"Felix1 perdio EL juego, vidas actuales"<<felix1->cantidad_vidas<<endl;
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
 			message1.append(Helper::fillMessage("1"));
@@ -410,7 +396,7 @@ void casePerdidaVida(int jugador) {
 	} else {
 		//cout << "Perdieron vida" << endl;
 		if (!felix2->perderVida()) {
-			cout<<"Felix2 ID:"<< felix2->id<<"perdio vida, vidas actuales"<<felix2->cantidad_vidas<<endl;
+			cout<<"Felix2 perdio vida, vidas actuales"<<felix2->cantidad_vidas<<endl;
 			//TODO Sacar harcodeo.
 			string message1(CD_PERDIDA_VIDA);
 			string message2(CD_PERDIDA_VIDA);
@@ -418,9 +404,10 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("140"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
+			cout<<"Encole mensaje perdida vida"<<endl;
 			felix2->mover(0, EDIFICIO_COLUMNAS - 1, edificio);
 		} else {
-			cout<<"Felix2 ID:"<< felix2->id<<"perdio el Juego, vidas actuales"<<felix2->cantidad_vidas<<endl;
+			cout<<"Felix2 perdio el Juego, vidas actuales"<<felix2->cantidad_vidas<<endl;
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
 			message1.append(Helper::fillMessage("2"));

@@ -30,7 +30,7 @@ static const char* CD_MOVIMIENTO_FELIX = "04";
 static const char* CD_PERDIDA_VIDA = "05";
 static const char* CD_VENTANA_ARREGLADA = "08";
 static const char* CD_VENTANA_ARREGLANDO = "12";
-
+static const char* CD_POSICION_INICIAL = "46";
 static const char* CD_ACK = "99";
 
 //CODIGOS SERVIDOR TORNEO
@@ -53,6 +53,7 @@ static const int CD_VENTANA_ARREGLANDO_I = 12;
 static const int CD_NOMBRE_I = 50;
 static const int CD_RANKING_I = 80;
 static const int CD_FIN_TORNEO_I = 81;
+static const int CD_POSICION_INICIAL_I = 46;
 static const int CD_ACK_I = 99;
 
 #endif /* CONSTANTES_H_ */

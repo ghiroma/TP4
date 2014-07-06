@@ -144,6 +144,7 @@ int main(int argc, char * argv[]) {
 	cout << "Envio las posiciones iniciales a cada jugador" << endl;
 	cSocket1->SendBloq(posicionInicial1().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
 	cSocket2->SendBloq(posicionInicial2().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+	cout<<"Posiciones iniciales enviadas"<<endl;
 
 	edificio = new Edificio(EDIFICIO_FILAS_1, EDIFICIO_COLUMNAS, 0);
 

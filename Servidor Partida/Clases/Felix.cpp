@@ -45,11 +45,9 @@ bool Felix::mover(int columna, int fila, Edificio * edificio) {
 			this->columna = columna;
 			this->fila = fila;
 
-			cout << "Salgo validacion movimiento true" << endl;
 			return true;
 		}
 	}
-	cout << "Salgo validacion movimiento false" << endl;
 	return false;
 }
 
