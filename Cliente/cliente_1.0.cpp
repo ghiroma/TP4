@@ -381,7 +381,7 @@ int main(int argc, char *argv[]) {
 			ventana_x = PARED_X + 45, ventana_y = PARED_Y + 25;
 			for (fila = 3; fila > 0; fila--) {
 				for (columna = 0; columna < 5; columna++) {
-					ventanas_tramo1[fila - 1][columna].tipo_ventana = rand() % 5;
+					ventanas_tramo1[fila - 1][columna].tipo_ventana = 4; //rand() % 5;
 					CargarVentanasDelTramo(&ventanas_tramo1[fila - 1][columna], ventana_x, ventana_y, columna + (fila - 1) * 5, 'N', fila - 1, columna);
 					ventana_x += 80;
 				}
@@ -1226,10 +1226,14 @@ void inicializarNuevaPartida() {
 	pthread_mutex_unlock(&mutex_nombreOponente);
 	//////////////////////////////////////
 	//inicializacion de variables
-	felix1_posicion = {0, 0};
-	felix2_posicion = {0, (EDIFICIO_COLUMNAS-1)};
-	ralph_posicion = {3, 2};
-	pajaro_desplazamiento = {-1, -1};
+	felix1_posicion.fila = 0;
+	felix1_posicion.columna = 0;
+	felix2_posicion.fila = 0;
+	felix2_posicion.columna = EDIFICIO_COLUMNAS-1;
+	ralph_posicion.fila = 3;
+	ralph_posicion.columna = 2;
+	pajaro_desplazamiento.x = -1;
+	pajaro_desplazamiento.y= -1;;
 
 	rahlp_x = PARED_X + 200;
 	rahlp_y = PARED_Y;
@@ -1245,8 +1249,8 @@ void inicializarNuevaPartida() {
 	felix2_reparar = 'N';
 	ventanas_cargadas = 'N';
 	torta_aparece = 'N';
-	felix_cartel_puntos[10] = {'0'};
-	felix_cartel_vidas[10] = {'0'};
+	strcpy(felix_cartel_puntos, "0");
+	strcpy(felix_cartel_vidas, "0");
 	//felix1_nombre = ""; NO CAMBIA
 	//felix2_nombre = ""; LO RECIBO ARRIBA (me lo manda el servTorneo)
 	felix1_puntos = 0;
