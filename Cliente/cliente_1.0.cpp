@@ -381,7 +381,7 @@ int main(int argc, char *argv[]) {
 			ventana_x = PARED_X + 45, ventana_y = PARED_Y + 25;
 			for (fila = 3; fila > 0; fila--) {
 				for (columna = 0; columna < 5; columna++) {
-					ventanas_tramo1[fila - 1][columna].tipo_ventana = rand() % 5;
+					ventanas_tramo1[fila - 1][columna].tipo_ventana = 4; //rand() % 5;
 					CargarVentanasDelTramo(&ventanas_tramo1[fila - 1][columna], ventana_x, ventana_y, columna + (fila - 1) * 5, 'N', fila - 1, columna);
 					ventana_x += 80;
 				}
