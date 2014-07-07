@@ -22,6 +22,8 @@ Semaforo.o:Clases/Semaforo.cpp
 	$(CC) $(CFLAGS) -c Clases/Semaforo.cpp
 Helper.o:Support/Helper.cpp
 	$(CC) $(CFLAGS) -c Support/Helper.cpp
+Timer.o:Clases/Timer.cpp
+	$(CC) $(CFLAGS) -c Clases/Timer.cpp
 
 .PHONY: clean
 clean:
