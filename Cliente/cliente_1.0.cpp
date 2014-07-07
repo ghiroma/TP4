@@ -30,6 +30,7 @@ pthread_mutex_t mutex_nombreOponente = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_torneoFinalizado = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_solicitudDeNuevaParitda = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_partidaFinalizada = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_murioServidorTorneo = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_mutex_t mutex_cola_grafico = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cola_ralph = PTHREAD_MUTEX_INITIALIZER;
@@ -90,7 +91,6 @@ void liberarRecursos();
 void mostrarPantalla(const char*);
 void esperarNombreOponente();
 void esperarPuertoPartida();
-void esperarPosicionesIniciales();
 void vaciarColas();
 void inicializarNuevaPartida();
 
@@ -312,7 +312,7 @@ int main(int argc, char *argv[]) {
 		pthread_mutex_lock(&mutex_torneoFinalizado);
 		auxTorneoFinalizado = torneoFinalizado;
 		pthread_mutex_unlock(&mutex_torneoFinalizado);
-		if (auxSolicitudDeNuevaPartida && !auxTorneoFinalizado) {
+		if (auxSolicitudDeNuevaPartida && !auxTorneoFinalizado && !murioServidorTorneo) {
 			//espero a que se cierre el ultimo thread de la partida anterior
 			pthread_join(tpid_enviar_partida, NULL);
 			sleep(3);
@@ -917,11 +917,12 @@ void* EscuchaTorneo(void *arg) {
 				break;
 			}
 		} else if (readData == 0) {
-			cout << "Murio el servidor torneo" << endl;
-
-			/// dar aviso de que murio y cerrar todo
-
 			murioServidorTorneo = true;
+			cout << "Murio el servidor torneo" << endl;
+			/// dar aviso de que murio y cerrar todo
+			mostrarPantalla("servertorneodown");
+			sleep(5);
+			exit(1);
 			break;
 		}
 		usleep(1000);
@@ -1380,8 +1381,11 @@ void liberarRecursos() {
 	pthread_mutex_destroy(&mutex_cola_grafico);
 	pthread_mutex_destroy(&mutex_torneoFinalizado);
 	pthread_mutex_destroy(&mutex_nombreOponente);
+	pthread_mutex_destroy(&mutex_murioServidorTorneo);
 
 	//SDL
 	SDL_Quit();
 	TTF_Quit();
+
+	cout<<"libero los recursos"<<endl;
 }
