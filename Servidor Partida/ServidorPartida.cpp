@@ -142,9 +142,16 @@ int main(int argc, char * argv[]) {
 
 	//Envio las posiciones iniciales a cada jugador.
 	cout << "Envio las posiciones iniciales a cada jugador" << endl;
-	cSocket1->SendBloq(posicionInicial1().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
-	cSocket2->SendBloq(posicionInicial2().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
-	cout<<"Posiciones iniciales enviadas"<<endl;
+
+	int result=0;
+	result = cSocket1->SendBloq(posicionInicial1().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+	if(result==-1)
+		cout<<"Error al enviar la posicion al jugador 1"<<endl;
+	cout<<"SRV PARTIDA: Enviada la posicion al jugador 1"<<endl;
+	result = cSocket2->SendBloq(posicionInicial2().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+	if(result==-1)
+		cout<<"Error al enviar la posicion al jugador 2"<<endl;
+	cout<<"SRV PARTIDA: Enviada la posicion al jugador 2"<<endl;
 
 	edificio = new Edificio(EDIFICIO_FILAS_1, EDIFICIO_COLUMNAS, 0);
 
@@ -157,7 +164,7 @@ int main(int argc, char * argv[]) {
 	pthread_create(&thread_validator, NULL, validator_thread, NULL);
 	pthread_create(&thread_sharedMemory, NULL, sharedMemory_thread, NULL);
 
-	pthread_join(thread_timer, NULL);
+	/*pthread_join(thread_timer, NULL);
 	cout<<"Joineado thread tiemr"<<endl;
 	pthread_join(thread_receiver1, NULL);
 	cout<<"Joineado thread receiver 1"<<endl;
@@ -168,7 +175,7 @@ int main(int argc, char * argv[]) {
 	pthread_join(thread_sender2, NULL);
 	cout<<"Joineado thread sender 2"<<endl;
 	pthread_join(thread_validator, NULL);
-	cout<<"Joineado thread validator"<<endl;
+	cout<<"Joineado thread validator"<<endl;*/
 	pthread_join(thread_sharedMemory, NULL);
 	cout<<"Joineado thread shared memory"<<endl;
 
