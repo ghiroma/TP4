@@ -108,7 +108,6 @@ sender1_thread(void * arguments) {
 			//Lo que venga del timer y validator, se replica a ambos jugadores.
 			string message;
 			message = Helper::desencolar(&sender1_queue, &mutex_sender1);
-			cout << "Mensaje a enviar: " << message << endl;
 			if (cliente1_conectado) {
 				cSocket1->SendBloq(message.c_str(), message.length());
 			}
@@ -127,10 +126,8 @@ void*
 sender2_thread(void * arguments) {
 	while (stop == false && cliente2_conectado) {
 		if (!sender2_queue.empty()) {
-			//Lo que venga del timer y validator, se replica a ambos jugadores.
 			string message;
 			message = Helper::desencolar(&sender2_queue, &mutex_sender2);
-			cout << "Mensaje a enviar: " << message << endl;
 			if (cliente2_conectado) {
 				cSocket2->SendBloq(message.c_str(), message.length());
 			}
@@ -155,7 +152,6 @@ receiver1_thread(void * fd) {
 		readDataCode = cSocket1->ReceiveBloq(buffer, sizeof(buffer));
 		if (readDataCode > 0) {
 			string aux(buffer);
-			cout << "Recibi mensaje: " << buffer << endl;
 			Helper::encolar(&aux, &receiver1_queue, &mutex_receiver1);
 		} else if (readDataCode == 0) {
 			//TODO decirle al jugador nro2 que el cliente 1 se desconecto.
@@ -186,7 +182,6 @@ receiver2_thread(void * fd) {
 		readDataCode = cSocket2->ReceiveNoBloq(buffer, sizeof(buffer));
 		if (readDataCode > 0) {
 			string mensaje(buffer);
-			cout << "Recibi mensaje: " << mensaje << endl;
 			Helper::encolar(&mensaje, &receiver2_queue, &mutex_receiver2);
 		} else if (readDataCode == 0) {
 			string message(CD_OPONENTE_DESCONECTADO);
@@ -216,7 +211,6 @@ void *validator_thread(void * argument) {
 			string scodigo = message.substr(0, LONGITUD_CODIGO);
 			int codigo = atoi(scodigo.c_str());
 			switch (codigo) {
-			//Escribe en el sender_queue.
 			case CD_MOVIMIENTO_FELIX_I:
 				caseMovimientoFelix(1, &message);
 				break;
@@ -237,7 +231,6 @@ void *validator_thread(void * argument) {
 			string message = receiver2_queue.front();
 			receiver2_queue.pop();
 			string scodigo = message.substr(0, LONGITUD_CODIGO);
-			cout << "Codigo leido " << scodigo << endl;
 			int codigo = atoi(scodigo.c_str());
 			switch (codigo) {
 			case CD_MOVIMIENTO_FELIX_I:
@@ -302,8 +295,8 @@ sharedMemory_thread(void * arguments) {
 			usleep(POOLING_DEADTIME);
 		}
 	} catch (const char * err) {
-		cout << "Error inesperado: " << err << endl;
-		exit(1);
+		cout << "Error inesperado: " << err <<" los puntos de esta partida no se veran reflejados en el torneo."<< endl;
+		/*exit(1);*/
 	}
 	pthread_exit(0);
 }
@@ -370,7 +363,6 @@ void caseMovimientoFelix(int jugador, string *message) {
 void casePerdidaVida(int jugador) {
 	if (jugador == 1) {
 		if (!felix1->perderVida()) {
-			cout << "Felix1 perdio vida, vidas actuales: " << felix1->cantidad_vidas << endl;
 			string message1(CD_PERDIDA_VIDA);
 			string message2(CD_PERDIDA_VIDA);
 			//TODO Corregir hardcodeo.
@@ -378,21 +370,18 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("200"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
-			cout << "Encole mensaje perdida vida" << endl;
 			felix1->mover(0, 0, edificio);
 		} else {
-			cout << "Felix1 perdio EL juego, vidas actuales" << felix1->cantidad_vidas << endl;
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
 			message1.append(Helper::fillMessage("1"));
 			message2.append(Helper::fillMessage("2"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
-			//pthread_mutex_lock(&mutex_edificio);
+			pthread_mutex_lock(&mutex_edificio);
 			edificio->ventanas[felix1->fila][felix1->columna].ocupado = false;
 			edificio->ventanas[0][0].ocupado = false;
-			//pthread_mutex_unlock(&mutex_edificio);
-			cout << "Jugador 1 muerto, posicion liberada fila: "<<felix1->fila<<" columna: "<<felix1->columna << endl;
+			pthread_mutex_unlock(&mutex_edificio);
 			cliente1_jugando = false;
 		}
 	} else {
@@ -405,21 +394,18 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("140"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
-			cout << "Encole mensaje perdida vida" << endl;
 			felix2->mover(0, EDIFICIO_COLUMNAS - 1, edificio);
 		} else {
-			cout << "Felix2 perdio el Juego, vidas actuales" << felix2->cantidad_vidas << endl;
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
 			message1.append(Helper::fillMessage("2"));
 			message2.append(Helper::fillMessage("1"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
-			//pthread_mutex_lock(&mutex_edificio);
+			pthread_mutex_lock(&mutex_edificio);
 			edificio->ventanas[felix2->fila][felix2->columna].ocupado = false;
 			edificio->ventanas[0][EDIFICIO_COLUMNAS - 1].ocupado = false;
-			//pthread_mutex_unlock(&mutex_edificio);
-			cout << "Jugador 2 muerto, posicion liberada" << endl;
+			pthread_mutex_unlock(&mutex_edificio);
 			cliente2_jugando = false;
 		}
 	}
@@ -430,7 +416,7 @@ void casePerdidaVida(int jugador) {
  */
 
 void caseVentanaArreglada(int jugador) {
-	//pthread_mutex_lock(&mutex_edificio);
+	pthread_mutex_lock(&mutex_edificio);
 	if (jugador == 1) {
 		if (felix1->reparar(edificio)) {
 			string message1(CD_VENTANA_ARREGLADA);
@@ -449,14 +435,13 @@ void caseVentanaArreglada(int jugador) {
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
 		}
-		//pthread_mutex_unlock(&mutex_edificio);
-
 		if (tramoFinalizado(edificio)) {
-			cout << "Se arreglaron todas las ventanas" << endl;
 			cliente1_jugando = false;
 			cliente2_jugando = false;
 		}
 	}
+	pthread_mutex_unlock(&mutex_edificio);
+
 }
 
 void caseVentanaArreglando(int jugador) {
@@ -479,7 +464,6 @@ void liberarRecursos() {
 	shmctl(shmIds.shmId, IPC_RMID, 0);
 	delete (cSocket1);
 	delete (cSocket2);
-	cout << "Partida -> terimino liberrarRecursos" << endl;
 }
 
 string posicionInicial1() {
@@ -511,23 +495,18 @@ string posicionInicial2() {
 	strcpy(cPos, cColumna);
 	strcat(cPos, cFila);
 	message.append(Helper::fillMessage(cPos));
-	if(felix2==NULL)
-		cout<<"Felix 2 es NULOO"<<endl;
 	felix2->fila = fila;
 	felix2->columna = columna;
-	cout<<"Posicion inicial 2: "<<message<<endl;
 	return message;
 }
 
 bool tramoFinalizado(Edificio * edificio) {
 	int result = 0;
-	//pthread_mutex_lock(&mutex_edificio);
 	for (int fila = 0; fila < edificio->filas; fila++) {
 		for (int columna = 0; columna < edificio->columnas; columna++) {
 			if (!(fila == 0 && columna == 2))
 				result += edificio->ventanas[fila][columna].ventanaRota;
 		}
 	}
-	//pthread_mutex_unlock(&mutex_edificio);
 	return result == 0;
 }
