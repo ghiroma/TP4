@@ -212,7 +212,6 @@ void *validator_thread(void * argument) {
 			string message = receiver1_queue.front();
 			receiver1_queue.pop();
 			string scodigo = message.substr(0, LONGITUD_CODIGO);
-			cout << "Codigo leido " << scodigo << endl;
 			int codigo = atoi(scodigo.c_str());
 			switch (codigo) {
 			//Escribe en el sender_queue.
@@ -287,14 +286,10 @@ sharedMemory_thread(void * arguments) {
 			//Perdieron ambos, asi que finalmente cierro.
 			if (!cliente1_jugando && !cliente2_jugando) {
 
-				//if (cliente1_jugando && cliente2_jugando) {
-
 				puntaje->idJugador1 = felix1->id;
 				puntaje->idJugador2 = felix2->id;
 				puntaje->puntajeJugador1 = felix1->puntaje_parcial;
 				puntaje->puntajeJugador2 = felix2->puntaje_parcial;
-				//puntaje->puntajeJugador1 = 500;
-				//puntaje->puntajeJugador2 = 750;
 				puntaje->partidaFinalizadaOk = true;
 
 				cout << "SRV PARTIDA: Puntajes escritos" << endl;
@@ -319,11 +314,9 @@ void caseMovimientoFelix(int jugador, string *message) {
 	int fila;
 	int columna;
 	columna = atoi(message->substr(5, 1).c_str());
-	//columna = atoi(message->substr(4, 1).c_str());
 	fila = atoi(message->substr(6, 1).c_str());
 
 	if (jugador == 1) {
-		//if (validateMovement(felix1, fila, columna, edificio)) {
 		if (felix1->mover(columna, fila, edificio)) {
 			char auxFila[2];
 			char auxColumna[2];
@@ -345,7 +338,6 @@ void caseMovimientoFelix(int jugador, string *message) {
 			Helper::encolar(&mensaje_movimiento2, &sender2_queue, &mutex_sender2);
 		}
 	} else {
-		//if (validateMovement(felix2, fila, columna, edificio)) {
 		if (felix2->mover(columna, fila, edificio)) {
 			char auxFila[2];
 			char auxColumna[2];
@@ -375,7 +367,6 @@ void caseMovimientoFelix(int jugador, string *message) {
 
 void casePerdidaVida(int jugador) {
 	if (jugador == 1) {
-		//cout << "Perdieron vida" << endl;
 		if (!felix1->perderVida()) {
 			cout << "Felix1 perdio vida, vidas actuales: " << felix1->cantidad_vidas << endl;
 			string message1(CD_PERDIDA_VIDA);
@@ -400,7 +391,6 @@ void casePerdidaVida(int jugador) {
 			cliente1_jugando = false;
 		}
 	} else {
-		//cout << "Perdieron vida" << endl;
 		if (!felix2->perderVida()) {
 			cout << "Felix2 perdio vida, vidas actuales" << felix2->cantidad_vidas << endl;
 			//TODO Sacar harcodeo.
@@ -507,6 +497,5 @@ string posicionInicial2() {
 	message.append(Helper::fillMessage(cPos));
 	felix2->fila = fila;
 	felix2->columna = columna;
-	cout << "Posicion inicial del jugadoro 2" << message << endl;
 	return message;
 }

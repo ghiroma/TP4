@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) {
 		} catch (const char *err) {
 			cout << "No se puedo conectar al torneo" << endl;
 			error = true;
-			usleep(10000);
+			usleep(1000);
 		}
 	} while (error == true);
 	cout << "Conectado" << endl;
@@ -817,7 +817,7 @@ void* EscuchaServidor(void *arg) {
 			}
 		}
 
-		usleep(10000);
+		usleep(1000);
 	}
 	cout << "sale el thread de escucharServidor" << endl;
 	pthread_exit(NULL);
@@ -843,7 +843,7 @@ void * EnvioServidor(void * arg) {
 		if (auxSolicitudDeNuevaParitda) {
 			break;
 		}
-		usleep(10000);
+		usleep(1000);
 	}
 	cout << "sale el thread de EnvioServidor" << endl;
 	pthread_exit(NULL);
@@ -923,7 +923,7 @@ void* EscuchaTorneo(void *arg) {
 			murioServidorTorneo = true;
 			break;
 		}
-		usleep(10000);
+		usleep(1000);
 	}
 
 	pthread_exit(NULL);
@@ -1262,8 +1262,14 @@ void inicializarNuevaPartida() {
 	//////////////////////////////////////
 
 	//Me conecto al servidor de partida.
+	try{
 	socketPartida = new CommunicationSocket(puertoServidorPartida, (char*) ip.c_str());
-
+	}
+	catch(const char * err)
+	{
+		cout<<"Error al querer conectar al puerto de partida"<<endl;
+		exit(1);
+	}
 	//mando mi ID
 	string message(CD_ID_JUGADOR);
 	message.append(fillMessage(mi_id));
@@ -1313,7 +1319,7 @@ void esperarPuertoPartida() {
 		if (msjPuerto == true) {
 			break;
 		}
-		usleep(10000);
+		usleep(1000);
 	}
 	msjPuertoRecibido = false;
 	cout << "recibio el puerto:" << puertoServidorPartida << endl;
@@ -1330,7 +1336,7 @@ void esperarNombreOponente() {
 			recibioNombreOponente = true;
 		}
 		pthread_mutex_unlock(&mutex_nombreOponente);
-		usleep(10000);
+		usleep(1000);
 	}
 	cout << "f esperarNombreOponente ->recibo el nombre de mi oponente:" << felix2_nombre << endl;
 }
