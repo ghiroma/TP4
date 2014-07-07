@@ -755,6 +755,16 @@ void* EscuchaServidor(void *arg) {
 					}
 				}
 				break;
+			case CD_PERDIO_I:
+				if(buffer[6]=='1')
+				{
+					felix1_vidas=0;
+				}
+				else if(buffer[6]=='2')
+				{
+					felix2_vidas=0;
+				}
+				break;
 			case CD_VENTANA_ARREGLANDO_I:
 				//TODO grafico la otra ventana arreglada.
 				felix2_reparar = 'S';
