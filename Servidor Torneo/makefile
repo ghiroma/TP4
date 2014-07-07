@@ -17,3 +17,7 @@ ServerSocket.o:Clases/ServerSocket.cpp
 	$(CC) $(CFLAGS) -c Clases/ServerSocket.cpp $(LIBS)
 Semaforo.o:Clases/Semaforo.cpp
 	$(CC) $(CFLAGS) -c Clases/Semaforo.cpp $(LIBS)
+
+.PHONY: clean
+clean:
+	rm -f *.o
