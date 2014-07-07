@@ -129,14 +129,14 @@ int main(int argc, char * argv[]) {
 	 * Estoy a la espera de que los clientes me envien sus ids.
 	 */
 	cout << "Espero IDs de los clientes" << endl;
-	while (felix1 == NULL && felix2 == NULL) {
+	while (felix1 == NULL || felix2 == NULL) {
 		cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
 		string message(buffer);
-		if (message.substr(0, LONGITUD_CODIGO) == CD_ID_JUGADOR)
+		if (message.substr(0, LONGITUD_CODIGO) == CD_ID_JUGADOR && felix1==NULL)
 			felix1 = new Felix(cantVidas, atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str()));
 		cSocket2->ReceiveNoBloq(buffer, sizeof(buffer));
 		string message2(buffer);
-		if (message2.substr(0, LONGITUD_CODIGO) == CD_ID_JUGADOR)
+		if (message2.substr(0, LONGITUD_CODIGO) == CD_ID_JUGADOR && felix2==NULL)
 			felix2 = new Felix(cantVidas, atoi(message2.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str()));
 	}
 
@@ -148,6 +148,10 @@ int main(int argc, char * argv[]) {
 	if(result==-1)
 		cout<<"Error al enviar la posicion al jugador 1"<<endl;
 	cout<<"SRV PARTIDA: Enviada la posicion al jugador 1"<<endl;
+	if(cSocket2==NULL)
+	{
+		cout<<"El socket2 es nulo"<<endl;
+	}
 	result = cSocket2->SendBloq(posicionInicial2().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
 	if(result==-1)
 		cout<<"Error al enviar la posicion al jugador 2"<<endl;
@@ -185,6 +189,7 @@ int main(int argc, char * argv[]) {
 	pthread_mutex_destroy(&mutex_receiver2);
 	pthread_mutex_destroy(&mutex_sender1);
 	pthread_mutex_destroy(&mutex_sender2);
+	pthread_mutex_destroy(&mutex_edificio);
 
 	cout << " partida finalizanda " << endl;
 	return 0;

@@ -56,6 +56,7 @@ static const int CD_RANKING_I = 80;
 static const int CD_FIN_TORNEO_I = 81;
 static const int CD_POSICION_INICIAL_I = 46;
 static const int CD_OPONENTE_DESCONECTADO_I = 96;
+static const int CD_PERDIO_I = 98;
 static const int CD_ACK_I = 99;
 
 #endif /* CONSTANTES_H_ */

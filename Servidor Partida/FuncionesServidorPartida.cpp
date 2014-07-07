@@ -58,6 +58,8 @@ pthread_mutex_t mutex_receiver2 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_sender1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_sender2 = PTHREAD_MUTEX_INITIALIZER;
 
+pthread_mutex_t mutex_edificio = PTHREAD_MUTEX_INITIALIZER;
+
 struct puntajes * puntaje;
 struct idsSharedResources shmIds;
 
@@ -386,8 +388,11 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("2"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
+			//pthread_mutex_lock(&mutex_edificio);
 			edificio->ventanas[felix1->fila][felix1->columna].ocupado = false;
-			cout << "Jugador 1 muerto, posicion liberada" << endl;
+			edificio->ventanas[0][0].ocupado = false;
+			//pthread_mutex_unlock(&mutex_edificio);
+			cout << "Jugador 1 muerto, posicion liberada fila: "<<felix1->fila<<" columna: "<<felix1->columna << endl;
 			cliente1_jugando = false;
 		}
 	} else {
@@ -410,7 +415,10 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("1"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
+			//pthread_mutex_lock(&mutex_edificio);
 			edificio->ventanas[felix2->fila][felix2->columna].ocupado = false;
+			edificio->ventanas[0][EDIFICIO_COLUMNAS - 1].ocupado = false;
+			//pthread_mutex_unlock(&mutex_edificio);
 			cout << "Jugador 2 muerto, posicion liberada" << endl;
 			cliente2_jugando = false;
 		}
@@ -422,6 +430,7 @@ void casePerdidaVida(int jugador) {
  */
 
 void caseVentanaArreglada(int jugador) {
+	//pthread_mutex_lock(&mutex_edificio);
 	if (jugador == 1) {
 		if (felix1->reparar(edificio)) {
 			string message1(CD_VENTANA_ARREGLADA);
@@ -439,6 +448,13 @@ void caseVentanaArreglada(int jugador) {
 			message2.append(Helper::fillMessage("1"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
+		}
+		//pthread_mutex_unlock(&mutex_edificio);
+
+		if (tramoFinalizado(edificio)) {
+			cout << "Se arreglaron todas las ventanas" << endl;
+			cliente1_jugando = false;
+			cliente2_jugando = false;
 		}
 	}
 }
@@ -495,7 +511,23 @@ string posicionInicial2() {
 	strcpy(cPos, cColumna);
 	strcat(cPos, cFila);
 	message.append(Helper::fillMessage(cPos));
+	if(felix2==NULL)
+		cout<<"Felix 2 es NULOO"<<endl;
 	felix2->fila = fila;
 	felix2->columna = columna;
+	cout<<"Posicion inicial 2: "<<message<<endl;
 	return message;
+}
+
+bool tramoFinalizado(Edificio * edificio) {
+	int result = 0;
+	//pthread_mutex_lock(&mutex_edificio);
+	for (int fila = 0; fila < edificio->filas; fila++) {
+		for (int columna = 0; columna < edificio->columnas; columna++) {
+			if (!(fila == 0 && columna == 2))
+				result += edificio->ventanas[fila][columna].ventanaRota;
+		}
+	}
+	//pthread_mutex_unlock(&mutex_edificio);
+	return result == 0;
 }

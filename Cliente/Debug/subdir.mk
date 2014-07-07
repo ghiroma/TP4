@@ -3,10 +3,6 @@
 ################################################################################
 
 # Add inputs and outputs from these tool invocations to the build variables 
-O_SRCS += \
-../CommunicationSocket.o \
-../cliente_1.0.o 
-
 CPP_SRCS += \
 ../cliente_1.0.cpp 
 

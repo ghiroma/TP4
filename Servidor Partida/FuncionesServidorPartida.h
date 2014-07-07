@@ -32,6 +32,7 @@ extern pthread_mutex_t mutex_receiver1;
 extern pthread_mutex_t mutex_receiver2;
 extern pthread_mutex_t mutex_sender1;
 extern pthread_mutex_t mutex_sender2;
+extern pthread_mutex_t mutex_edificio;
 
 extern struct idsSharedResources shmIds;
 
@@ -48,6 +49,7 @@ void caseVentanaArreglada(int nroJugador);
 void caseVentanaArreglando(int jugador);
 void SIGINT_Handler(int inum);
 void liberarRecursos();
+bool tramoFinalizado(Edificio * edificio);
 string posicionInicial1();
 string posicionInicial2();
 
