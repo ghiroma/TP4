@@ -223,13 +223,6 @@ int main(int argc, char *argv[]) {
 	roca2 = SDL_LoadBMP(roca2_bmp);
 	torta = SDL_LoadBMP(torta_bmp);
 
-	/* lo puse en inicializaPartida
-	 for (int i = 0; i < 20; i++) {
-	 rocas_desplazamiento[i].x = 0;
-	 rocas_desplazamiento[i].y = 0;
-	 }
-	 */
-
 	//Inicio modo video
 	SDL_Init(SDL_INIT_VIDEO);
 	//Inicio modo texto grafico
@@ -301,9 +294,6 @@ int main(int argc, char *argv[]) {
 	//Thread para escuchar al servidor de Torneo.
 	pthread_create(&tpid_escuchar_torneo, NULL, EscuchaTorneo, &socketTorneo->ID);
 
-	///////////////////////////////////////////////////////////////////////////////
-
-	///////////////////////////////////////////////////////////////////////////////
 
 	//Lanzo el thread que va a estar a la escucha de las teclas que se presionan.
 	pthread_create(&tpid_teclas, NULL, EscuchaTeclas, NULL);
@@ -324,9 +314,7 @@ int main(int argc, char *argv[]) {
 		pthread_mutex_unlock(&mutex_torneoFinalizado);
 		if (auxSolicitudDeNuevaPartida && !auxTorneoFinalizado) {
 			//espero a que se cierre el ultimo thread de la partida anterior
-			cout << "bloqueado en el join esperando el th enviarServidoPartida" << endl;
 			pthread_join(tpid_enviar_partida, NULL);
-			cout << "DEEEESbloqueado en el join esperando el th enviarServidoPartida" << endl;
 			sleep(3);
 			inicializarNuevaPartida();
 			pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
@@ -354,37 +342,37 @@ int main(int argc, char *argv[]) {
 		}
 		Dibujar(PARED_X, PARED_Y, pared, superficie);
 
-		//Dibujo los puntos.
+		//Dibujo los puntos de los jugadores
 		pantalla_puntos.x = 10;
 		pantalla_puntos.y = 30;
 		sprintf(felix_cartel_puntos, "Puntos %d", felix1_puntos);
 		puntos = TTF_RenderText_Solid(fuente, felix_cartel_puntos, color_texto);
 		SDL_BlitSurface(puntos, NULL, superficie, &pantalla_puntos);
 
-		pantalla_puntos.x = 520;
+		pantalla_puntos.x = 500;
 		sprintf(felix_cartel_puntos, "Puntos %d", felix2_puntos);
 		puntos = TTF_RenderText_Solid(fuente, felix_cartel_puntos, color_texto);
 		SDL_BlitSurface(puntos, NULL, superficie, &pantalla_puntos);
 
-		//Dibujo las vidas.
+		//Dibujo la cantidad de vidas
 		pantalla_vidas.x = 10;
 		pantalla_vidas.y = 50;
 		sprintf(felix_cartel_vidas, "Vidas %d", felix1_vidas);
 		vidas = TTF_RenderText_Solid(fuente, felix_cartel_vidas, color_texto);
 		SDL_BlitSurface(vidas, NULL, superficie, &pantalla_vidas);
 
-		pantalla_vidas.x = 520;
+		pantalla_vidas.x = 500;
 		sprintf(felix_cartel_vidas, "Vidas %d", felix2_vidas);
 		vidas = TTF_RenderText_Solid(fuente, felix_cartel_vidas, color_texto);
 		SDL_BlitSurface(vidas, NULL, superficie, &pantalla_vidas);
 
-		//Dibujo el texto.
+		//Dibujo el nombre de los Jugadores Felix
 		pantalla_texto.x = 10;
 		pantalla_texto.y = 10;
 		texto = TTF_RenderText_Solid(fuente, felix1_nombre.c_str(), color_texto);
 		SDL_BlitSurface(texto, NULL, superficie, &pantalla_texto);
 
-		pantalla_texto.x = 520;
+		pantalla_texto.x = 500;
 		texto = TTF_RenderText_Solid(fuente, felix2_nombre.c_str(), color_texto);
 		SDL_BlitSurface(texto, NULL, superficie, &pantalla_texto);
 
@@ -751,7 +739,7 @@ void* EscuchaServidor(void *arg) {
 			case CD_OPONENTE_DESCONECTADO_I:
 				felix2_vidas = 0;
 				felix2_puntos = 0;
-				cout<<"SE DESCONECTO MI OPONENETE"<<endl;
+				cout << "SE DESCONECTO MI OPONENETE" << endl;
 				break;
 			case CD_PERDIDA_VIDA_I:
 				if (buffer[4] == '1') {
@@ -853,11 +841,14 @@ void* EscuchaTorneo(void *arg) {
 	int fd = *(int *) arg;
 	int readData = 0;
 	const char* mensajeNombre;
-	string auxNombreOponente;
+	char auxNombreOponente[6];
 	cout << "FD: " << fd << endl;
 	CommunicationSocket cSocket(fd);
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
+	int indice;
+	int auxIndice;
+
 	while (true) {
 		//cout << "Espero msj del servidor de Torneo ... " << endl;
 		readData = cSocket.ReceiveBloq(buffer, sizeof(buffer));
@@ -889,16 +880,16 @@ void* EscuchaTorneo(void *arg) {
 				break;
 			case CD_NOMBRE_I:
 				//recibo y limpio el nombre de ceros
-				cout << "th ESCUCHAR TORNEO -> recibo el nombre de mi oponente:" << aux_buffer << endl;
 				mensajeNombre = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str();
-				auxNombreOponente = "";
-				int indice;
+
+				auxIndice = 0;
 				for (indice = 0; indice < LONGITUD_CONTENIDO; indice++) {
 					if (mensajeNombre[indice] != '0') {
-						cout << "Agrego al nombre, la letra: " << mensajeNombre[indice] << endl;
-						auxNombreOponente += mensajeNombre[indice];
+						auxNombreOponente[auxIndice] = mensajeNombre[indice];
+						auxIndice++;
 					}
 				}
+				auxNombreOponente[auxIndice] = '\0';
 				pthread_mutex_lock(&mutex_nombreOponente);
 				nombreOponente = auxNombreOponente;
 				pthread_mutex_unlock(&mutex_nombreOponente);
@@ -1220,8 +1211,9 @@ void inicializarNuevaPartida() {
 
 	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
 	esperarNombreOponente();
-	cout << "nombre oponente:" << nombreOponente << endl;
-
+	pthread_mutex_lock(&mutex_nombreOponente);
+	cout << "despues de esperarNombreOponente():" << nombreOponente << endl;
+	pthread_mutex_unlock(&mutex_nombreOponente);
 	//////////////////////////////////////
 	//inicializacion de variables
 	felix1_posicion = {0, 0};
@@ -1324,7 +1316,6 @@ void esperarNombreOponente() {
 	int recibioNombreOponente = false;
 	while (!recibioNombreOponente) {
 		pthread_mutex_lock(&mutex_nombreOponente);
-		cout << "nombreOponente:" << nombreOponente << " - Lenght:" << nombreOponente.length() << endl;
 		if (nombreOponente.length() > 0) {
 			felix2_nombre = nombreOponente;
 			recibioNombreOponente = true;
