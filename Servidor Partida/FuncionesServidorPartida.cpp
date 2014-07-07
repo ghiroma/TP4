@@ -157,6 +157,9 @@ receiver1_thread(void * fd) {
 			Helper::encolar(&aux, &receiver1_queue, &mutex_receiver1);
 		} else if (readDataCode == 0) {
 			//TODO decirle al jugador nro2 que el cliente 1 se desconecto.
+			string message(CD_OPONENTE_DESCONECTADO);
+			message.append(Helper::fillMessage("0"));
+			Helper::encolar(&message, &sender2_queue, &mutex_sender2);
 			cliente1_conectado = false;
 			cliente1_jugando = false;
 			delete (cSocket1);
@@ -184,6 +187,9 @@ receiver2_thread(void * fd) {
 			cout << "Recibi mensaje: " << mensaje << endl;
 			Helper::encolar(&mensaje, &receiver2_queue, &mutex_receiver2);
 		} else if (readDataCode == 0) {
+			string message(CD_OPONENTE_DESCONECTADO);
+			message.append(Helper::fillMessage("0"));
+			Helper::encolar(&message, &sender1_queue, &mutex_sender1);
 			cliente2_conectado = false;
 			cliente2_jugando = false;
 			delete (cSocket2);
@@ -291,7 +297,7 @@ sharedMemory_thread(void * arguments) {
 				//puntaje->puntajeJugador2 = 750;
 				puntaje->partidaFinalizadaOk = true;
 
-				cout<<"SRV PARTIDA: Puntajes escritos"<<endl;
+				cout << "SRV PARTIDA: Puntajes escritos" << endl;
 
 				stop = true;
 			}
@@ -371,7 +377,7 @@ void casePerdidaVida(int jugador) {
 	if (jugador == 1) {
 		//cout << "Perdieron vida" << endl;
 		if (!felix1->perderVida()) {
-			cout<<"Felix1 perdio vida, vidas actuales: "<<felix1->cantidad_vidas<<endl;
+			cout << "Felix1 perdio vida, vidas actuales: " << felix1->cantidad_vidas << endl;
 			string message1(CD_PERDIDA_VIDA);
 			string message2(CD_PERDIDA_VIDA);
 			//TODO Corregir hardcodeo.
@@ -379,10 +385,10 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("200"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
-			cout<<"Encole mensaje perdida vida"<<endl;
+			cout << "Encole mensaje perdida vida" << endl;
 			felix1->mover(0, 0, edificio);
 		} else {
-			cout<<"Felix1 perdio EL juego, vidas actuales"<<felix1->cantidad_vidas<<endl;
+			cout << "Felix1 perdio EL juego, vidas actuales" << felix1->cantidad_vidas << endl;
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
 			message1.append(Helper::fillMessage("1"));
@@ -390,13 +396,13 @@ void casePerdidaVida(int jugador) {
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
 			edificio->ventanas[felix1->fila][felix1->columna].ocupado = false;
-			cout<<"Jugador 1 muerto, posicion liberada"<<endl;
+			cout << "Jugador 1 muerto, posicion liberada" << endl;
 			cliente1_jugando = false;
 		}
 	} else {
 		//cout << "Perdieron vida" << endl;
 		if (!felix2->perderVida()) {
-			cout<<"Felix2 perdio vida, vidas actuales"<<felix2->cantidad_vidas<<endl;
+			cout << "Felix2 perdio vida, vidas actuales" << felix2->cantidad_vidas << endl;
 			//TODO Sacar harcodeo.
 			string message1(CD_PERDIDA_VIDA);
 			string message2(CD_PERDIDA_VIDA);
@@ -404,10 +410,10 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("140"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
-			cout<<"Encole mensaje perdida vida"<<endl;
+			cout << "Encole mensaje perdida vida" << endl;
 			felix2->mover(0, EDIFICIO_COLUMNAS - 1, edificio);
 		} else {
-			cout<<"Felix2 perdio el Juego, vidas actuales"<<felix2->cantidad_vidas<<endl;
+			cout << "Felix2 perdio el Juego, vidas actuales" << felix2->cantidad_vidas << endl;
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
 			message1.append(Helper::fillMessage("2"));
@@ -415,7 +421,7 @@ void casePerdidaVida(int jugador) {
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
 			edificio->ventanas[felix2->fila][felix2->columna].ocupado = false;
-			cout<<"Jugador 2 muerto, posicion liberada"<<endl;
+			cout << "Jugador 2 muerto, posicion liberada" << endl;
 			cliente2_jugando = false;
 		}
 	}
@@ -467,7 +473,7 @@ void liberarRecursos() {
 	shmctl(shmIds.shmId, IPC_RMID, 0);
 	delete (cSocket1);
 	delete (cSocket2);
-	cout<<"Partida -> terimino liberrarRecursos"<<endl;
+	cout << "Partida -> terimino liberrarRecursos" << endl;
 }
 
 string posicionInicial1() {

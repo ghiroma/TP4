@@ -38,6 +38,7 @@ static const char* CD_POSICION_INICIAL = "46";
 static const char* CD_ACK = "99";
 static const char* CD_PERDIO = "98";
 static const char* CD_TORNEO_CAIDO = "97";
+static const char* CD_OPONENTE_DESCONECTADO = "96";
 static const char* CD_RANKING = "80";
 
 

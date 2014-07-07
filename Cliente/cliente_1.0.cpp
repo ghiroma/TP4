@@ -524,10 +524,7 @@ int main(int argc, char *argv[]) {
 					message.append(fillMessage("0"));
 					cola_grafico.push(message);
 					ventana_reparada(&felix1_posicion);
-					/*if (ventana_reparada(&felix1_posicion) == 'S') {
-					 felix1_puntos++;
-					 ventanas_reparadas++;
-					 }*/
+
 					felix1_reparar = 'N';
 				}
 				cout << "casi termina repara ventana" << endl;
@@ -563,10 +560,10 @@ int main(int argc, char *argv[]) {
 				else if (felix2 == felix_r52) {
 					felix2 = felix_d2;
 
-					string message(CD_VENTANA_ARREGLADA);
-					message.append(fillMessage("0"));
-					cola_grafico.push(message);
-					ventana_reparada(&felix2_posicion);
+					//string message(CD_VENTANA_ARREGLADA);
+					//message.append(fillMessage("0"));
+					//cola_grafico.push(message);
+					//ventana_reparada(&felix2_posicion);
 					//felix2_reparar = 'N';
 				}
 				cout << "casi termina repara ventana" << endl;
@@ -750,6 +747,11 @@ void* EscuchaServidor(void *arg) {
 				} else if (buffer[4] == '2') {
 					cola_felix2.push(aux_buffer);
 				}
+				break;
+			case CD_OPONENTE_DESCONECTADO_I:
+				felix2_vidas = 0;
+				felix2_puntos = 0;
+				cout<<"SE DESCONECTO MI OPONENETE"<<endl;
 				break;
 			case CD_PERDIDA_VIDA_I:
 				if (buffer[4] == '1') {

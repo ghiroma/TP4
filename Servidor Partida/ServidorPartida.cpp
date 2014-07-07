@@ -158,12 +158,19 @@ int main(int argc, char * argv[]) {
 	pthread_create(&thread_sharedMemory, NULL, sharedMemory_thread, NULL);
 
 	pthread_join(thread_timer, NULL);
+	cout<<"Joineado thread tiemr"<<endl;
 	pthread_join(thread_receiver1, NULL);
+	cout<<"Joineado thread receiver 1"<<endl;
 	pthread_join(thread_receiver2, NULL);
+	cout<<"Joineado thread receiver 2"<<endl;
 	pthread_join(thread_sender1, NULL);
+	cout<<"Joineado thread sender 1"<<endl;
 	pthread_join(thread_sender2, NULL);
+	cout<<"Joineado thread sender 2"<<endl;
 	pthread_join(thread_validator, NULL);
+	cout<<"Joineado thread validator"<<endl;
 	pthread_join(thread_sharedMemory, NULL);
+	cout<<"Joineado thread shared memory"<<endl;
 
 //TODO finalizada la partida, enviar los puntajes actualizados.
 
