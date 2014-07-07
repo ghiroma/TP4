@@ -9,6 +9,8 @@
 #include "Timer.h"
 #include "../Support/Constantes.h"
 #include "../Support/Helper.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 using namespace std;
 
