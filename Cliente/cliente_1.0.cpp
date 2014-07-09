@@ -8,12 +8,12 @@
 #include <time.h>
 #include <signal.h>
 #include <sys/types.h>
-#include "Clases/CommunicationSocket.h"
 #include <iostream>
 #include <string>
 #include <queue>
-#include "Support/Constantes.h"
 #include <algorithm>
+#include "Clases/CommunicationSocket.h"
+#include "Support/Constantes.h"
 
 #define ANCHO_PANTALLA	640
 #define ALTO_PANTALLA 480
@@ -39,6 +39,8 @@ pthread_mutex_t mutex_cola_torta = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cola_mensajes_enviar = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cola_felix1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cola_felix2 = PTHREAD_MUTEX_INITIALIZER;
+
+pthread_mutex_t mutex_mostrar_pantalla = PTHREAD_MUTEX_INITIALIZER;
 
 struct ventana {
 	short int x;
@@ -93,6 +95,8 @@ void esperarNombreOponente();
 void esperarPuertoPartida();
 void vaciarColas();
 void inicializarNuevaPartida();
+bool cargarImagenes();
+void esperarIdPartida();
 
 /* 
 
@@ -121,7 +125,6 @@ unsigned short int rahlp_y = PARED_Y;
 short int roca_siguiente = 0;
 short int cant_rocas = 0;
 short int ralph_destino = 0;
-int puertoServidorPartida = 0;
 unsigned short int tramo = 1;
 unsigned short int nivel = 1;
 pthread_t tpid_teclas, tpid_escuchar_partida, tpid_enviar_partida, tpid_escuchar_torneo;
@@ -152,6 +155,8 @@ SDL_Rect pantalla_juego, pantalla_texto, pantalla_puntos, pantalla_vidas, posBac
 SDL_Color color_texto;
 TTF_Font *fuente;
 
+unsigned int idPartida = 0;
+unsigned int puertoServidorPartida = 0;
 //configuracion archivo configFile
 unsigned short int puertoTorneo;
 string ip = "";
@@ -175,59 +180,20 @@ CommunicationSocket * socketPartida;
 
 int main(int argc, char *argv[]) {
 	atexit(liberarRecursos);
+	signal(SIGINT, handler);
 
-	const char pared_tramo1n1_bmp[] = "Sprites/pared_tramo1n1.bmp", pared_tramo2n1_bmp[] = "Sprites/pared_tramo2n1.bmp", pared_tramo3n1_bmp[] = "Sprites/pared_tramo3n1.bmp", ventana_sana_bmp[] = "Sprites/ventana_sana.bmp", ventana_rota1_bmp[] = "Sprites/ventana_rota1.bmp", ventana_rota2_bmp[] =
-			"Sprites/ventana_rota2.bmp", ventana_rota3_bmp[] = "Sprites/ventana_rota3.bmp", ventana_rota4_bmp[] = "Sprites/ventana_rota4.bmp", puerta_bmp[] = "Sprites/puerta_grande.bmp", felixd1_bmp[] = "Sprites/felix_d1.bmp", felixi1_bmp[] = "Sprites/felix_i1.bmp", felixr11_bmp[] =
-			"Sprites/felix_r11.bmp", felixr21_bmp[] = "Sprites/felix_r21.bmp", felixr31_bmp[] = "Sprites/felix_r31.bmp", felixr41_bmp[] = "Sprites/felix_r41.bmp", felixr51_bmp[] = "Sprites/felix_r51.bmp",
+	int readData=0;
 
-	felixr12_bmp[] = "Sprites/felix_r12.bmp", felixr22_bmp[] = "Sprites/felix_r22.bmp", felixr32_bmp[] = "Sprites/felix_r32.bmp", felixr42_bmp[] = "Sprites/felix_r42.bmp", felixr52_bmp[] = "Sprites/felix_r52.bmp",
-
-	felixd2_bmp[] = "Sprites/felix_d2.bmp", felixi2_bmp[] = "Sprites/felix_i2.bmp", ralph1_bmp[] = "Sprites/rahlp_1.bmp", ralph2_bmp[] = "Sprites/rahlp_2.bmp", ralph3_bmp[] = "Sprites/rahlp_3.bmp", ralph4_bmp[] = "Sprites/rahlp_4.bmp", ralph5_bmp[] = "Sprites/rahlp_5.bmp", ralph6_bmp[] =
-			"Sprites/rahlp_6.bmp", pajaro1_bmp[] = "Sprites/pajaro_1.bmp", pajaro2_bmp[] = "Sprites/pajaro_2.bmp", roca1_bmp[] = "Sprites/roca1.bmp", roca2_bmp[] = "Sprites/roca2.bmp", torta_bmp[] = "Sprites/torta.bmp";
-
-	pared_tramo1n1 = SDL_LoadBMP(pared_tramo1n1_bmp);
-	pared_tramo2n1 = SDL_LoadBMP(pared_tramo2n1_bmp);
-	pared_tramo3n1 = SDL_LoadBMP(pared_tramo3n1_bmp);
-	ventana_sana = SDL_LoadBMP(ventana_sana_bmp);
-	ventana_rota1 = SDL_LoadBMP(ventana_rota1_bmp);
-	ventana_rota2 = SDL_LoadBMP(ventana_rota2_bmp);
-	ventana_rota3 = SDL_LoadBMP(ventana_rota3_bmp);
-	ventana_rota4 = SDL_LoadBMP(ventana_rota4_bmp);
-	puerta = SDL_LoadBMP(puerta_bmp);
-	felix_d1 = SDL_LoadBMP(felixd1_bmp);
-	felix_i1 = SDL_LoadBMP(felixi1_bmp);
-
-	felix_r11 = SDL_LoadBMP(felixr11_bmp);
-	felix_r21 = SDL_LoadBMP(felixr21_bmp);
-	felix_r31 = SDL_LoadBMP(felixr31_bmp);
-	felix_r41 = SDL_LoadBMP(felixr41_bmp);
-	felix_r51 = SDL_LoadBMP(felixr51_bmp);
-
-	felix_r12 = SDL_LoadBMP(felixr12_bmp);
-	felix_r22 = SDL_LoadBMP(felixr22_bmp);
-	felix_r32 = SDL_LoadBMP(felixr32_bmp);
-	felix_r42 = SDL_LoadBMP(felixr42_bmp);
-	felix_r52 = SDL_LoadBMP(felixr52_bmp);
-
-	felix_d2 = SDL_LoadBMP(felixd2_bmp);
-	felix_i2 = SDL_LoadBMP(felixi2_bmp);
-	ralph_1 = SDL_LoadBMP(ralph1_bmp);
-	ralph_2 = SDL_LoadBMP(ralph2_bmp);
-	ralph_3 = SDL_LoadBMP(ralph3_bmp);
-	ralph_4 = SDL_LoadBMP(ralph4_bmp);
-	ralph_5 = SDL_LoadBMP(ralph5_bmp);
-	ralph_6 = SDL_LoadBMP(ralph6_bmp);
-	pajaro_1 = SDL_LoadBMP(pajaro1_bmp);
-	pajaro_2 = SDL_LoadBMP(pajaro2_bmp);
-	roca1 = SDL_LoadBMP(roca1_bmp);
-	roca2 = SDL_LoadBMP(roca2_bmp);
-	torta = SDL_LoadBMP(torta_bmp);
+	if(!cargarImagenes())
+	{
+		cout<<"Error al cargar las imagenes"<<endl;
+		exit(1);
+	}
 
 	//Inicio modo video
 	SDL_Init(SDL_INIT_VIDEO);
 	//Inicio modo texto grafico
 	TTF_Init();
-	signal(SIGINT, handler);
 	//Defino las propiedades de la pantalla del juego
 	superficie = SDL_SetVideoMode(ANCHO_PANTALLA, ALTO_PANTALLA, BPP, SDL_HWSURFACE);
 	//Seteo el titulo de la pantalla
@@ -240,7 +206,9 @@ int main(int argc, char *argv[]) {
 	//Pantalla de inicio.
 	posBackground.x = 0;
 	posBackground.y = 0;
+	pthread_mutex_lock(&mutex_mostrar_pantalla);
 	mostrarPantalla("start");
+	pthread_mutex_unlock(&mutex_mostrar_pantalla);
 
 	//Empieza a cargar el nombre
 	IngresaNombre();
@@ -257,22 +225,30 @@ int main(int argc, char *argv[]) {
 	}
 
 	//Muestro pantalla de "esperando al servidor por nueva partida"
+	pthread_mutex_lock(&mutex_mostrar_pantalla);
 	mostrarPantalla("waitmatch");
+	pthread_mutex_unlock(&mutex_mostrar_pantalla);
 
 	//Conexion con el servidor de torneo.
 	cout << "Intentando conectarme al torneo" << endl;
-	bool error = true;
+	int reintentos = 1;
+
 	do {
 		cout << "Esperando servidor" << endl;
 		try {
 			socketTorneo = new CommunicationSocket(puertoTorneo, (char*) ip.c_str());
-			error = false;
 		} catch (const char *err) {
-			cout << "No se puedo conectar al torneo" << endl;
-			error = true;
-			usleep(1000);
+			cout << "No se encuentra un servidor de torneo disponible en el puerto: "<<puertoTorneo<<" ip: "<<ip.c_str() << endl;
+			cout<<"Reintento nro: "<<reintentos<<endl;
+			reintentos++;
+			if(reintentos>3)
+			{
+				cout<<"No se ha podido establecer una conexion con un servidor de torneo."<<endl;
+				exit(1);
+			}
+			sleep(1);
 		}
-	} while (error == true);
+	} while (reintentos<=3);
 	cout << "Conectado" << endl;
 
 	//Le mando mi nombre
@@ -280,20 +256,29 @@ int main(int argc, char *argv[]) {
 
 	//Recibo el ID que me asigna el Torneo
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
-	bzero(buffer, sizeof(buffer));
-	socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
+	readData = socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
+	if(readData==0)
+	{
+		cout<<"Se ha cerrado la conexion con el servidor de torneo"<<endl;
+		exit(1);
+	}
 	string aux_buffer(buffer);
 	mi_id = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO);
 	cout << "Mi id: " << mi_id << endl;
 
-	//mando mi nombre de jugador
-	/*string messageNombre(CD_NOMBRE);
-	 messageNombre.append(fillMessage(felix1_nombre));
-	 socketTorneo->SendBloq(messageNombre.c_str(), messageNombre.length());*/
+	//Recibo el puerto del servidor de partida
+	readData = socketTorneo->ReceiveBloq(buffer,sizeof(buffer));
+	if(readData==0)
+	{
+		cout<<"Se ha cerrado la conexion con el servidor de torneo"<<endl;
+		exit(1);
+	}
+	string aux_puerto(buffer);
+	puertoServidorPartida = atoi(aux_puerto.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str());
+	cout<<"Servidor de partida: "<<puertoServidorPartida<<endl;
 
 	//Thread para escuchar al servidor de Torneo.
 	pthread_create(&tpid_escuchar_torneo, NULL, EscuchaTorneo, &socketTorneo->ID);
-
 
 	//Lanzo el thread que va a estar a la escucha de las teclas que se presionan.
 	pthread_create(&tpid_teclas, NULL, EscuchaTeclas, NULL);
@@ -608,7 +593,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	//esperar mientras las demas partidas no han finalizado. (mostrar msj "GameOver. waiting for rankings.. ")
+	pthread_mutex_lock(&mutex_mostrar_pantalla);
 	mostrarPantalla("gameover");
+	pthread_mutex_unlock(&mutex_mostrar_pantalla);
 
 	while (!showWindowRanking) {
 		sleep(1);
@@ -756,13 +743,10 @@ void* EscuchaServidor(void *arg) {
 				}
 				break;
 			case CD_PERDIO_I:
-				if(buffer[6]=='1')
-				{
-					felix1_vidas=0;
-				}
-				else if(buffer[6]=='2')
-				{
-					felix2_vidas=0;
+				if (buffer[6] == '1') {
+					felix1_vidas = 0;
+				} else if (buffer[6] == '2') {
+					felix2_vidas = 0;
 				}
 				break;
 			case CD_VENTANA_ARREGLANDO_I:
@@ -805,7 +789,9 @@ void* EscuchaServidor(void *arg) {
 			pthread_mutex_unlock(&mutex_torneoFinalizado);
 			if (!torneoFin) {
 				//mostrar pantalla Esperando partida
+				pthread_mutex_lock(&mutex_mostrar_pantalla);
 				mostrarPantalla("waitmatch");
+				pthread_mutex_unlock(&mutex_mostrar_pantalla);
 
 				pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
 				solicitudDeNuevaParitda = true;
@@ -888,6 +874,9 @@ void* EscuchaTorneo(void *arg) {
 				//salgo del thread porque este el ultimo mensaje que me interesa
 				pthread_exit(NULL);
 				break;
+			case CD_ID_PARTIDA_I:
+				cout<<"IDPartida: "<<aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO)<<endl;
+				idPartida = atoi(aux_buffer.substr(LONGITUD_CODIGO+LONGITUD_CONTENIDO).c_str());
 			case CD_NOMBRE_I:
 				//recibo y limpio el nombre de ceros
 				mensajeNombre = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str();
@@ -920,7 +909,9 @@ void* EscuchaTorneo(void *arg) {
 			murioServidorTorneo = true;
 			cout << "Murio el servidor torneo" << endl;
 			/// dar aviso de que murio y cerrar todo
+			pthread_mutex_lock(&mutex_mostrar_pantalla);
 			mostrarPantalla("servertorneodown");
+			pthread_mutex_unlock(&mutex_mostrar_pantalla);
 			sleep(5);
 			exit(1);
 			break;
@@ -1194,7 +1185,8 @@ void mostrarPantalla(const char* nombrPantalla) {
 		exit(1);
 	}
 	SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
-	SDL_Flip(superficie);
+	if (SDL_Flip(superficie) == -1)
+		cout << "Error: SDL_FLIP" << SDL_GetError() << endl;
 }
 
 void mostrarRanking(const char* ranking) {
@@ -1217,24 +1209,30 @@ void mostrarRanking(const char* ranking) {
 
 void inicializarNuevaPartida() {
 	//Espero que el servidor de Torneo me envie el puerto para conectarme al servidor de partida.
-	esperarPuertoPartida();
-	cout << "Socket Partida:" << puertoServidorPartida << endl;
+	//esperarPuertoPartida();
+	//cout << "Socket Partida:" << puertoServidorPartida << endl;
 
 	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
 	esperarNombreOponente();
 	pthread_mutex_lock(&mutex_nombreOponente);
 	cout << "despues de esperarNombreOponente():" << nombreOponente << endl;
 	pthread_mutex_unlock(&mutex_nombreOponente);
+
+	//Espero id de partida
+	esperarIdPartida();
+	cout<<"Recibi idDePartida"<<endl;
+
 	//////////////////////////////////////
 	//inicializacion de variables
 	felix1_posicion.fila = 0;
 	felix1_posicion.columna = 0;
 	felix2_posicion.fila = 0;
-	felix2_posicion.columna = EDIFICIO_COLUMNAS-1;
+	felix2_posicion.columna = EDIFICIO_COLUMNAS - 1;
 	ralph_posicion.fila = 3;
 	ralph_posicion.columna = 2;
 	pajaro_desplazamiento.x = -1;
-	pajaro_desplazamiento.y= -1;;
+	pajaro_desplazamiento.y = -1;
+	;
 
 	rahlp_x = PARED_X + 200;
 	rahlp_y = PARED_Y;
@@ -1269,14 +1267,20 @@ void inicializarNuevaPartida() {
 	//////////////////////////////////////
 
 	//Me conecto al servidor de partida.
-	try{
-	socketPartida = new CommunicationSocket(puertoServidorPartida, (char*) ip.c_str());
-	}
-	catch(const char * err)
-	{
-		cout<<"Error al querer conectar al puerto de partida"<<endl;
+	try {
+		socketPartida = new CommunicationSocket(puertoServidorPartida, (char*) ip.c_str());
+	} catch (const char * err) {
+		cout << "Error al querer conectar al puerto de partida" << endl;
 		exit(1);
 	}
+
+	//Mando mi IdDePartida
+	string messageIDPartida(CD_ID_PARTIDA);
+	char aux[5];
+	sprintf(aux,"%d",idPartida);
+	messageIDPartida.append(fillMessage(aux));
+	socketPartida->SendBloq(messageIDPartida.c_str(),messageIDPartida.length());
+
 	//mando mi ID
 	string message(CD_ID_JUGADOR);
 	message.append(fillMessage(mi_id));
@@ -1334,7 +1338,7 @@ void esperarPuertoPartida() {
 
 void esperarNombreOponente() {
 	cout << "comienza while de espera de nombre de oponente" << endl;
-	int recibioNombreOponente = false;
+	bool recibioNombreOponente = false;
 	while (!recibioNombreOponente) {
 		pthread_mutex_lock(&mutex_nombreOponente);
 		if (nombreOponente.length() > 0) {
@@ -1345,6 +1349,20 @@ void esperarNombreOponente() {
 		usleep(1000);
 	}
 	cout << "f esperarNombreOponente ->recibo el nombre de mi oponente:" << felix2_nombre << endl;
+}
+
+void esperarIdPartida()
+{
+	cout<<"esperando id Partida"<<endl;
+	bool recibioIdPartida = false;
+	while(!recibioIdPartida)
+	{
+		if(idPartida!=0)
+		{
+			recibioIdPartida = true;
+		}
+		usleep(10000);
+	}
 }
 
 void vaciarColas() {
@@ -1371,6 +1389,115 @@ void vaciarColas() {
 	}
 }
 
+bool cargarImagenes() {
+	pared_tramo1n1 = SDL_LoadBMP(pared_tramo1n1_bmp);
+	if (pared_tramo1n1 == NULL)
+		return false;
+	pared_tramo2n1 = SDL_LoadBMP(pared_tramo2n1_bmp);
+	if (pared_tramo2n1 == NULL)
+		return false;
+	pared_tramo3n1 = SDL_LoadBMP(pared_tramo3n1_bmp);
+	if (pared_tramo3n1 == NULL)
+		return false;
+	ventana_sana = SDL_LoadBMP(ventana_sana_bmp);
+	if (ventana_sana == NULL)
+		return false;
+	ventana_rota1 = SDL_LoadBMP(ventana_rota1_bmp);
+	if (ventana_rota1 == NULL)
+		return false;
+	ventana_rota2 = SDL_LoadBMP(ventana_rota2_bmp);
+	if (ventana_rota2 == NULL)
+		return false;
+	ventana_rota3 = SDL_LoadBMP(ventana_rota3_bmp);
+	if (ventana_rota3 == NULL)
+		return false;
+	ventana_rota4 = SDL_LoadBMP(ventana_rota4_bmp);
+	if (ventana_rota4 == NULL)
+		return false;
+	puerta = SDL_LoadBMP(puerta_bmp);
+	if (puerta == NULL)
+		return false;
+	felix_d1 = SDL_LoadBMP(felixd1_bmp);
+	if (felix_d1 == NULL)
+		return false;
+	felix_i1 = SDL_LoadBMP(felixi1_bmp);
+	if (felix_i1 == NULL)
+		return false;
+	felix_r11 = SDL_LoadBMP(felixr11_bmp);
+	if (felix_r11 == NULL)
+		return false;
+	felix_r21 = SDL_LoadBMP(felixr21_bmp);
+	if (felix_r21 == NULL)
+		return false;
+	if (felix_r21 == NULL)
+		return false;
+	felix_r31 = SDL_LoadBMP(felixr31_bmp);
+	if (felix_r31 == NULL)
+		return false;
+	felix_r41 = SDL_LoadBMP(felixr41_bmp);
+	if (felix_r41 == NULL)
+		return false;
+	felix_r51 = SDL_LoadBMP(felixr51_bmp);
+	if (felix_r51 == NULL)
+		return false;
+	felix_r12 = SDL_LoadBMP(felixr12_bmp);
+	if (felix_r12 == NULL)
+		return false;
+	felix_r22 = SDL_LoadBMP(felixr22_bmp);
+	if (felix_r22 == NULL)
+		return false;
+	felix_r32 = SDL_LoadBMP(felixr32_bmp);
+	if (felix_r32 == NULL)
+		return false;
+	felix_r42 = SDL_LoadBMP(felixr42_bmp);
+	if (felix_r42 == NULL)
+		return false;
+	felix_r52 = SDL_LoadBMP(felixr52_bmp);
+	if (felix_r52 == NULL)
+		return false;
+	felix_d2 = SDL_LoadBMP(felixd2_bmp);
+	if (felix_d2 == NULL)
+		return false;
+	felix_i2 = SDL_LoadBMP(felixi2_bmp);
+	if (felix_i2 == NULL)
+		return false;
+	ralph_1 = SDL_LoadBMP(ralph1_bmp);
+	if (ralph_1 == NULL)
+		return false;
+	ralph_2 = SDL_LoadBMP(ralph2_bmp);
+	if (ralph_2 == NULL)
+		return false;
+	ralph_3 = SDL_LoadBMP(ralph3_bmp);
+	if (ralph_3 == NULL)
+		return false;
+	ralph_4 = SDL_LoadBMP(ralph4_bmp);
+	if (ralph_4 == NULL)
+		return false;
+	ralph_5 = SDL_LoadBMP(ralph5_bmp);
+	if (ralph_5 == NULL)
+		return false;
+	ralph_6 = SDL_LoadBMP(ralph6_bmp);
+	if (ralph_6 == NULL)
+		return false;
+	pajaro_1 = SDL_LoadBMP(pajaro1_bmp);
+	if (pajaro_1 == NULL)
+		return false;
+	pajaro_2 = SDL_LoadBMP(pajaro2_bmp);
+	if (pajaro_2 == NULL)
+		return false;
+	roca1 = SDL_LoadBMP(roca1_bmp);
+	if (roca1 == NULL)
+		return false;
+	roca2 = SDL_LoadBMP(roca2_bmp);
+	if (roca2 == NULL)
+		return false;
+	torta = SDL_LoadBMP(torta_bmp);
+	if (torta == NULL)
+		return false;
+
+	return true;
+}
+
 void liberarRecursos() {
 	//SOCKET
 	delete (socketTorneo);
@@ -1387,5 +1514,5 @@ void liberarRecursos() {
 	SDL_Quit();
 	TTF_Quit();
 
-	cout<<"libero los recursos"<<endl;
 }
+

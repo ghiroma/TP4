@@ -45,7 +45,10 @@ void casePerdidaVida(Mensaje mensaje);
 void caseIdJugador(Mensaje mensaje);
 void caseVentanaArreglada(Mensaje mensaje);
 void caseVentanaArreglando(Mensaje mensaje);
+void caseJugadorListo(Mensaje mensaje);
 void* timer_thread(void* argument);
+string posicionInicial1(Felix *);
+string posicionInicial2(Felix *);
 
 /*void* receiver1_thread(void * argument);
 void* receiver2_thread(void * argument);
@@ -60,7 +63,6 @@ void caseVentanaArreglando(int jugador);*/
 void SIGINT_Handler(int inum);
 void liberarRecursos();
 bool tramoFinalizado(Edificio * edificio);
-string posicionInicial1();
-string posicionInicial2();
+
 
 #endif /* FUNCIONESSERVIDORPARTIDA_H_ */

@@ -21,6 +21,8 @@ public:
 	Felix * felix1;
 	Felix * felix2;
 	Edificio * edificio;
+	bool jugador1Listo;
+	bool jugador2Listo;
 	int nivel;
 	int estado;
 	int id;
