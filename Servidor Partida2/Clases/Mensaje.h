@@ -19,6 +19,7 @@ public:
 	string mensaje;
 	Mensaje(int jugador, string mensaje, Partida * partida);
 	Mensaje();
+	void setMensaje(string mensaje);
 	virtual ~Mensaje();
 };
 

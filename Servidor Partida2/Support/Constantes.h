@@ -1,7 +1,7 @@
 #ifndef CONSTANTES_H_
 #define CONSTANTES_H_
 
-static const int PERMISOS_SHM = 0777;
+static const int PERMISOS_SHM = 0666;
 
 static const int EDIFICIO_COLUMNAS = 5;
 static const int EDIFICIO_FILAS_1 = 3;
@@ -54,6 +54,7 @@ static const int CD_MOVIMIENTO_FELIX_I = 4;
 static const int CD_PERDIDA_VIDA_I = 5;
 static const int CD_VENTANA_ARREGLADA_I = 8;
 static const int CD_VENTANA_ARREGLANDO_I = 12;
+static const int CD_ID_JUGADOR_I=06;
 
 #endif /* CONSTANTES_H_ */
 
