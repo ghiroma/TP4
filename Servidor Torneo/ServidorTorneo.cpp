@@ -107,11 +107,13 @@ int main(int argc, char * argv[]) {
 		sprintf(auxCantVidas, "%d", cantVidas);
 		char auxPuertoServidorPartida[LONGITUD_CONTENIDO];
 		sprintf(auxPuertoServidorPartida, "%d", puertoServidorPartida);
-		char *nombreEjecutable = NULL;
+		char nombreEjecutable[100];
+		cout<<"antes de copiar "<<endl;
 		strcpy(nombreEjecutable, "ServidorPartida");
 
+		cout<<"nombreEjecutable: "<<nombreEjecutable<<endl;
 		char *argumentos[] = { nombreEjecutable, auxPuertoServidorPartida, auxCantVidas, NULL };
-		execv("../Servidor Partida2/ServidorPartida", argumentos);
+		execv("../Servidor Partida2/Debug/Servidor Partida2", argumentos);
 		cout << "ERROR al ejecutar execv Nueva Partida" << endl;
 		exit(1);
 	} else if (pid < 0) {

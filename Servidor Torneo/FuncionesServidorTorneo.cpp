@@ -635,6 +635,7 @@ void mandarPuntajes() {
 void liberarRecursos() {
 	//SOCKETS
 	if (sSocket != NULL) {
+		cout<<"Torneo -> cierro socket"<<endl;
 		close(sSocket->ID);
 	}
 

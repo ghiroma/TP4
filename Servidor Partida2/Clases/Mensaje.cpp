@@ -25,11 +25,8 @@ Mensaje::Mensaje() {
 }
 
 void Mensaje::setMensaje(string mensaje) {
-		std::cout<<"longitud de mensaje: "<<mensaje.length()<<std::endl;
 	if (mensaje.length() == (LONGITUD_CODIGO + LONGITUD_CONTENIDO)) {
-		std::cout<<"this->codigo "<<this->codigo<<std::endl;
 		this->codigo = mensaje.substr(0, LONGITUD_CODIGO);
-		std::cout<<"this->mensaje"<<this->mensaje<<std::endl;;
 		this->mensaje = mensaje.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO);
 	}
 	else

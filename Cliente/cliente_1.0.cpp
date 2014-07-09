@@ -230,23 +230,23 @@ int main(int argc, char *argv[]) {
 
 	//Conexion con el servidor de torneo.
 	cout << "Intentando conectarme al torneo" << endl;
-	int reintentos = 1;
+	int reintentar = 3;
 
 	do {
 		cout << "Esperando servidor" << endl;
 		try {
 			socketTorneo = new CommunicationSocket(puertoTorneo, (char*) ip.c_str());
-		} catch (const char *err) {
+			reintentar = 0;
+		} catch (...) {
 			cout << "No se encuentra un servidor de torneo disponible en el puerto: " << puertoTorneo << " ip: " << ip.c_str() << endl;
-			cout << "Reintento nro: " << reintentos << endl;
-			reintentos++;
-			if (reintentos > 3) {
+			reintentar--;
+			if (reintentar == 0) {
 				cout << "No se ha podido establecer una conexion con un servidor de torneo." << endl;
 				exit(1);
 			}
 			sleep(1);
 		}
-	} while (reintentos <= 3);
+	} while (reintentar != 0);
 	cout << "Conectado" << endl;
 
 	//Le mando mi nombre
@@ -294,6 +294,7 @@ int main(int argc, char *argv[]) {
 		auxTorneoFinalizado = torneoFinalizado;
 		pthread_mutex_unlock(&mutex_torneoFinalizado);
 		if (auxSolicitudDeNuevaPartida && !auxTorneoFinalizado && !murioServidorTorneo) {
+			cout << "Solicite nueva partida" << endl;
 			//espero a que se cierre el ultimo thread de la partida anterior
 			pthread_join(tpid_enviar_partida, NULL);
 			sleep(3);
@@ -764,6 +765,11 @@ void* EscuchaServidor(void *arg) {
 				break;
 			case CD_ID_JUGADOR_I:
 				break;
+			case CD_FIN_PARTIDA_I:
+				pthread_mutex_lock(&mutex_partidaFinalizada);
+				solicitudDeNuevaParitda = true;
+				pthread_mutex_unlock(&mutex_partidaFinalizada);
+				break;
 			case CD_ACK_I:
 				string message(CD_ACK);
 				message.append(fillMessage("0"));
@@ -871,8 +877,9 @@ void* EscuchaTorneo(void *arg) {
 				pthread_exit(NULL);
 				break;
 			case CD_ID_PARTIDA_I:
-				cout << "IDPartida: " << aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO) << endl;
-				idPartida = atoi(aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO).c_str());
+				cout << "IDPartida: " << aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO) << endl;
+				idPartida = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
+				break;
 			case CD_NOMBRE_I:
 				//recibo y limpio el nombre de ceros
 				mensajeNombre = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str();
@@ -1288,6 +1295,7 @@ void inicializarNuevaPartida() {
 	do {
 		socketPartida->ReceiveBloq(buffer, sizeof(buffer));
 		messagePosicion = buffer;
+		cout<<"while esperando posicion inicial: "<<buffer<<endl;
 	} //while(atoi(message.substr(0,LONGITUD_CODIGO).c_str())!=CD_POSICION_INICIAL_I);
 	while (strcmp(messagePosicion.substr(0, LONGITUD_CODIGO).c_str(), CD_POSICION_INICIAL) != 0);
 
@@ -1306,13 +1314,24 @@ void inicializarNuevaPartida() {
 	felix2_posicion.fila = 0;
 	cout << "Recibi mi posicion inicial" << endl;
 
+	//Envio mensaje de listo.
+	string mensajeListo(CD_JUGADOR_LISTO);
+	mensajeListo.append(fillMessage("0"));
+	socketPartida->SendNoBloq(mensajeListo.c_str(), mensajeListo.length());
+
+	cout << "Envie que estoy listo" << endl;
+
 	//inicializo la cantida de vidas
 
 	//Empiezo a tirar Thread para comunicarme con el servidor de partida.
+	int codigo = 0;
 	do {
 		socketPartida->ReceiveBloq(buffer, sizeof(buffer));
+		string mensajeListo(buffer);
+		codigo = atoi(mensajeListo.substr(0, LONGITUD_CODIGO).c_str());
+		cout << "REcibi mensaje en while " << codigo << endl;
 	} //while(atoi(message.substr(0,LONGITUD_CODIGO).c_str())!=CD_POSICION_INICIAL_I);
-	while (strcmp(messagePosicion.substr(0, LONGITUD_CODIGO).c_str(), CD_EMPEZAR_PARTIDA) != 0);
+	while (codigo != 62);
 
 	vaciarColas();
 	pthread_create(&tpid_escuchar_partida, NULL, EscuchaServidor, &socketPartida->ID);

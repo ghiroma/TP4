@@ -54,6 +54,7 @@ static const char* CD_RANKING = "80";
 static const char* CD_ID_PARTIDA = "60";
 static const char* CD_JUGADOR_LISTO ="61";
 static const char* CD_EMPEZAR_PARTIDA = "62";
+static const char* CD_FIN_PARTIDA = "33";
 
 static const int CD_RANKING_I = 80;
 static const int CD_MOVIMIENTO_FELIX_I = 4;
@@ -63,6 +64,7 @@ static const int CD_VENTANA_ARREGLANDO_I = 12;
 static const int CD_ID_JUGADOR_I=06;
 static const int CD_ID_PARTIDA_I = 60;
 static const int CD_JUGADOR_LISTO_I = 61;
+static const int CD_FIN_PARTIDA_I = 33;
 
 #endif /* CONSTANTES_H_ */
 

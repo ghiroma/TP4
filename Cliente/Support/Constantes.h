@@ -43,6 +43,7 @@ static const char* CD_FIN_TORNEO = "81";
 static const char* CD_ID_PARTIDA = "60";
 static const char* CD_JUGADOR_LISTO = "61";
 static const char* CD_EMPEZAR_PARTIDA = "62";
+static const char* CD_FIN_PARTIDA = "33";
 
 static const int CD_MOVIMIENTO_RALPH_I = 0;
 static const int CD_PALOMA_I = 1;
@@ -62,6 +63,8 @@ static const int CD_OPONENTE_DESCONECTADO_I = 96;
 static const int CD_PERDIO_I = 98;
 static const int CD_ACK_I = 99;
 static const int CD_ID_PARTIDA_I = 60;
+static const int CD_EMPEZAR_PARTIDA_I=62;
+static const int CD_FIN_PARTIDA_I = 33;
 
 // Imagenes.
 

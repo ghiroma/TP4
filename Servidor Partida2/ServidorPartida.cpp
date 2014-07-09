@@ -31,6 +31,8 @@ using namespace std;
 
 int main(int argc, char * argv[]) {
 
+	cout<<"Servidor Partida iniciado"<<endl;
+
 	pthread_t thread_receptorConexiones;
 	pthread_t thread_escuchaClientes;
 	pthread_t thread_procesarMensajesClientes;
@@ -48,6 +50,8 @@ int main(int argc, char * argv[]) {
 	srand(time(NULL));
 
 	ppid = getppid();
+	cout<<"Servidor Partida padre pid: "<<getppid()<<endl;
+	cout<<"Servidor Partida pid: "<<getpid()<<endl;
 
 	/*
 	 * Obtengo puertos y cantidad de vidas de felix por parametros.

@@ -20,7 +20,7 @@ public:
 	Helper();
 	static string fillMessage(string message);
 	static void encolar(string *message,queue<string> *cola,pthread_mutex_t *mutex);
-	static void encolar(Mensaje * mensaje,queue<Mensaje>*cola,pthread_mutex_t* mutex);
+	static void encolar(Mensaje mensaje,queue<Mensaje>*cola,pthread_mutex_t* mutex);
 	static string desencolar(queue<string> *cola, pthread_mutex_t *mutex);
 	static Mensaje desencolar(queue<Mensaje>* cola,pthread_mutex_t *mutex);
 	virtual ~Helper();
