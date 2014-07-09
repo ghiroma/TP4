@@ -75,9 +75,9 @@ int main(int argc, char * argv[]) {
 	pthread_create(&thread_receptorConexiones,NULL,receptorConexiones,NULL);
 	pthread_create(&thread_escuchaClientes,NULL,escuchaClientes,NULL);
 	pthread_create(&thread_procesarMensajesClientes,NULL,procesarMensajesCliente,NULL);
-	pthread_create(&thread_receptorConexiones,NULL,receptorConexiones,NULL);
 	pthread_create(&thread_sharedMemory,NULL,sharedMemory,NULL);
 	pthread_create(&thread_timer,NULL,timer_thread,NULL);
+	pthread_create(&thread_enviarMensajesCliente,NULL,enviarMensajesCliente,NULL);
 
 	pthread_join(thread_receptorConexiones,NULL);
 

@@ -182,11 +182,10 @@ int main(int argc, char *argv[]) {
 	atexit(liberarRecursos);
 	signal(SIGINT, handler);
 
-	int readData=0;
+	int readData = 0;
 
-	if(!cargarImagenes())
-	{
-		cout<<"Error al cargar las imagenes"<<endl;
+	if (!cargarImagenes()) {
+		cout << "Error al cargar las imagenes" << endl;
 		exit(1);
 	}
 
@@ -238,17 +237,16 @@ int main(int argc, char *argv[]) {
 		try {
 			socketTorneo = new CommunicationSocket(puertoTorneo, (char*) ip.c_str());
 		} catch (const char *err) {
-			cout << "No se encuentra un servidor de torneo disponible en el puerto: "<<puertoTorneo<<" ip: "<<ip.c_str() << endl;
-			cout<<"Reintento nro: "<<reintentos<<endl;
+			cout << "No se encuentra un servidor de torneo disponible en el puerto: " << puertoTorneo << " ip: " << ip.c_str() << endl;
+			cout << "Reintento nro: " << reintentos << endl;
 			reintentos++;
-			if(reintentos>3)
-			{
-				cout<<"No se ha podido establecer una conexion con un servidor de torneo."<<endl;
+			if (reintentos > 3) {
+				cout << "No se ha podido establecer una conexion con un servidor de torneo." << endl;
 				exit(1);
 			}
 			sleep(1);
 		}
-	} while (reintentos<=3);
+	} while (reintentos <= 3);
 	cout << "Conectado" << endl;
 
 	//Le mando mi nombre
@@ -257,9 +255,8 @@ int main(int argc, char *argv[]) {
 	//Recibo el ID que me asigna el Torneo
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	readData = socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
-	if(readData==0)
-	{
-		cout<<"Se ha cerrado la conexion con el servidor de torneo"<<endl;
+	if (readData == 0) {
+		cout << "Se ha cerrado la conexion con el servidor de torneo" << endl;
 		exit(1);
 	}
 	string aux_buffer(buffer);
@@ -267,15 +264,14 @@ int main(int argc, char *argv[]) {
 	cout << "Mi id: " << mi_id << endl;
 
 	//Recibo el puerto del servidor de partida
-	readData = socketTorneo->ReceiveBloq(buffer,sizeof(buffer));
-	if(readData==0)
-	{
-		cout<<"Se ha cerrado la conexion con el servidor de torneo"<<endl;
+	readData = socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
+	if (readData == 0) {
+		cout << "Se ha cerrado la conexion con el servidor de torneo" << endl;
 		exit(1);
 	}
 	string aux_puerto(buffer);
-	puertoServidorPartida = atoi(aux_puerto.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str());
-	cout<<"Servidor de partida: "<<puertoServidorPartida<<endl;
+	puertoServidorPartida = atoi(aux_puerto.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
+	cout << "Servidor de partida: " << puertoServidorPartida << endl;
 
 	//Thread para escuchar al servidor de Torneo.
 	pthread_create(&tpid_escuchar_torneo, NULL, EscuchaTorneo, &socketTorneo->ID);
@@ -875,8 +871,8 @@ void* EscuchaTorneo(void *arg) {
 				pthread_exit(NULL);
 				break;
 			case CD_ID_PARTIDA_I:
-				cout<<"IDPartida: "<<aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO)<<endl;
-				idPartida = atoi(aux_buffer.substr(LONGITUD_CODIGO+LONGITUD_CONTENIDO).c_str());
+				cout << "IDPartida: " << aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO) << endl;
+				idPartida = atoi(aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO).c_str());
 			case CD_NOMBRE_I:
 				//recibo y limpio el nombre de ceros
 				mensajeNombre = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str();
@@ -1220,7 +1216,7 @@ void inicializarNuevaPartida() {
 
 	//Espero id de partida
 	esperarIdPartida();
-	cout<<"Recibi idDePartida"<<endl;
+	cout << "Recibi idDePartida" << endl;
 
 	//////////////////////////////////////
 	//inicializacion de variables
@@ -1232,7 +1228,6 @@ void inicializarNuevaPartida() {
 	ralph_posicion.columna = 2;
 	pajaro_desplazamiento.x = -1;
 	pajaro_desplazamiento.y = -1;
-	;
 
 	rahlp_x = PARED_X + 200;
 	rahlp_y = PARED_Y;
@@ -1277,9 +1272,9 @@ void inicializarNuevaPartida() {
 	//Mando mi IdDePartida
 	string messageIDPartida(CD_ID_PARTIDA);
 	char aux[5];
-	sprintf(aux,"%d",idPartida);
+	sprintf(aux, "%d", idPartida);
 	messageIDPartida.append(fillMessage(aux));
-	socketPartida->SendBloq(messageIDPartida.c_str(),messageIDPartida.length());
+	socketPartida->SendBloq(messageIDPartida.c_str(), messageIDPartida.length());
 
 	//mando mi ID
 	string message(CD_ID_JUGADOR);
@@ -1288,13 +1283,13 @@ void inicializarNuevaPartida() {
 
 	//espero mi posicion inicial;
 	cout << "Esperando mi posicion inicial" << endl;
-	char bufferPosicion[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
+	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	string messagePosicion;
 	do {
-		socketPartida->ReceiveBloq(bufferPosicion, sizeof(bufferPosicion));
-		messagePosicion = bufferPosicion;
+		socketPartida->ReceiveBloq(buffer, sizeof(buffer));
+		messagePosicion = buffer;
 	} //while(atoi(message.substr(0,LONGITUD_CODIGO).c_str())!=CD_POSICION_INICIAL_I);
-	while (strcmp(messagePosicion.substr(0, LONGITUD_CODIGO).c_str(), "46") != 0);
+	while (strcmp(messagePosicion.substr(0, LONGITUD_CODIGO).c_str(), CD_POSICION_INICIAL) != 0);
 
 	cout << "Codigo encontrado, valor mensake " << messagePosicion << endl;
 	felix1_posicion.columna = atoi(messagePosicion.substr(5, 1).c_str());
@@ -1314,6 +1309,11 @@ void inicializarNuevaPartida() {
 	//inicializo la cantida de vidas
 
 	//Empiezo a tirar Thread para comunicarme con el servidor de partida.
+	do {
+		socketPartida->ReceiveBloq(buffer, sizeof(buffer));
+	} //while(atoi(message.substr(0,LONGITUD_CODIGO).c_str())!=CD_POSICION_INICIAL_I);
+	while (strcmp(messagePosicion.substr(0, LONGITUD_CODIGO).c_str(), CD_EMPEZAR_PARTIDA) != 0);
+
 	vaciarColas();
 	pthread_create(&tpid_escuchar_partida, NULL, EscuchaServidor, &socketPartida->ID);
 	pthread_create(&tpid_enviar_partida, NULL, EnvioServidor, &socketPartida->ID);
@@ -1351,14 +1351,11 @@ void esperarNombreOponente() {
 	cout << "f esperarNombreOponente ->recibo el nombre de mi oponente:" << felix2_nombre << endl;
 }
 
-void esperarIdPartida()
-{
-	cout<<"esperando id Partida"<<endl;
+void esperarIdPartida() {
+	cout << "esperando id Partida" << endl;
 	bool recibioIdPartida = false;
-	while(!recibioIdPartida)
-	{
-		if(idPartida!=0)
-		{
+	while (!recibioIdPartida) {
+		if (idPartida != 0) {
 			recibioIdPartida = true;
 		}
 		usleep(10000);
