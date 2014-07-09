@@ -54,7 +54,7 @@ int main(int argc, char * argv[]) {
 
 	//Obtener configuracion
 	getConfiguration(&puertoTorneo, &ip, &duracionTorneo, &tiempoInmunidad, &cantVidas);
-	if (puertoTorneo == 0 || ip.compare("") == 0 || duracionTorneo == 0 || tiempoInmunidad == 0 || cantVidas == 0) {
+	if (puertoTorneo == 0 || duracionTorneo == 0 || tiempoInmunidad == 0 || cantVidas == 0) {
 		cout << "Error al obtener configuracion." << endl;
 		exit(1);
 	}

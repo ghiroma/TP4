@@ -69,10 +69,6 @@ void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* 
 			int pos = line.find(":");
 			string sport = line.substr(pos + 1, line.length());
 			*port = atoi(sport.c_str());
-		} else if (line.find("IP") == 0) {
-			int pos = line.find(":");
-			string auxip = line.substr(pos + 1, line.length());
-			*ip = auxip.c_str();
 		} else if (line.find("Duracion del Torneo[min]") == 0) {
 			int pos = line.find(":");
 			string sduracionTorneo = line.substr(pos + 1, line.length());

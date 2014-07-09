@@ -41,7 +41,7 @@ static const int CD_ACK_I = 99;
 
 static const int MAX_JUGADORES_SOPORTADOS = 100;
 
-static const int PERMISOS_SHM = 0777;
+static const int PERMISOS_SHM = 0666;
 static const int CLAVE_MEMORIA_COMPARTIDA = 1322;
 static const int INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES = 1000000;
 
