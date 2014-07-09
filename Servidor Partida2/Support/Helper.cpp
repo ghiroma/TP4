@@ -34,6 +34,13 @@ void Helper::encolar(string *message, queue<string> *cola,pthread_mutex_t *mutex
 	pthread_mutex_unlock(mutex);
 }
 
+void Helper::encolar(Mensaje *message, queue<Mensaje> *cola,pthread_mutex_t *mutex)
+{
+	pthread_mutex_lock(mutex);
+	cola->push(*message);
+	pthread_mutex_unlock(mutex);
+}
+
 string Helper::desencolar(queue<string> *cola, pthread_mutex_t *mutex)
 {
 	string message;
@@ -42,4 +49,14 @@ string Helper::desencolar(queue<string> *cola, pthread_mutex_t *mutex)
 	cola->pop();
 	pthread_mutex_unlock(mutex);
 	return message;
+}
+
+Mensaje Helper::desencolar(queue<Mensaje> *cola, pthread_mutex_t *mutex)
+{
+	Mensaje mensaje;
+	pthread_mutex_lock(mutex);
+	mensaje = cola->front();
+	cola->pop();
+	pthread_mutex_unlock(mutex);
+	return mensaje;
 }

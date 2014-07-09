@@ -14,6 +14,10 @@ static const int INTERVALOS_PALOMA = 20;
 static const int INTERVALOS_TORTA = 60;
 static const int INTERVALOS_PERSIANA = 35;
 
+static const int JUGADOR_1 = 1;
+static const int JUGADOR_2 = 2;
+static const int BROADCAST = 0;
+
 static const int LONGITUD_CODIGO = 2;
 static const int LONGITUD_CONTENIDO = 5;
 

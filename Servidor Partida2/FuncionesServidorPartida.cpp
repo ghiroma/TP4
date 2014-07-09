@@ -85,12 +85,16 @@ void* receptorConexiones(void * args) {
 			pthread_mutex_lock(&mutex_partidas);
 			map<int, Partida*>::iterator iterator = partidas.find(idPartida);
 			iterator->second->cSocket2 = cSocket;
+			felix->fila = 0;
+			felix->columna = EDIFICIO_COLUMNAS - 1;
 			iterator->second->felix2 = felix;
 			pthread_mutex_unlock(&mutex_partidas);
 			cout << "Partida nro: " << idPartida << " completada" << endl;
 		} else {
 			partida = new Partida(idPartida);
 			partida->cSocket1 = cSocket;
+			felix->fila = 0;
+			felix->columna = 0;
 			partida->felix1 = felix;
 			pthread_mutex_lock(&mutex_partidas);
 			partidas[partida->id] = partida;
@@ -115,10 +119,11 @@ void * escuchaClientes(void * args) {
 					readData = it->second->cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
 					if (readData > 0) {
 						message = buffer;
-						Mensaje mensaje(1, message, it->second);
+						Mensaje mensaje(JUGADOR_1, message, it->second);
 						cola_mensajes_recibir.push(mensaje);
 					}
 				} else if (readData == 0) {
+					delete (it->second->cSocket1);
 					//TODO se desconecto el jugador1.
 				}
 
@@ -126,9 +131,10 @@ void * escuchaClientes(void * args) {
 					readData = it->second->cSocket2->ReceiveNoBloq(buffer, sizeof(buffer));
 					if (readData > 0) {
 						message = buffer;
-						Mensaje mensaje(2, message, it->second);
+						Mensaje mensaje(JUGADOR_2, message, it->second);
 						cola_mensajes_recibir.push(mensaje);
 					} else if (readData == 0) {
+						delete (it->second->cSocket2);
 						//TODO se desconecto el jugador2
 					}
 				}
@@ -146,15 +152,17 @@ void* procesarMensajesCliente(void * args) {
 			pthread_mutex_lock(&mutex_cola_mensajes_recibir);
 			Mensaje mensaje = cola_mensajes_recibir.front();
 			cola_mensajes_recibir.pop();
-			int codigo=atoi(mensaje.codigo.c_str());
+			int codigo = atoi(mensaje.codigo.c_str());
 			switch (codigo) {
-				case CD_MOVIMIENTO_FELIX_I:
+			case CD_MOVIMIENTO_FELIX_I:
+				caseMovimientoFelix(mensaje);
 				break;
-				case CD_PERDIDA_VIDA_I:
+			case CD_PERDIDA_VIDA_I:
+				casePerdidaVida(mensaje);
 				break;
-				case CD_VENTANA_ARREGLADA_I:
+			case CD_VENTANA_ARREGLADA_I:
 				break;
-				case CD_VENTANA_ARREGLANDO_I:
+			case CD_VENTANA_ARREGLANDO_I:
 				break;
 			}
 			pthread_mutex_unlock(&mutex_cola_mensajes_recibir);
@@ -163,6 +171,97 @@ void* procesarMensajesCliente(void * args) {
 	}
 	pthread_exit(0);
 }
+
+void* timer_thread(void * args)
+{
+	Timer timer;
+	string message;
+
+	while(!stop)
+	{
+
+		pthread_mutex_lock(&mutex_partidas);
+		for(map<int,Partida*>::iterator it=partidas.begin();it!=partidas.end();it++)
+		{
+			message = timer.keepAlive();
+			if(message.length()>0)
+			{
+				Mensaje mensaje(BROADCAST,message,it->second);
+				Helper::encolar(&mensaje,&cola_mensajes_enviar,&mutex_cola_mensajes_enviar);
+			}
+
+			message = timer.ralph(it->second->edificio->nivel);
+			if(message.length()>0)
+			{
+				Mensaje mensaje(BROADCAST,message,it->second);
+				Helper::encolar(&mensaje,&cola_mensajes_enviar,&mutex_cola_mensajes_enviar);
+			}
+
+			message = timer.paloma(it->second->edificio->nivel);
+			if(message.length()>0)
+			{
+				Mensaje mensaje(BROADCAST,message,it->second);
+				Helper::encolar(&mensaje,&cola_mensajes_enviar,&mutex_cola_mensajes_enviar);
+			}
+		}
+		pthread_mutex_unlock(&mutex_partidas);
+
+		usleep(POOLING_DEADTIME);
+	}
+	pthread_exit(0);
+}
+
+void * sharedMemory(void * args) {
+	try {
+		int shmId = shmget(shmIds.shmId, sizeof(struct puntajes), PERMISOS_SHM);
+		if (shmId < 0) {
+			throw "Error al obtener memoria compartida";
+		}
+		puntaje = (struct puntajes *) shmat(shmId, (void *) 0, 0);
+		if (puntaje == (void *) -1) {
+			throw "Error al mapear la memoria compartida";
+		}
+
+		while (stop == false) {
+
+			//Verifico si el padre esta vivo
+			if (kill(ppid, 0) == -1) {
+				stop = true;
+			}
+
+			pthread_mutex_lock(&mutex_partidas);
+			for (map<int, Partida*>::iterator it = partidas.begin(); it != partidas.end(); it++) {
+				if (it->second->estado == ESTADO_FINALIZADO && !(it->second->cSocket1 == NULL && it->second->cSocket2 == NULL)) {
+					//TODO usar semaforos para sincronizar.
+					//TODO borrar la partida.
+					puntaje->idJugador1 = it->second->felix1->id;
+					puntaje->idJugador2 = it->second->felix2->id;
+					puntaje->puntajeJugador1 = it->second->felix1->puntaje_parcial;
+					puntaje->puntajeJugador2 = it->second->felix2->puntaje_parcial;
+					puntaje->partidaFinalizadaOk = true;
+					map<int, Partida*>::iterator auxIt = it;
+					++it;
+					partidas.erase(auxIt);
+					//End usar semaforos para sincronizar.
+					//Borrar partida.
+				} else if (it->second->cSocket1 == NULL && it->second->cSocket2 == NULL) {
+					//Borrar Partida.
+					map<int, Partida*>::iterator auxIt = it;
+					++it;
+					partidas.erase(auxIt);
+				}
+			}
+			pthread_mutex_unlock(&mutex_partidas);
+
+			usleep(POOLING_DEADTIME);
+		}
+	} catch (const char * err) {
+		cout << "Error inesperado al mapear la memoria compartida." << endl;
+		exit(1);
+	}
+	pthread_exit(0);
+}
+
 
 void* enviarMensajesCliente(void * args) {
 	char aux[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
@@ -175,7 +274,7 @@ void* enviarMensajesCliente(void * args) {
 			pthread_mutex_unlock(&mutex_cola_mensajes_enviar);
 			strcpy(aux, mensaje.codigo.c_str());
 			strcat(aux, mensaje.mensaje.c_str());
-			if (mensaje.jugador == 0) //BroadCast
+			if (mensaje.jugador == BROADCAST) //BroadCast
 					{
 				if (mensaje.partida->cSocket1 != NULL) {
 					mensaje.partida->cSocket1->SendNoBloq(aux, sizeof(aux));
@@ -183,10 +282,10 @@ void* enviarMensajesCliente(void * args) {
 				if (mensaje.partida->cSocket2 != NULL) {
 					mensaje.partida->cSocket2->SendNoBloq(aux, sizeof(aux));
 				}
-			} else if (mensaje.jugador == 2 && mensaje.partida->cSocket2 != NULL) //Jugador 2
+			} else if (mensaje.jugador == JUGADOR_2 && mensaje.partida->cSocket2 != NULL) //Jugador 2
 			{
 				mensaje.partida->cSocket2->SendNoBloq(aux, sizeof(aux));
-			} else if (mensaje.jugador == 1 && mensaje.partida->cSocket1 != NULL) {
+			} else if (mensaje.jugador == JUGADOR_1 && mensaje.partida->cSocket1 != NULL) {
 				mensaje.partida->cSocket1->SendNoBloq(aux, sizeof(aux));
 			}
 		}
@@ -194,6 +293,7 @@ void* enviarMensajesCliente(void * args) {
 	}
 	pthread_exit(0);
 }
+
 
 bool partidaPendiente(int idPartida) {
 	pthread_mutex_lock(&mutex_partidas);
@@ -208,24 +308,113 @@ bool partidaPendiente(int idPartida) {
 	return false;
 }
 
+
 void caseMovimientoFelix(Mensaje mensaje) {
 	int columna = atoi(mensaje.mensaje.substr(5, 1).c_str());
 	int fila = atoi(mensaje.mensaje.substr(6, 1).c_str());
-	Partida * partidaJugador;
-	Felix * felixJugador;
-	Edificio * edificioJugador;
+	Partida * partidaJugador = mensaje.partida;
+	Felix * felixJugador = 0;
+	Edificio * edificioJugador = mensaje.partida->edificio;
 
-	if (mensaje.jugador == 1)
+	if (mensaje.jugador == JUGADOR_1)
 		felixJugador = partidaJugador->felix1;
-	else if (mensaje.jugador == 2)
+	else if (mensaje.jugador == JUGADOR_2)
 		felixJugador = partidaJugador->felix2;
 
-	if (!edificioJugador->ventanas[fila][columna].ocupado && fila >= 0 && columna >= 0 && fila < edificioJugador->filas && columna < edificioJugador->columnas && !(fila==0 && columna==2)) {
-		//Puede moverse ahi.
-		//Helper::encolar()
+	if (!edificioJugador->ventanas[fila][columna].ocupado && fila >= 0 && columna >= 0 && fila < edificioJugador->filas && columna < edificioJugador->columnas && !(fila == 0 && columna == 2)) {
+//Puede moverse ahi.
+		edificioJugador->ventanas[felixJugador->fila][felixJugador->columna].ocupado = false;
+		edificioJugador->ventanas[fila][columna].ocupado = true;
+		felixJugador->fila = fila;
+		felixJugador->columna = columna;
+
+//Construyo nuevo mensaje a enviar.
+		char auxFila[2];
+		char auxColumna[2];
+		char aux1[5] = { "1" };
+		char aux2[5] = { "2" };
+
+		sprintf(auxFila, "%d", fila);
+		sprintf(auxColumna, "%d", columna);
+
+		strcat(aux1, auxColumna);
+		strcat(aux1, auxFila);
+		strcat(aux2, auxColumna);
+		strcat(aux2, auxFila);
+//Envio mensaje al jugador1.
+		Mensaje mensajeMovimiento = mensaje;
+		if (felixJugador == mensaje.partida->felix1) {
+			mensajeMovimiento.jugador = JUGADOR_1;
+			mensajeMovimiento.mensaje = string(CD_MOVIMIENTO_FELIX) + string(Helper::fillMessage(aux1));
+			Helper::encolar(&mensajeMovimiento, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+			mensajeMovimiento.jugador = JUGADOR_2;
+			mensajeMovimiento.mensaje = string(CD_MOVIMIENTO_FELIX) + string(Helper::fillMessage(aux2));
+			Helper::encolar(&mensajeMovimiento, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+		} else if (felixJugador == mensaje.partida->felix2) {
+			mensajeMovimiento.jugador = JUGADOR_1;
+			mensajeMovimiento.mensaje = string(CD_MOVIMIENTO_FELIX) + string(Helper::fillMessage(aux2));
+			Helper::encolar(&mensajeMovimiento, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+			mensajeMovimiento.jugador = JUGADOR_2;
+			mensajeMovimiento.mensaje = string(CD_MOVIMIENTO_FELIX) + string(Helper::fillMessage(aux1));
+			Helper::encolar(&mensajeMovimiento, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+		}
+
 	}
 }
 
+void casePerdidaVida(Mensaje mensaje) {
+	Felix * felixJugador;
+	if (mensaje.jugador == JUGADOR_1) {
+		felixJugador = mensaje.partida->felix1;
+	} else if (mensaje.jugador == JUGADOR_2) {
+		felixJugador = mensaje.partida->felix2;
+	}
+
+	if (!felixJugador->perderVida()) //Perdio vida
+	{
+		if (felixJugador == mensaje.partida->felix1) {
+			mensaje.mensaje = string(CD_PERDIDA_VIDA) + Helper::fillMessage("100");
+			mensaje.jugador = JUGADOR_1;
+			Helper::encolar(&mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+			mensaje.mensaje = string(CD_PERDIDA_VIDA) + Helper::fillMessage("200");
+			mensaje.jugador = JUGADOR_2;
+			Helper::encolar(&mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+			felixJugador->mover(0, 0, mensaje.partida->edificio);
+		} else if (felixJugador == mensaje.partida->felix2) {
+			mensaje.mensaje = string(CD_PERDIDA_VIDA) + Helper::fillMessage("240");
+			mensaje.jugador = JUGADOR_1;
+			Helper::encolar(&mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+			mensaje.mensaje = string(CD_PERDIDA_VIDA) + Helper::fillMessage("140");
+			mensaje.jugador = JUGADOR_2;
+			Helper::encolar(&mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+			felixJugador->mover(0, 4, mensaje.partida->edificio);
+		}
+	} else //Murio
+	{
+		if (felixJugador == mensaje.partida->felix1) {
+			mensaje.mensaje = string(CD_PERDIO) + Helper::fillMessage("1");
+			mensaje.jugador = JUGADOR_1;
+			Helper::encolar(&mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+			mensaje.mensaje = string(CD_PERDIO) + Helper::fillMessage("2");
+			mensaje.jugador = JUGADOR_2;
+			Helper::encolar(&mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+			mensaje.partida->edificio->ventanas[felixJugador->fila][felixJugador->columna].ocupado = false;
+			mensaje.partida->edificio->ventanas[0][0].ocupado = false;
+		} else if (felixJugador == mensaje.partida->felix2) {
+			mensaje.mensaje = string(CD_PERDIO) + Helper::fillMessage("2");
+			mensaje.jugador = JUGADOR_1;
+			Helper::encolar(&mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+			mensaje.mensaje = string(CD_PERDIO) + Helper::fillMessage("1");
+			mensaje.jugador = JUGADOR_2;
+			Helper::encolar(&mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+			mensaje.partida->edificio->ventanas[felixJugador->fila][felixJugador->columna].ocupado = false;
+			mensaje.partida->edificio->ventanas[0][4].ocupado = false;
+		}
+	}
+	if (mensaje.partida->felix1->cantidad_vidas <= 0 && mensaje.partida->felix2->cantidad_vidas <= 0) {
+		mensaje.partida->estado = ESTADO_FINALIZADO;
+	}
+}
 /*
  * Thread encargado de enviar los mensajes de los sucesos del juego no pertenecientes
  * a ninguno de los dos jugadores, siendo movimiento ralph, paloma,etc.

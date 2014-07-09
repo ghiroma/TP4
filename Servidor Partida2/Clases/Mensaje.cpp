@@ -16,6 +16,14 @@ Mensaje::Mensaje(int jugador, string mensaje, Partida * partida) {
 
 }
 
+Mensaje::Mensaje()
+{
+	this->jugador = 0;
+	this->codigo ="";
+	this->mensaje = "";
+	this->partida = 0;
+}
+
 Mensaje::~Mensaje() {
 	// TODO Auto-generated destructor stub
 }
