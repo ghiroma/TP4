@@ -40,6 +40,9 @@ static const char* CD_PUERTO_PARTIDA = "07";
 static const char* CD_NOMBRE = "50";
 static const char* CD_RANKING = "80";
 static const char* CD_FIN_TORNEO = "81";
+static const char* CD_ID_PARTIDA = "60";
+static const char* CD_JUGADOR_LISTO = "61";
+static const char* CD_EMPEZAR_PARTIDA = "62";
 
 static const int CD_MOVIMIENTO_RALPH_I = 0;
 static const int CD_PALOMA_I = 1;
@@ -58,5 +61,43 @@ static const int CD_POSICION_INICIAL_I = 46;
 static const int CD_OPONENTE_DESCONECTADO_I = 96;
 static const int CD_PERDIO_I = 98;
 static const int CD_ACK_I = 99;
+static const int CD_ID_PARTIDA_I = 60;
+
+// Imagenes.
+
+const char pared_tramo1n1_bmp[] = "Sprites/pared_tramo1n1.bmp";
+const char pared_tramo2n1_bmp[] = "Sprites/pared_tramo2n1.bmp";
+const char pared_tramo3n1_bmp[] = "Sprites/pared_tramo3n1.bmp";
+const char ventana_sana_bmp[] = "Sprites/ventana_sana.bmp";
+const char ventana_rota1_bmp[] = "Sprites/ventana_rota1.bmp";
+const char ventana_rota2_bmp[] = "Sprites/ventana_rota2.bmp";
+const char ventana_rota3_bmp[] = "Sprites/ventana_rota3.bmp";
+const char ventana_rota4_bmp[] = "Sprites/ventana_rota4.bmp";
+const char puerta_bmp[] = "Sprites/puerta_grande.bmp";
+const char felixd1_bmp[] = "Sprites/felix_d1.bmp";
+const char felixi1_bmp[] = "Sprites/felix_i1.bmp";
+const char felixr11_bmp[] = "Sprites/felix_r11.bmp";
+const char felixr21_bmp[] = "Sprites/felix_r21.bmp";
+const char felixr31_bmp[] = "Sprites/felix_r31.bmp";
+const char felixr41_bmp[] = "Sprites/felix_r41.bmp";
+const char felixr51_bmp[] = "Sprites/felix_r51.bmp";
+const char felixr12_bmp[] = "Sprites/felix_r12.bmp";
+const char felixr22_bmp[] = "Sprites/felix_r22.bmp";
+const char felixr32_bmp[] = "Sprites/felix_r32.bmp";
+const char felixr42_bmp[] = "Sprites/felix_r42.bmp";
+const char felixr52_bmp[] = "Sprites/felix_r52.bmp";
+const char felixd2_bmp[] = "Sprites/felix_d2.bmp";
+const char felixi2_bmp[] = "Sprites/felix_i2.bmp";
+const char ralph1_bmp[] = "Sprites/rahlp_1.bmp";
+const char ralph2_bmp[] = "Sprites/rahlp_2.bmp";
+const char ralph3_bmp[] = "Sprites/rahlp_3.bmp";
+const char ralph4_bmp[] = "Sprites/rahlp_4.bmp";
+const char ralph5_bmp[] = "Sprites/rahlp_5.bmp";
+const char ralph6_bmp[] = "Sprites/rahlp_6.bmp";
+const char pajaro1_bmp[] = "Sprites/pajaro_1.bmp";
+const char pajaro2_bmp[] = "Sprites/pajaro_2.bmp";
+const char roca1_bmp[] = "Sprites/roca1.bmp";
+const char roca2_bmp[] = "Sprites/roca2.bmp";
+const char torta_bmp[] = "Sprites/torta.bmp";
 
 #endif /* CONSTANTES_H_ */

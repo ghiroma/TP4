@@ -5,13 +5,13 @@
  *      Author: ghiroma
  */
 
+#include "FuncionesServidorPartida.h"
 #include "Clases/Semaforo.h"
 #include "Clases/CommunicationSocket.h"
 #include "Clases/ServerSocket.h"
 #include "Clases/Felix.h"
 #include "Clases/Edificio.h"
 #include "Support/Constantes.h"
-#include "FuncionesServidorPartida.h"
 #include "Support/Estructuras.h"
 #include <pthread.h>
 #include <sys/types.h>
@@ -32,6 +32,11 @@ using namespace std;
 int main(int argc, char * argv[]) {
 
 	pthread_t thread_receptorConexiones;
+	pthread_t thread_escuchaClientes;
+	pthread_t thread_procesarMensajesClientes;
+	pthread_t thread_timer;
+	pthread_t thread_sharedMemory;
+	pthread_t thread_enviarMensajesCliente;
 
 	atexit(liberarRecursos);
 
@@ -50,8 +55,8 @@ int main(int argc, char * argv[]) {
 	if (argc == 3) {
 		puerto = atoi(argv[1]);
 		cantVidas = atoi(argv[2]);
-		shmIds.shmId = ftok("/bin/ls", puerto);
-		if (shmIds.shmId == -1) {
+		shmId = ftok("/bin/ls", puerto);
+		if (shmId == -1) {
 			cout << "Error al generar el shmId. " << endl;
 			exit(1);
 		}
@@ -64,11 +69,22 @@ int main(int argc, char * argv[]) {
 		sSocket = new ServerSocket(puerto);
 	} catch (const char* err) {
 		cout << "Error al querer conectar al puerto: " << puerto << endl;
+		exit(1);
 	}
 
 	pthread_create(&thread_receptorConexiones,NULL,receptorConexiones,NULL);
+	pthread_create(&thread_escuchaClientes,NULL,escuchaClientes,NULL);
+	pthread_create(&thread_procesarMensajesClientes,NULL,procesarMensajesCliente,NULL);
+	pthread_create(&thread_receptorConexiones,NULL,receptorConexiones,NULL);
+	pthread_create(&thread_sharedMemory,NULL,sharedMemory,NULL);
+	pthread_create(&thread_timer,NULL,timer_thread,NULL);
 
 	pthread_join(thread_receptorConexiones,NULL);
+
+	pthread_mutex_destroy(&mutex_edificio);
+	pthread_mutex_destroy(&mutex_cola_mensajes_enviar);
+	pthread_mutex_destroy(&mutex_cola_mensajes_recibir);
+	pthread_mutex_destroy(&mutex_partidas);
 
 	cout << "Partida finalizada." << endl;
 	return 0;
