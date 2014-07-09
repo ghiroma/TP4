@@ -16,13 +16,18 @@
 #include <SDL/SDL_ttf.h>
 #include <list>
 #include "Clases/Semaforo.h"
+#include "Clases/ServerSocket.h"
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
 using namespace std;
 
 map<int, Jugador*> listJugadores;
-unsigned int puertoTorneo;
-unsigned int puertoPartida;
+unsigned int puertoServidorTorneo;
+unsigned int puertoServidorPartida;
 int cantVidas = 0;
+ServerSocket* sSocket;
+int idSHM;
 
 int main(int argc, char * argv[]) {
 	atexit(liberarRecursos);
@@ -44,22 +49,74 @@ int main(int argc, char * argv[]) {
 	pthread_t thModoGrafico;
 	int resultThModoGrafico;
 	thModoGrafico_data modoGraficoData;
-	pthread_t thSDLEventos;
-	int resultThSDLEventos;
+	pthread_t thLecturaDeResultados;
+	int resultThLecturaDeResultados;
+	pid_t pid;
 
 	signal(SIGINT, SIG_Handler);
 	signal(SIGTERM, SIG_Handler);
 	signal(SIGCHLD, SIG_CHLD);
 
-
 	//Obtener configuracion
-	getConfiguration(&puertoTorneo, &ip, &duracionTorneo, &tiempoInmunidad, &cantVidas);
-	if (puertoTorneo == 0 || duracionTorneo == 0 || tiempoInmunidad == 0 || cantVidas == 0) {
+	getConfiguration(&puertoServidorTorneo, &ip, &duracionTorneo, &tiempoInmunidad, &cantVidas);
+	if (puertoServidorTorneo == 0 || duracionTorneo == 0 || tiempoInmunidad == 0 || cantVidas == 0) {
 		cout << "Error al obtener configuracion." << endl;
 		exit(1);
 	}
-	puertoPartida = puertoTorneo;
-	cout << "puertoTorneo: " << puertoTorneo << endl;
+	if (puertoServidorTorneo < MIN_PUERTO_REGISTRADO || puertoServidorTorneo >= MAX_PUERTO_REGISTRADO) {
+		cout << "El puerto del servidor de partida no se encuentra en el rango permitido. Pruebe otro valor en el rango " << MIN_PUERTO_REGISTRADO << " - " << MAX_PUERTO_REGISTRADO << endl;
+		exit(1);
+	}
+
+	puertoServidorPartida = puertoServidorTorneo + 1;
+	cout << "puertoServidorTorneo: " << puertoServidorTorneo << endl;
+
+	//Creo el bloque de memoria compartida
+	key_t key = ftok("/bin/ls", puertoServidorPartida);
+	if (key == -1) {
+		cout << "Error al generar clave de memoria compartida" << endl;
+		exit(1);
+	}
+	idSHM = shmget(key, sizeof(struct puntajesPartida) * 1, IPC_CREAT | PERMISOS_SHM);
+	if (idSHM == -1) {
+		cout << "Error al obtener memoria compartida" << endl;
+		exit(1);
+	}
+
+	//inicializo el BLOQUE DE SHM
+	puntajesPartida* resumenPartida = (struct puntajesPartida *) shmat(idSHM, (char *) 0, 0);
+	resumenPartida->idJugador1 = -1;
+	resumenPartida->idJugador2 = -1;
+	resumenPartida->puntajeJugador1 = 0;
+	resumenPartida->puntajeJugador2 = 0;
+	resumenPartida->partidaFinalizadaOK = false;
+
+	//Crear Socket del Servidor
+	try {
+		sSocket = new ServerSocket(puertoServidorTorneo);
+	} catch (...) {
+		cout << "No se pudo conectar al puerto solicitado. Pruebe otro." << endl;
+		exit(1);
+	}
+
+	///Lanzar Servidor Partida
+	if ((pid = fork()) == 0) {
+		//Proceso hijo
+		cout << "Lanzar Servidor de Partida FORK - PID:" << getpid() << endl;
+		char auxCantVidas[2];
+		sprintf(auxCantVidas, "%d", cantVidas);
+		char auxPuertoServidorPartida[LONGITUD_CONTENIDO];
+		sprintf(auxPuertoServidorPartida, "%d", puertoServidorPartida);
+		char *nombreEjecutable = NULL;
+		strcpy(nombreEjecutable, "ServidorPartida");
+
+		char *argumentos[] = { nombreEjecutable, auxPuertoServidorPartida, auxCantVidas, NULL };
+		execv("../Servidor Partida2/ServidorPartida", argumentos);
+		cout << "ERROR al ejecutar execv Nueva Partida" << endl;
+		exit(1);
+	} else if (pid < 0) {
+		cout << "Error al forkear" << endl;
+	}
 
 	//Lanzar THREAD establecer partidas
 	resultThEstablecerPartidas = pthread_create(&thEstablecerPartidas, NULL, establecerPartidas, NULL);
@@ -99,14 +156,23 @@ int main(int argc, char * argv[]) {
 		cout << "Error no se pudo crear el thread de temporizacion del torneo" << endl;
 		exit(1);
 	}
+
+	//Lanzar THREAD lectura de resultados de las partidas
+	resultThLecturaDeResultados = pthread_create(&thLecturaDeResultados, NULL, lecturaDeResultados, (void *) NULL);
+	if (resultThLecturaDeResultados) {
+		cout << "Error no se pudo crear el thread de lectura de resultados de las partidas" << endl;
+		exit(1);
+	}
+
+	//pthread_join(thLecturaDeResultados, NULL);
 	pthread_join(thModoGrafico, NULL);
 
 	//mandar a cada cliente su puntaje y ranking
 	mandarPuntajes();
 
-	pthread_join(thkeepAliveJugadores, NULL);
+	//pthread_join(thkeepAliveJugadores, NULL);
 
-	//bloqueo en espera de que ingrese una tecla para cerrar la pantalla
+	//Bloqueo en espera de que ingrese una tecla para cerrar la pantalla
 	cout << "Ingrese una tecla para finalizar: ";
 	getchar();
 	liberarRecursos();
