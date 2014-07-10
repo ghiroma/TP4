@@ -107,7 +107,6 @@ void* receptorConexiones(void * args) {
 			//Mando posicion inicial
 			Mensaje mensaje(JUGADOR_1, posicionInicial1(felix), partida);
 			Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-			cout << "Encola mensaje de posicion inicial" << endl;
 		}
 		usleep(POOLING_DEADTIME);
 	}
@@ -216,8 +215,6 @@ void* timer_thread(void * args) {
 				Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 			}
 
-			//cout<<"Partida id: "<<it->second->id<<" estado: "<<it->second->estado<<endl;
-
 			if (it->second->estado == ESTADO_JUGANDO) {
 
 				message = timer.ralph(it->second->edificio->nivel);
@@ -234,7 +231,6 @@ void* timer_thread(void * args) {
 			}
 		}
 		pthread_mutex_unlock(&mutex_partidas);
-		cout << "lock mutex timer" << endl;
 		usleep(POOLING_DEADTIME);
 	}
 	pthread_exit(0);
@@ -264,13 +260,10 @@ void * sharedMemory(void * args) {
 				exit(1);
 			}
 
-			cout << "lock mutex sharedmemory" << endl;
 			pthread_mutex_lock(&mutex_partidas);
 			for (map<int, Partida*>::iterator it = partidas.begin(); it != partidas.end(); it++) {
 				if (it->second->estado == ESTADO_FINALIZADO && !(it->second->cSocket1 == NULL && it->second->cSocket2 == NULL)) {
-					cout << "lock before semaphore1 sharedmemory" << endl;
 					if (sem_trywait(semPartida->getSem_t()) != -1) {
-						cout << "lock semaphore1 sharedmemory" << endl;
 						puntaje->idJugador1 = it->second->felix1->id;
 						puntaje->idJugador2 = it->second->felix2->id;
 						puntaje->puntajeJugador1 = it->second->felix1->puntaje_parcial;
@@ -289,15 +282,12 @@ void * sharedMemory(void * args) {
 						partidas.erase(it);
 						cout << "Borre la partida" << endl;
 						semTorneo->V();
-						cout << "unlock semaphore1 sharedmemory" << endl;
 					}
 					//End usar semaforos para sincronizar.
 					//Borrar partida.
 				} else if (it->second->cSocket1 == NULL && it->second->cSocket2 == NULL) {
 					//Borrar Partida porque se desconectaron ambos jugadores.
-					cout << "lock before semaphore2 sharedmemory" << endl;
 					if (sem_trywait(semPartida->getSem_t()) != -1) {
-						cout << "lock semaphore2 sharedmemory" << endl;
 						puntaje->idJugador1 = it->second->felix1->id;
 						puntaje->idJugador2 = it->second->felix2->id;
 						puntaje->puntajeJugador1 = 0;
@@ -311,8 +301,6 @@ void * sharedMemory(void * args) {
 				}
 			}
 			pthread_mutex_unlock(&mutex_partidas);
-			cout << "unlock mutex sharedmemory" << endl;
-
 			usleep(POOLING_DEADTIME);
 		}
 	} catch (const char * err) {
@@ -578,7 +566,6 @@ void liberarRecursos() {
 	pthread_mutex_destroy(&mutex_cola_mensajes_enviar);
 	pthread_mutex_destroy(&mutex_cola_mensajes_recibir);
 	pthread_mutex_destroy(&mutex_partidas);
-	cout << "ServidorPartida: Recursos liberados" << endl;
 }
 
 string posicionInicial1(Felix * felix) {
