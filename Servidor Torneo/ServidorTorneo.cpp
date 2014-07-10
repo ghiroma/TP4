@@ -108,16 +108,15 @@ int main(int argc, char * argv[]) {
 		char auxPuertoServidorPartida[LONGITUD_CONTENIDO];
 		sprintf(auxPuertoServidorPartida, "%d", puertoServidorPartida);
 		char nombreEjecutable[100];
-		cout<<"antes de copiar "<<endl;
 		strcpy(nombreEjecutable, "ServidorPartida");
 
-		cout<<"nombreEjecutable: "<<nombreEjecutable<<endl;
 		char *argumentos[] = { nombreEjecutable, auxPuertoServidorPartida, auxCantVidas, NULL };
 		execv("../Servidor Partida2/Debug/Servidor Partida2", argumentos);
 		cout << "ERROR al ejecutar execv Nueva Partida" << endl;
 		exit(1);
 	} else if (pid < 0) {
 		cout << "Error al forkear" << endl;
+		exit(1);
 	}
 
 	//Lanzar THREAD establecer partidas

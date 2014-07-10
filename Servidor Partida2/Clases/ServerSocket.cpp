@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <stdlib.h>
 #include <iostream>
 
 #define MAX_PENDING_CONNECTIONS 20

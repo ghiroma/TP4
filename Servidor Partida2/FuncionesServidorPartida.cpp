@@ -116,6 +116,7 @@ void* receptorConexiones(void * args) {
 		usleep(POOLING_DEADTIME);
 	}
 
+	cout<<"receptor conexiones salio del stop"<<endl;
 	pthread_exit(0);
 }
 
@@ -146,6 +147,7 @@ void * escuchaClientes(void * args) {
 					message.append(Helper::fillMessage("0"));
 					Mensaje mensaje(JUGADOR_2, message, it->second);
 					Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+					
 				}
 
 				if (it->second->cSocket2 != NULL) {
@@ -160,6 +162,7 @@ void * escuchaClientes(void * args) {
 						message.append(Helper::fillMessage("0"));
 						Mensaje mensaje(JUGADOR_1, message, it->second);
 						Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+						
 					}
 				}
 			}
@@ -168,6 +171,8 @@ void * escuchaClientes(void * args) {
 		cout << "lock mutex escuchacliente" << endl;
 		usleep(POOLING_DEADTIME);
 	}
+
+	cout<<"escuchar clientes salio del stop"<<endl;
 	pthread_exit(0);
 }
 
@@ -258,13 +263,9 @@ void * sharedMemory(void * args) {
 			throw "Error al mapear la memoria compartida";
 		}
 
-	} catch (const char * err) {
-		cout << "Error inesperado al obtener memoria compartida" << endl;
-		exit(1);
-	}
-	try {
 		semTorneo = new Semaforo(SEMAFORO_TORNEO);
 		semPartida = new Semaforo(SEMAFORO_PARTIDA);
+		//TODO Crear semaforos.
 
 		while (stop == false) {
 
@@ -587,6 +588,7 @@ void SIGINT_Handler(int inum) {
  * Libera recursos del servidor.
  */
 void liberarRecursos() {
+
 	if (puntaje != NULL)
 		shmdt(puntaje);
 	shmctl(shmIds.shmId, IPC_RMID, 0);
@@ -644,4 +646,3 @@ bool tramoFinalizado(Edificio * edificio) {
 	}
 	return result == 0;
 }
-
