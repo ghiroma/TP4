@@ -93,6 +93,6 @@ char * ServerSocket::ShowHostName()
 
 ServerSocket::~ServerSocket ()
 {
-	std::cout<<"Close: socket server Servidor Partida2"<<std::endl;
+  // TODO Auto-generated destructor stub
   close(this->ID);
 }
