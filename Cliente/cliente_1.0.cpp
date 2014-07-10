@@ -184,6 +184,7 @@ bool solicitudDeNuevaParitda = false;
 bool start = false;
 bool recibioPosicionInicial = false;
 int partidasJugadas = 0;
+bool recibioIdPartida = false;
 
 CommunicationSocket * socketTorneo;
 CommunicationSocket * socketPartida;
@@ -813,19 +814,19 @@ void* EscuchaServidor(void *arg) {
 			cout << "Termino la partida" << endl;
 
 			//si no se llego a fin del torneo
-			pthread_mutex_lock(&mutex_torneoFinalizado);
-			bool torneoFin = torneoFinalizado;
-			pthread_mutex_unlock(&mutex_torneoFinalizado);
-			if (!torneoFin) {
+			//pthread_mutex_lock(&mutex_torneoFinalizado);
+			//bool torneoFin = torneoFinalizado;
+			//pthread_mutex_unlock(&mutex_torneoFinalizado);
+			//if (!torneoFin) {
 				//mostrar pantalla Esperando partida
-				mostrarPantalla("waitmatch");
+				//mostrarPantalla("waitmatch");
 
-				pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
-				solicitudDeNuevaParitda = true;
-				pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
+				//pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
+				//solicitudDeNuevaParitda = true;
+				//pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
 
-				break;
-			}
+				//break;
+			//}
 
 			delete(socketPartida);
 		}
@@ -850,12 +851,12 @@ void * EnvioServidor(void * arg) {
 		}
 
 		//si murio la partida salgo de este thread (me doy cuenta cuando solicitan una nueva partida)
-		pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
+		/*pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
 		auxSolicitudDeNuevaParitda = solicitudDeNuevaParitda;
 		pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
 		if (auxSolicitudDeNuevaParitda) {
 			break;
-		}
+		}*/
 		usleep(1000);
 	}
 	cout << "sale el thread de EnvioServidor" << endl;
@@ -906,6 +907,7 @@ void* EscuchaTorneo(void *arg) {
 			case CD_ID_PARTIDA_I:
 				cout << "IDPartida: " << aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO) << endl;
 				idPartida = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
+				recibioIdPartida = true;
 				break;
 			case CD_NOMBRE_I:
 				//recibo y limpio el nombre de ceros
@@ -1275,6 +1277,7 @@ void inicializarNuevaPartida() {
 
 	//Espero id de partida
 	esperarIdPartida();
+	recibioIdPartida = false;
 	//cout << "Recibi idDePartida" << endl;
 
 	//////////////////////////////////////
@@ -1347,7 +1350,9 @@ void inicializarNuevaPartida() {
 	//inicializo la cantida de vidas
 
 	//Espero que el Servidor de Partida me mande el mensaje de START
+	cout<<"Esperar signal de START"<<endl;
 	esperarSTART();
+	cout<<"START - Match "<<idPartida<<endl;
 
 	//vaciarColas();
 }
@@ -1413,11 +1418,16 @@ void esperarPosicionInicial() {
 
 void esperarIdPartida() {
 	//cout << "esperando id Partida" << endl;
-	bool recibioIdPartida = false;
+
+	// MEJORARRRRR
+	///
+
+	//bool recibioIdPartida = false;
 	while (!recibioIdPartida) {
-		if (idPartida != 0) {
-			recibioIdPartida = true;
-		}
+		
+			//recibioIdPartida = true;
+			//break;
+		
 		usleep(10000);
 	}
 }
