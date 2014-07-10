@@ -189,6 +189,8 @@ bool recibioIdPartida = false;
 CommunicationSocket * socketTorneo;
 CommunicationSocket * socketPartida;
 
+//CommunicationSocket cSocket(fd);
+
 int main(int argc, char *argv[]) {
 	atexit(liberarRecursos);
 	signal(SIGINT, handler);
@@ -839,7 +841,7 @@ void* EscuchaServidor(void *arg) {
 
 void * EnvioServidor(void * arg) {
 	int fd = *(int *) arg;
-	CommunicationSocket cSocket(fd);
+	//CommunicationSocket cSocket(fd);
 	bool auxSolicitudDeNuevaParitda = false;
 	cout << "inicia th EnviaServidor" << endl;
 	while (true) {
@@ -847,7 +849,10 @@ void * EnvioServidor(void * arg) {
 			string mensaje = cola_grafico.front();
 			cola_grafico.pop();
 			//cout << "Mensaje a enviar al servPartida: " << mensaje.c_str() << endl;
-			cSocket.SendBloq(mensaje.c_str(), mensaje.length());
+			
+			//cSocket.SendBloq(mensaje.c_str(), mensaje.length());
+			socketPartida->SendBloq(mensaje.c_str(), mensaje.length());
+
 		}
 
 		//si murio la partida salgo de este thread (me doy cuenta cuando solicitan una nueva partida)
@@ -869,7 +874,7 @@ void* EscuchaTorneo(void *arg) {
 	const char* mensajeNombre;
 	char auxNombreOponente[6];
 	cout << "FD: " << fd << endl;
-	CommunicationSocket cSocket(fd);
+	//CommunicationSocket cSocket(fd);
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
 	int indice;
@@ -877,7 +882,12 @@ void* EscuchaTorneo(void *arg) {
 
 	while (true) {
 		//cout << "Espero msj del servidor de Torneo ... " << endl;
-		readData = cSocket.ReceiveBloq(buffer, sizeof(buffer));
+		
+		
+		//readData = cSocket.ReceiveBloq(buffer, sizeof(buffer));
+		readData = socketPartida->ReceiveBloq(buffer, sizeof(buffer));
+
+
 		if (strlen(buffer) > 0) {
 			string aux_buffer(buffer);
 
@@ -934,7 +944,7 @@ void* EscuchaTorneo(void *arg) {
 				string message(CD_ACK);
 				string content = "1";
 				message.append(fillMessage(content));
-				cSocket.SendNoBloq(message.c_str(), LONGITUD_CODIGO);
+				socketPartida->SendNoBloq(message.c_str(), LONGITUD_CODIGO);
 				break;
 			}
 		} else if (readData == 0) {
