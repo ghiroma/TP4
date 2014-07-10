@@ -17,6 +17,7 @@
 #include <list>
 #include <signal.h>
 #include <wait.h>
+#include <sys/socket.h>
 
 bool timeIsUp = false;
 bool comenzoConteo = false;
@@ -78,7 +79,7 @@ void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* 
  * Manejador de señales
  */
 void SIG_Handler(int inum) {
-	cout << "Señal Handler" << endl;
+	cout << "Torneo Señal Handler PID:"<<getpid()<< endl;
 	exit(1);
 }
 
@@ -633,10 +634,13 @@ void mandarPuntajes() {
 }
 
 void liberarRecursos() {
+	cout<<"libero recursos de Servidor Torneo PID:"<<getpid()<<endl;
 	//SOCKETS
 	if (sSocket != NULL) {
 		cout<<"Torneo -> cierro socket"<<endl;
 		close(sSocket->ID);
+		//shutdown(sSocket->ID,2);
+		delete(sSocket);
 	}
 
 	pthread_mutex_lock(&mutex_listJugadores);

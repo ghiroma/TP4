@@ -110,6 +110,7 @@ void* receptorConexiones(void * args) {
 		usleep(POOLING_DEADTIME);
 	}
 
+	cout<<"receptor conexiones salio del stop"<<endl;
 	pthread_exit(0);
 }
 
@@ -161,6 +162,8 @@ void * escuchaClientes(void * args) {
 		cout << "lock mutex escuchacliente" << endl;
 		usleep(POOLING_DEADTIME);
 	}
+
+	cout<<"escuchar clientes salio del stop"<<endl;
 	pthread_exit(0);
 }
 
@@ -570,12 +573,15 @@ void caseJugadorListo(Mensaje mensaje) {
 }
 
 void SIGINT_Handler(int inum) {
-	cout << "Signal received" << endl;
+	cout << "Serv Partida  Signal received PID:"<<getpid()<< endl;
 	stop = true;
+	exit(1);
 }
 
 void liberarRecursos() {
 	//TODO cerrar semaforos.
+
+	cout<<"libero recursos de Servidor Partida PID:"<<getpid()<<endl;
 	if (puntaje != NULL)
 		shmdt(puntaje);
 	shmctl(shmIds.shmId, IPC_RMID, 0);

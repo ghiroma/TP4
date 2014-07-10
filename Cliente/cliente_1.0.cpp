@@ -39,8 +39,9 @@ pthread_mutex_t mutex_cola_torta = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cola_mensajes_enviar = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cola_felix1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cola_felix2 = PTHREAD_MUTEX_INITIALIZER;
-
 pthread_mutex_t mutex_mostrar_pantalla = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_start = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_recibioPosicionInicial = PTHREAD_MUTEX_INITIALIZER;
 
 struct ventana {
 	short int x;
@@ -97,6 +98,11 @@ void vaciarColas();
 void inicializarNuevaPartida();
 bool cargarImagenes();
 void esperarIdPartida();
+bool nuevaPartidaSolicitada();
+bool torneoFinalizo();
+bool murioServidorDelTorneo();
+void esperarSTART();
+void esperarPosicionInicial();
 
 /* 
 
@@ -127,7 +133,8 @@ short int cant_rocas = 0;
 short int ralph_destino = 0;
 unsigned short int tramo = 1;
 unsigned short int nivel = 1;
-pthread_t tpid_teclas, tpid_escuchar_partida, tpid_enviar_partida, tpid_escuchar_torneo;
+pthread_t thEscuchaTorneo, thEscuchaTeclas, thEscuchaServidor, thEnvioServidor;
+int resultThEscuchaTorneo, resultThEscuchaTeclas, resultThEscuchaServidor, resultThEnvioServidor;
 char salir = 'N';
 char ralph_moverse = 'N';
 char pajaro_moverse = 'N';
@@ -174,6 +181,8 @@ bool murioServidorTorneo = false;
 string nombreOponente;
 string mi_id;
 bool solicitudDeNuevaParitda = false;
+bool start = false;
+bool recibioPosicionInicial = false;
 
 CommunicationSocket * socketTorneo;
 CommunicationSocket * socketPartida;
@@ -205,9 +214,7 @@ int main(int argc, char *argv[]) {
 	//Pantalla de inicio.
 	posBackground.x = 0;
 	posBackground.y = 0;
-	pthread_mutex_lock(&mutex_mostrar_pantalla);
 	mostrarPantalla("start");
-	pthread_mutex_unlock(&mutex_mostrar_pantalla);
 
 	//Empieza a cargar el nombre
 	IngresaNombre();
@@ -224,14 +231,11 @@ int main(int argc, char *argv[]) {
 	}
 
 	//Muestro pantalla de "esperando al servidor por nueva partida"
-	pthread_mutex_lock(&mutex_mostrar_pantalla);
 	mostrarPantalla("waitmatch");
-	pthread_mutex_unlock(&mutex_mostrar_pantalla);
 
 	//Conexion con el servidor de torneo.
 	cout << "Intentando conectarme al torneo" << endl;
 	int reintentar = 3;
-
 	do {
 		cout << "Esperando servidor" << endl;
 		try {
@@ -242,9 +246,11 @@ int main(int argc, char *argv[]) {
 			reintentar--;
 			if (reintentar == 0) {
 				cout << "No se ha podido establecer una conexion con un servidor de torneo." << endl;
+				mostrarPantalla("servernotfound");
+				sleep(10);
 				exit(1);
 			}
-			sleep(1);
+			sleep(5);
 		}
 	} while (reintentar != 0);
 	cout << "Conectado" << endl;
@@ -257,6 +263,8 @@ int main(int argc, char *argv[]) {
 	readData = socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
 	if (readData == 0) {
 		cout << "Se ha cerrado la conexion con el servidor de torneo" << endl;
+		mostrarPantalla("servertorneodown");
+		sleep(10);
 		exit(1);
 	}
 	string aux_buffer(buffer);
@@ -267,19 +275,45 @@ int main(int argc, char *argv[]) {
 	readData = socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
 	if (readData == 0) {
 		cout << "Se ha cerrado la conexion con el servidor de torneo" << endl;
+		//mostrarPantalla("servertorneodown");
 		exit(1);
 	}
 	string aux_puerto(buffer);
 	puertoServidorPartida = atoi(aux_puerto.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
 	cout << "Servidor de partida: " << puertoServidorPartida << endl;
 
+	//Me conecto al servidor de partida.
+	try {
+		socketPartida = new CommunicationSocket(puertoServidorPartida, (char*) ip.c_str());
+	} catch (const char * err) {
+		cout << "Error al querer conectar al puerto de partida" << endl;
+		exit(1);
+	}
+
 	//Thread para escuchar al servidor de Torneo.
-	pthread_create(&tpid_escuchar_torneo, NULL, EscuchaTorneo, &socketTorneo->ID);
+	resultThEscuchaTorneo = pthread_create(&thEscuchaTorneo, NULL, EscuchaTorneo, &socketTorneo->ID);
+	if (resultThEscuchaTorneo) {
+		cout << "Error no se pudo crear el thread de Escuchar Servidor de Torneo" << endl;
+		exit(1);
+	}
+	//Thread que va a estar a la escucha de las teclas que se presionan.
+	resultThEscuchaTeclas = pthread_create(&thEscuchaTeclas, NULL, EscuchaTeclas, NULL);
+	if (resultThEscuchaTeclas) {
+		cout << "Error no se pudo crear el thread de Escucha Teclas" << endl;
+		exit(1);
+	}
+	//Lanzo Threads de comunicacio con el Servidor de Partida
+	resultThEscuchaServidor = pthread_create(&thEscuchaServidor, NULL, EscuchaServidor, &socketPartida->ID);
+	if (resultThEscuchaServidor) {
+		cout << "Error no se pudo crear el thread de Escucha Servidor" << endl;
+		exit(1);
+	}
+	resultThEnvioServidor = pthread_create(&thEnvioServidor, NULL, EnvioServidor, &socketPartida->ID);
+	if (resultThEnvioServidor) {
+		cout << "Error no se pudo crear el thread de Envio Servidor" << endl;
+		exit(1);
+	}
 
-	//Lanzo el thread que va a estar a la escucha de las teclas que se presionan.
-	pthread_create(&tpid_teclas, NULL, EscuchaTeclas, NULL);
-
-	///thEscucharServdior =  create thread;
 	unsigned short int fila, columna;
 	unsigned short int ventana_x, ventana_y;
 	bool auxSolicitudDeNuevaPartida;
@@ -287,17 +321,9 @@ int main(int argc, char *argv[]) {
 
 	inicializarNuevaPartida();
 	while (salir == 'N') {
-		pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
-		auxSolicitudDeNuevaPartida = solicitudDeNuevaParitda;
-		pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
-		pthread_mutex_lock(&mutex_torneoFinalizado);
-		auxTorneoFinalizado = torneoFinalizado;
-		pthread_mutex_unlock(&mutex_torneoFinalizado);
-		if (auxSolicitudDeNuevaPartida && !auxTorneoFinalizado && !murioServidorTorneo) {
+		if (nuevaPartidaSolicitada() && !torneoFinalizo() && !murioServidorDelTorneo()) {
 			cout << "Solicite nueva partida" << endl;
 			//espero a que se cierre el ultimo thread de la partida anterior
-			pthread_join(tpid_enviar_partida, NULL);
-			sleep(3);
 			inicializarNuevaPartida();
 			pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
 			solicitudDeNuevaParitda = false;
@@ -590,9 +616,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	//esperar mientras las demas partidas no han finalizado. (mostrar msj "GameOver. waiting for rankings.. ")
-	pthread_mutex_lock(&mutex_mostrar_pantalla);
 	mostrarPantalla("gameover");
-	pthread_mutex_unlock(&mutex_mostrar_pantalla);
 
 	while (!showWindowRanking) {
 		sleep(1);
@@ -698,7 +722,7 @@ void* EscuchaServidor(void *arg) {
 			codigo = atoi(aux_buffer.substr(0, LONGITUD_CODIGO).c_str());
 
 			if (aux_buffer.compare("9900000") != 0) {
-				cout << "Recibi: " << buffer << endl;
+				cout << "Escucho Servidor Partida, recibi: " << buffer << endl;
 			}
 
 			switch (codigo) {
@@ -770,6 +794,25 @@ void* EscuchaServidor(void *arg) {
 				solicitudDeNuevaParitda = true;
 				pthread_mutex_unlock(&mutex_partidaFinalizada);
 				break;
+			case CD_EMPEZAR_PARTIDA_I:
+				pthread_mutex_lock(&mutex_start);
+				start = true;
+				pthread_mutex_unlock(&mutex_start);
+				break;
+			case CD_POSICION_INICIAL_I:
+				felix1_posicion.columna = atoi(aux_buffer.substr(5, 1).c_str());
+				felix1_posicion.fila = atoi(aux_buffer.substr(6, 1).c_str());
+				cout << "Posicion inicial de felix: columna " << felix1_posicion.columna << " fila " << felix1_posicion.fila << endl;
+				if (felix1_posicion.columna == 0) {
+					felix2_posicion.columna = EDIFICIO_COLUMNAS - 1;
+				} else {
+					felix2_posicion.columna = 0;
+				}
+				felix2_posicion.fila = 0;
+				pthread_mutex_lock(&mutex_recibioPosicionInicial);
+				recibioPosicionInicial = true;
+				pthread_mutex_unlock(&mutex_recibioPosicionInicial);
+				break;
 			case CD_ACK_I:
 				string message(CD_ACK);
 				message.append(fillMessage("0"));
@@ -791,9 +834,7 @@ void* EscuchaServidor(void *arg) {
 			pthread_mutex_unlock(&mutex_torneoFinalizado);
 			if (!torneoFin) {
 				//mostrar pantalla Esperando partida
-				pthread_mutex_lock(&mutex_mostrar_pantalla);
 				mostrarPantalla("waitmatch");
-				pthread_mutex_unlock(&mutex_mostrar_pantalla);
 
 				pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
 				solicitudDeNuevaParitda = true;
@@ -854,7 +895,7 @@ void* EscuchaTorneo(void *arg) {
 			string aux_buffer(buffer);
 
 			if (aux_buffer.compare("9900000") != 0) {
-				cout << "Recibi: " << buffer << endl;
+				cout << "Escucho servidor TORNEO, recibi: " << buffer << endl;
 			}
 
 			int codigo = atoi((aux_buffer.substr(0, LONGITUD_CODIGO).c_str()));
@@ -912,12 +953,9 @@ void* EscuchaTorneo(void *arg) {
 			murioServidorTorneo = true;
 			cout << "Murio el servidor torneo" << endl;
 			/// dar aviso de que murio y cerrar todo
-			pthread_mutex_lock(&mutex_mostrar_pantalla);
 			mostrarPantalla("servertorneodown");
-			pthread_mutex_unlock(&mutex_mostrar_pantalla);
-			sleep(5);
+			sleep(10);
 			exit(1);
-			break;
 		}
 		usleep(1000);
 	}
@@ -1179,20 +1217,25 @@ void getConfiguration(unsigned short int* port, string* ip, int* arriba, int* de
 }
 
 void mostrarPantalla(const char* nombrPantalla) {
+	pthread_mutex_lock(&mutex_mostrar_pantalla);
 	string dir = "Sprites/Mensajes/";
 	dir += nombrPantalla;
 	dir += ".bmp";
 	backgroundImg = SDL_LoadBMP(dir.c_str());
 	if (backgroundImg == NULL) {
-		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
+		cout << "Error en SDL_LoadBMP = " << SDL_GetError() << endl;
 		exit(1);
 	}
 	SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
-	if (SDL_Flip(superficie) == -1)
+	if (SDL_Flip(superficie) == -1) {
 		cout << "Error: SDL_FLIP" << SDL_GetError() << endl;
+		exit(1);
+	}
+	pthread_mutex_unlock(&mutex_mostrar_pantalla);
 }
 
 void mostrarRanking(const char* ranking) {
+	pthread_mutex_lock(&mutex_mostrar_pantalla);
 	SDL_Rect posTextoRanking;
 	posTextoRanking.x = 315;
 	posTextoRanking.y = 340;
@@ -1208,12 +1251,11 @@ void mostrarRanking(const char* ranking) {
 
 	SDL_BlitSurface(backgroundImg, NULL, superficie, &posBackground);
 	SDL_Flip(superficie);
+	pthread_mutex_unlock(&mutex_mostrar_pantalla);
 }
 
 void inicializarNuevaPartida() {
-	//Espero que el servidor de Torneo me envie el puerto para conectarme al servidor de partida.
-	//esperarPuertoPartida();
-	//cout << "Socket Partida:" << puertoServidorPartida << endl;
+	vaciarColas();
 
 	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
 	esperarNombreOponente();
@@ -1268,14 +1310,6 @@ void inicializarNuevaPartida() {
 	}
 	//////////////////////////////////////
 
-	//Me conecto al servidor de partida.
-	try {
-		socketPartida = new CommunicationSocket(puertoServidorPartida, (char*) ip.c_str());
-	} catch (const char * err) {
-		cout << "Error al querer conectar al puerto de partida" << endl;
-		exit(1);
-	}
-
 	//Mando mi IdDePartida
 	string messageIDPartida(CD_ID_PARTIDA);
 	char aux[5];
@@ -1283,59 +1317,29 @@ void inicializarNuevaPartida() {
 	messageIDPartida.append(fillMessage(aux));
 	socketPartida->SendBloq(messageIDPartida.c_str(), messageIDPartida.length());
 
-	//mando mi ID
+	//Mando mi ID de Jugador
 	string message(CD_ID_JUGADOR);
 	message.append(fillMessage(mi_id));
 	socketPartida->SendBloq(message.c_str(), message.length());
 
-	//espero mi posicion inicial;
+	//Espero mi posicion inicial;
 	cout << "Esperando mi posicion inicial" << endl;
-	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
-	string messagePosicion;
-	do {
-		socketPartida->ReceiveBloq(buffer, sizeof(buffer));
-		messagePosicion = buffer;
-		cout<<"while esperando posicion inicial: "<<buffer<<endl;
-	} //while(atoi(message.substr(0,LONGITUD_CODIGO).c_str())!=CD_POSICION_INICIAL_I);
-	while (strcmp(messagePosicion.substr(0, LONGITUD_CODIGO).c_str(), CD_POSICION_INICIAL) != 0);
-
-	cout << "Codigo encontrado, valor mensake " << messagePosicion << endl;
-	felix1_posicion.columna = atoi(messagePosicion.substr(5, 1).c_str());
-	felix1_posicion.fila = atoi(messagePosicion.substr(6, 1).c_str());
-
-	cout << "Posicion inicial de felix: columna " << felix1_posicion.columna << " fila " << felix1_posicion.fila << endl;
-
-	if (felix1_posicion.columna == 0) {
-		felix2_posicion.columna = EDIFICIO_COLUMNAS - 1;
-	} else {
-		felix2_posicion.columna = 0;
-	}
-
-	felix2_posicion.fila = 0;
+	esperarPosicionInicial();
 	cout << "Recibi mi posicion inicial" << endl;
 
-	//Envio mensaje de listo.
+	//Envio mensaje de listo para empezar.
 	string mensajeListo(CD_JUGADOR_LISTO);
 	mensajeListo.append(fillMessage("0"));
-	socketPartida->SendNoBloq(mensajeListo.c_str(), mensajeListo.length());
+	socketPartida->SendBloq(mensajeListo.c_str(), mensajeListo.length());
 
 	cout << "Envie que estoy listo" << endl;
 
 	//inicializo la cantida de vidas
 
-	//Empiezo a tirar Thread para comunicarme con el servidor de partida.
-	int codigo = 0;
-	do {
-		socketPartida->ReceiveBloq(buffer, sizeof(buffer));
-		string mensajeListo(buffer);
-		codigo = atoi(mensajeListo.substr(0, LONGITUD_CODIGO).c_str());
-		cout << "REcibi mensaje en while " << codigo << endl;
-	} //while(atoi(message.substr(0,LONGITUD_CODIGO).c_str())!=CD_POSICION_INICIAL_I);
-	while (codigo != 62);
+	//Espero que el Servidor de Partida me mande el mensaje de START
+	esperarSTART();
 
-	vaciarColas();
-	pthread_create(&tpid_escuchar_partida, NULL, EscuchaServidor, &socketPartida->ID);
-	pthread_create(&tpid_enviar_partida, NULL, EnvioServidor, &socketPartida->ID);
+	//vaciarColas();
 }
 
 void esperarPuertoPartida() {
@@ -1365,10 +1369,38 @@ void esperarNombreOponente() {
 			recibioNombreOponente = true;
 		}
 		pthread_mutex_unlock(&mutex_nombreOponente);
-		usleep(1000);
+		usleep(10000);
 	}
 	cout << "f esperarNombreOponente ->recibo el nombre de mi oponente:" << felix2_nombre << endl;
 }
+
+void esperarSTART() {
+	bool empezar = false;
+	while (!empezar) {
+		pthread_mutex_lock(&mutex_start);
+		empezar = start;
+		pthread_mutex_unlock(&mutex_start);
+		usleep(5000);
+	}
+
+	pthread_mutex_lock(&mutex_start);
+	start = false;
+	pthread_mutex_unlock(&mutex_start);
+}
+
+void esperarPosicionInicial(){
+	bool auxRecibioPosicionInicial = false;
+		while (!auxRecibioPosicionInicial) {
+			pthread_mutex_lock(&mutex_recibioPosicionInicial);
+			auxRecibioPosicionInicial = recibioPosicionInicial;
+			pthread_mutex_unlock(&mutex_recibioPosicionInicial);
+			usleep(10000);
+		}
+		pthread_mutex_lock(&mutex_start);
+		recibioPosicionInicial = false;
+		pthread_mutex_unlock(&mutex_start);
+}
+
 
 void esperarIdPartida() {
 	cout << "esperando id Partida" << endl;
@@ -1532,3 +1564,26 @@ void liberarRecursos() {
 
 }
 
+bool nuevaPartidaSolicitada() {
+	bool solicitud;
+	pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
+	solicitud = solicitudDeNuevaParitda;
+	pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
+	return solicitud;
+}
+
+bool torneoFinalizo() {
+	bool estado;
+	pthread_mutex_lock(&mutex_torneoFinalizado);
+	estado = torneoFinalizado;
+	pthread_mutex_unlock(&mutex_torneoFinalizado);
+	return estado;
+}
+
+bool murioServidorDelTorneo() {
+	bool estado;
+	pthread_mutex_lock(&mutex_murioServidorTorneo);
+	estado = murioServidorTorneo;
+	pthread_mutex_unlock(&mutex_murioServidorTorneo);
+	return estado;
+}

@@ -11,6 +11,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <stdlib.h>
+#include <iostream>
 
 #define MAX_PENDING_CONNECTIONS 20
 
@@ -91,6 +93,6 @@ char * ServerSocket::ShowHostName()
 
 ServerSocket::~ServerSocket ()
 {
-  // TODO Auto-generated destructor stub
+	std::cout<<"Close: socket server Servidor Partida2"<<std::endl;
   close(this->ID);
 }
