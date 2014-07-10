@@ -270,7 +270,7 @@ int main(int argc, char *argv[]) {
 	}
 	string aux_buffer(buffer);
 	mi_id = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO);
-	cout << "Mi id: " << mi_id << endl;
+	cout << "Mi ID: " << mi_id << endl;
 
 	//Recibo el puerto del servidor de partida
 	readData = socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
@@ -463,7 +463,7 @@ int main(int argc, char *argv[]) {
 			if (!cola_pajaro.empty()) {
 				short int pajaro_fila = atoi(cola_pajaro.front().substr(6, 1).c_str());
 				cola_pajaro.pop();
-				cout << "Fila comienzo: " << pajaro_fila << endl;
+				//cout << "Fila comienzo: " << pajaro_fila << endl;
 				pajaro_desplazamiento.x = 10;
 				pajaro_desplazamiento.y = ventanas_tramo1[pajaro_fila][0].y;
 				pajaro_moverse = 'S';
@@ -475,18 +475,18 @@ int main(int argc, char *argv[]) {
 				if (felix1 == NULL)
 					felix1 = felix_d1;
 				if (!cola_felix1.empty()) {
-					cout << "Entro a la cola de felix movimiento" << endl;
+					//cout << "Entro a la cola de felix movimiento" << endl;
 					felix1_inicial = false;
 					string msj = cola_felix1.front();
 					cola_felix1.pop();
 					felix1_posicion.columna = atoi(msj.substr(5, 1).c_str());
-					cout << "Nueva posicion columna de felix1" << felix1_posicion.columna << endl;
+					//cout << "Nueva posicion columna de felix1" << felix1_posicion.columna << endl;
 					felix1_posicion.fila = atoi(msj.substr(6, 1).c_str());
-					cout << "Nueva posicion fila de felix1: " << felix1_posicion.fila << endl;
+					//cout << "Nueva posicion fila de felix1: " << felix1_posicion.fila << endl;
 				}
 				Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
 			} else {
-				cout << "inicia repara ventana" << endl;
+				//cout << "inicia repara ventana" << endl;
 				if (felix1 == felix_d1 || felix1 == felix_i1)
 					felix1 = felix_r11;
 				else if (felix1 == felix_r11)
@@ -600,7 +600,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	//esperar mientras las demas partidas no han finalizado. (mostrar msj "GameOver. waiting for rankings.. ")
-	mostrarPantalla("gameover");
+	//mostrarPantalla("gameover");
 
 	while (!showWindowRanking) {
 		sleep(1);
@@ -706,7 +706,7 @@ void* EscuchaServidor(void *arg) {
 			codigo = atoi(aux_buffer.substr(0, LONGITUD_CODIGO).c_str());
 
 			if (aux_buffer.compare("9900000") != 0) {
-				cout << "Escucho Servidor Partida, recibi: " << buffer << endl;
+				//cout << "Escucho Servidor Partida, recibi: " << buffer << endl;
 			}
 
 			switch (codigo) {
@@ -845,7 +845,7 @@ void * EnvioServidor(void * arg) {
 		if (!cola_grafico.empty()) {
 			string mensaje = cola_grafico.front();
 			cola_grafico.pop();
-			cout << "Mensaje a enviar al servPartida: " << mensaje.c_str() << endl;
+			//cout << "Mensaje a enviar al servPartida: " << mensaje.c_str() << endl;
 			cSocket.SendBloq(mensaje.c_str(), mensaje.length());
 		}
 
@@ -881,7 +881,7 @@ void* EscuchaTorneo(void *arg) {
 			string aux_buffer(buffer);
 
 			if (aux_buffer.compare("9900000") != 0) {
-				cout << "Escucho servidor TORNEO, recibi: " << buffer << endl;
+				//cout << "Escucho servidor TORNEO, recibi: " << buffer << endl;
 			}
 
 			int codigo = atoi((aux_buffer.substr(0, LONGITUD_CODIGO).c_str()));
@@ -989,7 +989,7 @@ void* EscuchaTeclas(void *arg) {
 					string aux(ss1.str() + ss2.str());
 					string message(CD_MOVIMIENTO_FELIX);
 					message.append(fillMessage(aux));
-					cout << "MENSAJE: " << message << endl;
+					//cout << "MENSAJE: " << message << endl;
 					cola_grafico.push(message);
 				}
 			} else if (evento.key.keysym.sym == SDLK_RIGHT || evento.key.keysym.sym == key_derecha) {
@@ -1003,7 +1003,7 @@ void* EscuchaTeclas(void *arg) {
 					string aux(ss1.str() + ss2.str());
 					string message(CD_MOVIMIENTO_FELIX);
 					message.append(fillMessage(aux));
-					cout << "MENSAJE: " << message << endl;
+					//cout << "MENSAJE: " << message << endl;
 					cola_grafico.push(message);
 				}
 			} else if (evento.key.keysym.sym == SDLK_LEFT || evento.key.keysym.sym == key_izquierda) {
@@ -1017,7 +1017,7 @@ void* EscuchaTeclas(void *arg) {
 					string aux(ss1.str() + ss2.str());
 					string message(CD_MOVIMIENTO_FELIX);
 					message.append(fillMessage(aux));
-					cout << "MENSAJE: " << message << endl;
+					//cout << "MENSAJE: " << message << endl;
 					cola_grafico.push(message);
 				}
 			} else if ((evento.key.keysym.sym == SDLK_SPACE || evento.key.keysym.sym == key_accion) && felix1_vidas > 0) {
@@ -1354,7 +1354,7 @@ void inicializarNuevaPartida() {
 
 void esperarPuertoPartida() {
 	bool msjPuerto = false;
-	cout << "comienza while de espera de puerto de partida" << endl;
+	//cout << "comienza while de espera de puerto de partida" << endl;
 	while (true) {
 		pthread_mutex_lock(&mutex_msjPuertoRecibido);
 		msjPuerto = msjPuertoRecibido;
@@ -1366,11 +1366,11 @@ void esperarPuertoPartida() {
 		usleep(1000);
 	}
 	msjPuertoRecibido = false;
-	cout << "recibio el puerto:" << puertoServidorPartida << endl;
+	//cout << "recibio el puerto:" << puertoServidorPartida << endl;
 }
 
 void esperarNombreOponente() {
-	cout << "comienza while de espera de nombre de oponente" << endl;
+	//cout << "comienza while de espera de nombre de oponente" << endl;
 	bool recibioNombreOponente = false;
 	while (!recibioNombreOponente) {
 		pthread_mutex_lock(&mutex_nombreOponente);
@@ -1381,7 +1381,7 @@ void esperarNombreOponente() {
 		pthread_mutex_unlock(&mutex_nombreOponente);
 		usleep(10000);
 	}
-	cout << "f esperarNombreOponente ->recibo el nombre de mi oponente:" << felix2_nombre << endl;
+	//cout << "f esperarNombreOponente ->recibo el nombre de mi oponente:" << felix2_nombre << endl;
 }
 
 void esperarSTART() {
@@ -1412,7 +1412,7 @@ void esperarPosicionInicial() {
 }
 
 void esperarIdPartida() {
-	cout << "esperando id Partida" << endl;
+	//cout << "esperando id Partida" << endl;
 	bool recibioIdPartida = false;
 	while (!recibioIdPartida) {
 		if (idPartida != 0) {
