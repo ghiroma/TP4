@@ -434,7 +434,7 @@ int main(int argc, char *argv[]) {
 				// Me llegan numeradas del 1 al 5. Le resto 1 porque yo las tengo del 0 al 4.
 				ralph_destino = atoi(cola_ralph.front().substr(6, 1).c_str());
 				cola_ralph.pop();
-				cout << "Columna destino " << ralph_destino << endl;
+
 				if (ralph_destino > ralph_posicion.columna)
 					ralph_sentido = 'D';
 				else
@@ -507,9 +507,9 @@ int main(int argc, char *argv[]) {
 
 					felix1_reparar = 'N';
 				}
-				cout << "casi termina repara ventana" << endl;
+		
 				Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
-				cout << "termino repara ventana" << endl;
+			
 			}
 		}
 		if (felix2 == NULL)
@@ -546,9 +546,9 @@ int main(int argc, char *argv[]) {
 					//ventana_reparada(&felix2_posicion);
 					felix2_reparar = 'N';
 				}
-				cout << "casi termina repara ventana" << endl;
+	
 				Dibujar(ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].x, ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].y, felix2, superficie);
-				cout << "termino repara ventana" << endl;
+	
 			}
 		}
 		//Dibujo las rocas
@@ -611,8 +611,8 @@ int main(int argc, char *argv[]) {
 	getchar();
 
 	//Liberar recursos
-	liberarRecursos();
-	return 0;
+	//liberarRecursos();
+	exit(1);
 }
 
 bool hayChoque() {
@@ -765,7 +765,7 @@ void* EscuchaServidor(void *arg) {
 				} else if (buffer[6] == '2') {
 					felix2_puntos += 10;
 					felix2 = felix_d2;
-					cout << "Posicion felix2, fila: " << felix2_posicion.fila << " columna: " << felix2_posicion.columna << endl;
+					//cout << "Posicion felix2, fila: " << felix2_posicion.fila << " columna: " << felix2_posicion.columna << endl;
 					ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].tipo_ventana = 0;
 					ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].sana = 1;
 					felix2_reparar = 'N';
@@ -786,7 +786,7 @@ void* EscuchaServidor(void *arg) {
 			case CD_POSICION_INICIAL_I:
 				felix1_posicion.columna = atoi(aux_buffer.substr(5, 1).c_str());
 				felix1_posicion.fila = atoi(aux_buffer.substr(6, 1).c_str());
-				cout << "Posicion inicial de felix: columna " << felix1_posicion.columna << " fila " << felix1_posicion.fila << endl;
+				//cout << "Posicion inicial de felix: columna " << felix1_posicion.columna << " fila " << felix1_posicion.fila << endl;
 				if (felix1_posicion.columna == 0) {
 					felix2_posicion.columna = EDIFICIO_COLUMNAS - 1;
 				} else {
@@ -830,7 +830,7 @@ void* EscuchaServidor(void *arg) {
 			delete(socketPartida);
 		}
 
-		usleep(8000);
+		usleep(2000);
 	}
 	cout << "sale el thread de escucharServidor" << endl;
 	pthread_exit(NULL);
@@ -1039,13 +1039,13 @@ void* EscuchaTeclas(void *arg) {
 
 char ventana_reparada(struct posicion *felix_posicion) {
 
-	cout << "Ventana Sana valor " << ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana << endl;
+	//cout << "Ventana Sana valor " << ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana << endl;
 	if (ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].tipo_ventana != 0) {
 		if (ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana < 1) {
 			ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana++;
 			if (ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana == 1) {
 				ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].tipo_ventana = 0;
-				cout << "Ventana reparada " << felix_posicion->fila << ":" << felix_posicion->columna << endl;
+				//cout << "Ventana reparada " << felix_posicion->fila << ":" << felix_posicion->columna << endl;
 				return 'S';
 			} else
 				return 'N';
@@ -1241,6 +1241,8 @@ void mostrarRanking(const char* ranking) {
 }
 
 void inicializarNuevaPartida() {
+	vaciarColas();
+
 	cout<<"inicializo un nueva partida. Reconecto"<<endl;
 	//Me conecto al servidor de partida.
 	try {
@@ -1248,9 +1250,7 @@ void inicializarNuevaPartida() {
 	} catch (const char * err) {
 		cout << "Error al querer conectar al puerto de partida" << endl;
 		exit(1);
-	}
-
-	vaciarColas();
+	}	
 
 	//Lanzo Threads de comunicacio con el Servidor de Partida
 	if (partidasJugadas == 0) {
@@ -1270,12 +1270,12 @@ void inicializarNuevaPartida() {
 	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
 	esperarNombreOponente();
 	pthread_mutex_lock(&mutex_nombreOponente);
-	cout << "despues de esperarNombreOponente():" << nombreOponente << endl;
+	//cout << "despues de esperarNombreOponente():" << nombreOponente << endl;
 	pthread_mutex_unlock(&mutex_nombreOponente);
 
 	//Espero id de partida
 	esperarIdPartida();
-	cout << "Recibi idDePartida" << endl;
+	//cout << "Recibi idDePartida" << endl;
 
 	//////////////////////////////////////
 	//inicializacion de variables
@@ -1333,16 +1333,16 @@ void inicializarNuevaPartida() {
 	socketPartida->SendBloq(message.c_str(), message.length());
 
 	//Espero mi posicion inicial;
-	cout << "Esperando mi posicion inicial" << endl;
+	//cout << "Esperando mi posicion inicial" << endl;
 	esperarPosicionInicial();
-	cout << "Recibi mi posicion inicial" << endl;
+	//cout << "Recibi mi posicion inicial" << endl;
 
 	//Envio mensaje de listo para empezar.
 	string mensajeListo(CD_JUGADOR_LISTO);
 	mensajeListo.append(fillMessage("0"));
 	socketPartida->SendBloq(mensajeListo.c_str(), mensajeListo.length());
 
-	cout << "Envie que estoy listo" << endl;
+	//cout << "Envie que estoy listo" << endl;
 
 	//inicializo la cantida de vidas
 
