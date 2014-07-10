@@ -54,6 +54,12 @@ Partida*> partidas;
 
 ServerSocket * sSocket;
 
+Semaforo *semTorneo;
+Semaforo *semPartida;
+
+/*
+ * Thread encargado de la recepcion de jugadores. Crea las partidas.
+ */
 void* receptorConexiones(void * args) {
 	CommunicationSocket * cSocket;
 	Partida * partida;
@@ -113,11 +119,14 @@ void* receptorConexiones(void * args) {
 	pthread_exit(0);
 }
 
+/*
+ * Thread encargado de la escucha de los mensajes provenientes desde el cliente.
+ */
 void * escuchaClientes(void * args) {
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	string message;
 	int readData = 0;
-	//TODO continuo polleo de la lista de partidas.
+
 	while (!stop) {
 		cout << "lock mutex escuchacliente" << endl;
 		pthread_mutex_lock(&mutex_partidas);
@@ -137,7 +146,6 @@ void * escuchaClientes(void * args) {
 					message.append(Helper::fillMessage("0"));
 					Mensaje mensaje(JUGADOR_2, message, it->second);
 					Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-					//TODO se desconecto el jugador1.
 				}
 
 				if (it->second->cSocket2 != NULL) {
@@ -152,7 +160,6 @@ void * escuchaClientes(void * args) {
 						message.append(Helper::fillMessage("0"));
 						Mensaje mensaje(JUGADOR_1, message, it->second);
 						Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-						//TODO se desconecto el jugador2
 					}
 				}
 			}
@@ -251,15 +258,21 @@ void * sharedMemory(void * args) {
 			throw "Error al mapear la memoria compartida";
 		}
 
-		Semaforo semTorneo(SEMAFORO_TORNEO);
-		Semaforo semPartida(SEMAFORO_PARTIDA);
-		//TODO Crear semaforos.
+	} catch (const char * err) {
+		cout << "Error inesperado al obtener memoria compartida" << endl;
+		exit(1);
+	}
+	try {
+		semTorneo = new Semaforo(SEMAFORO_TORNEO);
+		semPartida = new Semaforo(SEMAFORO_PARTIDA);
 
 		while (stop == false) {
 
 			//Verifico si el padre esta vivo
 			if (kill(ppid, 0) == -1) {
-				stop = true;
+				cout << "Servidor partida: Padre esta muerto" << endl;
+				//stop = true;
+				exit(1);
 			}
 
 			cout << "lock mutex sharedmemory" << endl;
@@ -267,7 +280,7 @@ void * sharedMemory(void * args) {
 			for (map<int, Partida*>::iterator it = partidas.begin(); it != partidas.end(); it++) {
 				if (it->second->estado == ESTADO_FINALIZADO && !(it->second->cSocket1 == NULL && it->second->cSocket2 == NULL)) {
 					cout << "lock before semaphore1 sharedmemory" << endl;
-					if (sem_trywait(semPartida.getSem_t()) != -1) {
+					if (sem_trywait(semPartida->getSem_t()) != -1) {
 						cout << "lock semaphore1 sharedmemory" << endl;
 						puntaje->idJugador1 = it->second->felix1->id;
 						puntaje->idJugador2 = it->second->felix2->id;
@@ -281,12 +294,9 @@ void * sharedMemory(void * args) {
 							it->second->cSocket1->SendNoBloq(mensajeFinPartida.c_str(), mensajeFinPartida.length());
 						if (it->second->cSocket2 != NULL)
 							it->second->cSocket2->SendNoBloq(mensajeFinPartida.c_str(), mensajeFinPartida.length());
-						//map<int, Partida*>::iterator auxIt = it;
-						//++it;
-						//partidas.erase(auxIt);
 						partidas.erase(it);
 						cout << "Borre la partida" << endl;
-						semTorneo.V();
+						semTorneo->V();
 						cout << "unlock semaphore1 sharedmemory" << endl;
 					}
 					//End usar semaforos para sincronizar.
@@ -294,7 +304,7 @@ void * sharedMemory(void * args) {
 				} else if (it->second->cSocket1 == NULL && it->second->cSocket2 == NULL) {
 					//Borrar Partida porque se desconectaron ambos jugadores.
 					cout << "lock before semaphore2 sharedmemory" << endl;
-					if (sem_trywait(semPartida.getSem_t()) != -1) {
+					if (sem_trywait(semPartida->getSem_t()) != -1) {
 						cout << "lock semaphore2 sharedmemory" << endl;
 						puntaje->idJugador1 = it->second->felix1->id;
 						puntaje->idJugador2 = it->second->felix2->id;
@@ -304,17 +314,17 @@ void * sharedMemory(void * args) {
 						map<int, Partida*>::iterator auxIt = it;
 						++it;
 						partidas.erase(auxIt);
-						semTorneo.V();
+						semTorneo->V();
 					}
 				}
 			}
-			pthread_mutex_unlock(&mutex_partidas);
-			cout << "unlock mutex sharedmemory" << endl;
-
-			usleep(POOLING_DEADTIME);
 		}
-	} catch (const char * err) {
-		cout << "Error inesperado al mapear la memoria compartida." << endl;
+		pthread_mutex_unlock(&mutex_partidas);
+		cout << "unlock mutex sharedmemory" << endl;
+
+		usleep(POOLING_DEADTIME);
+	} catch (const char *err) {
+		cout << "Ha ocurrido un error: " << err << endl;
 		exit(1);
 	}
 	pthread_exit(0);
@@ -461,13 +471,12 @@ void caseVentanaArreglada(Mensaje mensaje) {
 		}
 	}
 
-	if(tramoFinalizado(mensaje.partida->edificio))
-	{
+	if (tramoFinalizado(mensaje.partida->edificio)) {
 		mensaje.jugador = BROADCAST;
 		string message(CD_FIN_PARTIDA);
 		message.append(Helper::fillMessage("0"));
 		mensaje.setMensaje(message);
-		Helper::encolar(mensaje,&cola_mensajes_enviar,&mutex_cola_mensajes_enviar);
+		Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 	}
 
 }
@@ -571,15 +580,24 @@ void caseJugadorListo(Mensaje mensaje) {
 
 void SIGINT_Handler(int inum) {
 	cout << "Signal received" << endl;
-	stop = true;
+	exit(1);
 }
 
+/*
+ * Libera recursos del servidor.
+ */
 void liberarRecursos() {
-	//TODO cerrar semaforos.
 	if (puntaje != NULL)
 		shmdt(puntaje);
 	shmctl(shmIds.shmId, IPC_RMID, 0);
 	delete (sSocket);
+	delete (semPartida);
+	delete (semTorneo);
+	pthread_mutex_destroy(&mutex_edificio);
+	pthread_mutex_destroy(&mutex_cola_mensajes_enviar);
+	pthread_mutex_destroy(&mutex_cola_mensajes_recibir);
+	pthread_mutex_destroy(&mutex_partidas);
+	cout << "ServidorPartida: Recursos liberados" << endl;
 }
 
 string posicionInicial1(Felix * felix) {

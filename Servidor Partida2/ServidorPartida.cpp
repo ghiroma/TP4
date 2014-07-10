@@ -50,8 +50,6 @@ int main(int argc, char * argv[]) {
 	srand(time(NULL));
 
 	ppid = getppid();
-	cout<<"Servidor Partida padre pid: "<<getppid()<<endl;
-	cout<<"Servidor Partida pid: "<<getpid()<<endl;
 
 	/*
 	 * Obtengo puertos y cantidad de vidas de felix por parametros.
@@ -84,11 +82,6 @@ int main(int argc, char * argv[]) {
 	pthread_create(&thread_enviarMensajesCliente,NULL,enviarMensajesCliente,NULL);
 
 	pthread_join(thread_receptorConexiones,NULL);
-
-	pthread_mutex_destroy(&mutex_edificio);
-	pthread_mutex_destroy(&mutex_cola_mensajes_enviar);
-	pthread_mutex_destroy(&mutex_cola_mensajes_recibir);
-	pthread_mutex_destroy(&mutex_partidas);
 
 	cout << "Partida finalizada." << endl;
 	return 0;
