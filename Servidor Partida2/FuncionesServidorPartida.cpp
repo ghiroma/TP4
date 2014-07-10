@@ -77,7 +77,6 @@ void* receptorConexiones(void * args) {
 		idPartida = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
 		felix = new Felix(cantVidas);
 		if (partidaPendiente(idPartida)) {
-			cout << "lock mutex partidas receptor conexiones2" << endl;
 			pthread_mutex_lock(&mutex_partidas);
 			map<int, Partida*>::iterator iterator = partidas.find(idPartida);
 			iterator->second->cSocket2 = cSocket;
@@ -85,7 +84,6 @@ void* receptorConexiones(void * args) {
 			felix->columna = EDIFICIO_COLUMNAS - 1;
 			iterator->second->felix2 = felix;
 			pthread_mutex_unlock(&mutex_partidas);
-			cout << "unlock mutex partidas receptor conexiones2" << endl;
 			Mensaje mensaje(JUGADOR_2, posicionInicial2(felix), iterator->second);
 			Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 			//Mando posicion inicial.
@@ -97,11 +95,9 @@ void* receptorConexiones(void * args) {
 			felix->fila = 0;
 			felix->columna = 0;
 			partida->felix1 = felix;
-			cout << "lock mutex partidas receptor conexiones1" << endl;
 			pthread_mutex_lock(&mutex_partidas);
 			partidas[partida->id] = partida;
 			pthread_mutex_unlock(&mutex_partidas);
-			cout << "unlock mutex partidas recepetor conexiones1" << endl;
 			//Mando posicion inicial
 			Mensaje mensaje(JUGADOR_1, posicionInicial1(felix), partida);
 			Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
@@ -110,7 +106,6 @@ void* receptorConexiones(void * args) {
 		usleep(POOLING_DEADTIME);
 	}
 
-	cout<<"receptor conexiones salio del stop"<<endl;
 	pthread_exit(0);
 }
 
@@ -120,7 +115,6 @@ void * escuchaClientes(void * args) {
 	int readData = 0;
 	//TODO continuo polleo de la lista de partidas.
 	while (!stop) {
-		cout << "lock mutex escuchacliente" << endl;
 		pthread_mutex_lock(&mutex_partidas);
 		if (!partidas.empty()) {
 			for (map<int, Partida *>::iterator it = partidas.begin(); it != partidas.end(); it++) {
@@ -159,7 +153,6 @@ void * escuchaClientes(void * args) {
 			}
 		}
 		pthread_mutex_unlock(&mutex_partidas);
-		cout << "lock mutex escuchacliente" << endl;
 		usleep(POOLING_DEADTIME);
 	}
 
@@ -170,7 +163,6 @@ void * escuchaClientes(void * args) {
 void* procesarMensajesCliente(void * args) {
 	while (!stop) {
 		if (!cola_mensajes_recibir.empty()) {
-			cout << "lock mutex procesarmnensajesclientes" << endl;
 			pthread_mutex_lock(&mutex_cola_mensajes_recibir);
 			Mensaje mensaje = cola_mensajes_recibir.front();
 			cola_mensajes_recibir.pop();
@@ -192,12 +184,10 @@ void* procesarMensajesCliente(void * args) {
 				caseIdJugador(mensaje);
 				break;
 			case CD_JUGADOR_LISTO_I:
-				cout << "Entro caso jugador listo" << endl;
 				caseJugadorListo(mensaje);
 				break;
 			}
 			pthread_mutex_unlock(&mutex_cola_mensajes_recibir);
-			cout << "unlock mutex procesarmensajescliente" << endl;
 		}
 		usleep(POOLING_DEADTIME);
 	}
@@ -210,7 +200,6 @@ void* timer_thread(void * args) {
 
 	while (!stop) {
 
-		cout << "lock mutex timer" << endl;
 		pthread_mutex_lock(&mutex_partidas);
 		for (map<int, Partida*>::iterator it = partidas.begin(); it != partidas.end(); it++) {
 			message = timer.keepAlive();
@@ -237,7 +226,6 @@ void* timer_thread(void * args) {
 			}
 		}
 		pthread_mutex_unlock(&mutex_partidas);
-		cout << "lock mutex timer" << endl;
 		usleep(POOLING_DEADTIME);
 	}
 	pthread_exit(0);
@@ -265,13 +253,10 @@ void * sharedMemory(void * args) {
 				stop = true;
 			}
 
-			cout << "lock mutex sharedmemory" << endl;
 			pthread_mutex_lock(&mutex_partidas);
 			for (map<int, Partida*>::iterator it = partidas.begin(); it != partidas.end(); it++) {
 				if (it->second->estado == ESTADO_FINALIZADO && !(it->second->cSocket1 == NULL && it->second->cSocket2 == NULL)) {
-					cout << "lock before semaphore1 sharedmemory" << endl;
 					if (sem_trywait(semPartida.getSem_t()) != -1) {
-						cout << "lock semaphore1 sharedmemory" << endl;
 						puntaje->idJugador1 = it->second->felix1->id;
 						puntaje->idJugador2 = it->second->felix2->id;
 						puntaje->puntajeJugador1 = it->second->felix1->puntaje_parcial;
@@ -290,15 +275,12 @@ void * sharedMemory(void * args) {
 						partidas.erase(it);
 						cout << "Borre la partida" << endl;
 						semTorneo.V();
-						cout << "unlock semaphore1 sharedmemory" << endl;
 					}
 					//End usar semaforos para sincronizar.
 					//Borrar partida.
 				} else if (it->second->cSocket1 == NULL && it->second->cSocket2 == NULL) {
 					//Borrar Partida porque se desconectaron ambos jugadores.
-					cout << "lock before semaphore2 sharedmemory" << endl;
 					if (sem_trywait(semPartida.getSem_t()) != -1) {
-						cout << "lock semaphore2 sharedmemory" << endl;
 						puntaje->idJugador1 = it->second->felix1->id;
 						puntaje->idJugador2 = it->second->felix2->id;
 						puntaje->puntajeJugador1 = 0;
@@ -312,7 +294,6 @@ void * sharedMemory(void * args) {
 				}
 			}
 			pthread_mutex_unlock(&mutex_partidas);
-			cout << "unlock mutex sharedmemory" << endl;
 
 			usleep(POOLING_DEADTIME);
 		}
@@ -329,12 +310,10 @@ void* enviarMensajesCliente(void * args) {
 	while (!stop) {
 		if (!cola_mensajes_enviar.empty()) {
 			//do {
-			cout << "lock mutex enviarmensajescliente" << endl;
 			pthread_mutex_lock(&mutex_cola_mensajes_enviar);
 			Mensaje mensaje = cola_mensajes_enviar.front();
 			cola_mensajes_enviar.pop();
 			pthread_mutex_unlock(&mutex_cola_mensajes_enviar);
-			cout << "unlock mutex enviarmensajescliente" << endl;
 			strcpy(aux, mensaje.codigo.c_str());
 			strcat(aux, mensaje.mensaje.c_str());
 			cout << "Estoy por enviar mensaje: " << mensaje.codigo + mensaje.mensaje << "de tipo: " << mensaje.jugador << endl;
@@ -360,19 +339,15 @@ void* enviarMensajesCliente(void * args) {
 }
 
 bool partidaPendiente(int idPartida) {
-	cout << "entro a partida pendiente" << endl;
 	bool encontrado = false;
-	cout << "lock mutex partidapendiente" << endl;
 	pthread_mutex_lock(&mutex_partidas);
 	for (map<int, Partida*>::iterator it = partidas.begin(); it != partidas.end(); it++) {
-		cout << "iterando en partidas" << endl;
 		if (it->first == idPartida) {
 			encontrado = true;
 			break;
 		}
 	}
 	pthread_mutex_unlock(&mutex_partidas);
-	cout << "lock unmutex partidapendiente" << endl;
 	return encontrado;
 }
 
@@ -390,7 +365,6 @@ void caseMovimientoFelix(Mensaje mensaje) {
 
 	if (!edificioJugador->ventanas[fila][columna].ocupado && fila >= 0 && columna >= 0 && fila < edificioJugador->filas && columna < edificioJugador->columnas && !(fila == 0 && columna == 2)) {
 //Puede moverse ahi.
-		cout << "Puede moverse" << endl;
 		edificioJugador->ventanas[felixJugador->fila][felixJugador->columna].ocupado = false;
 		edificioJugador->ventanas[fila][columna].ocupado = true;
 		felixJugador->fila = fila;
@@ -412,7 +386,6 @@ void caseMovimientoFelix(Mensaje mensaje) {
 //Envio mensaje al jugador1.
 		Mensaje mensajeMovimiento = mensaje;
 		if (felixJugador == mensaje.partida->felix1) {
-			cout << "Se movio el jugador 1" << endl;
 			mensajeMovimiento.jugador = JUGADOR_1;
 			mensajeMovimiento.mensaje = string(Helper::fillMessage(aux1));
 			cout << "mensajeMovimiento.mensaje: " << mensajeMovimiento.mensaje << endl;
@@ -421,16 +394,13 @@ void caseMovimientoFelix(Mensaje mensaje) {
 			mensajeMovimiento.mensaje = string(Helper::fillMessage(aux2));
 			cout << "mensajeMovimiento.mensaje: " << mensajeMovimiento.mensaje << endl;
 			Helper::encolar(mensajeMovimiento, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-			cout << "encolo mensaje" << endl;
 		} else if (felixJugador == mensaje.partida->felix2) {
-			cout << "Se movio el jugador 2" << endl;
 			mensajeMovimiento.jugador = JUGADOR_1;
 			mensajeMovimiento.mensaje = string(Helper::fillMessage(aux2));
 			Helper::encolar(mensajeMovimiento, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 			mensajeMovimiento.jugador = JUGADOR_2;
 			mensajeMovimiento.mensaje = string(Helper::fillMessage(aux1));
 			Helper::encolar(mensajeMovimiento, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-			cout << "encolo mensaje" << endl;
 		}
 
 	}
@@ -540,7 +510,6 @@ void casePerdidaVida(Mensaje mensaje) {
 }
 
 void caseIdJugador(Mensaje mensaje) {
-	cout << "lock mutex caseidjugador" << endl;
 	pthread_mutex_lock(&mutex_partidas);
 	if (mensaje.jugador == JUGADOR_1) {
 		mensaje.partida->felix1->id = atoi(mensaje.mensaje.c_str());
@@ -548,7 +517,6 @@ void caseIdJugador(Mensaje mensaje) {
 		mensaje.partida->felix2->id = atoi(mensaje.mensaje.c_str());
 	}
 	pthread_mutex_unlock(&mutex_partidas);
-	cout << "unlock mutex caseidjugador" << endl;
 }
 
 void caseJugadorListo(Mensaje mensaje) {

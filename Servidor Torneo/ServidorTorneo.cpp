@@ -111,7 +111,8 @@ int main(int argc, char * argv[]) {
 		strcpy(nombreEjecutable, "ServidorPartida");
 
 		char *argumentos[] = { nombreEjecutable, auxPuertoServidorPartida, auxCantVidas, NULL };
-		execv("../Servidor Partida2/Debug/Servidor Partida2", argumentos);
+		//execv("../Servidor Partida2/Debug/Servidor Partida2", argumentos);
+		execv("../Servidor Partida2/ServidorPartida", argumentos);
 		cout << "ERROR al ejecutar execv Nueva Partida" << endl;
 		exit(1);
 	} else if (pid < 0) {
@@ -176,7 +177,6 @@ int main(int argc, char * argv[]) {
 	//Bloqueo en espera de que ingrese una tecla para cerrar la pantalla
 	cout << "Ingrese una tecla para finalizar: ";
 	getchar();
-	liberarRecursos();
 	cout << "Fin proceso Servidor Torneo" << endl;
-	return 1;
+	exit(1);
 }
