@@ -544,7 +544,7 @@ int main(int argc, char *argv[]) {
 					//message.append(fillMessage("0"));
 					//cola_grafico.push(message);
 					//ventana_reparada(&felix2_posicion);
-					//felix2_reparar = 'N';
+					felix2_reparar = 'N';
 				}
 				cout << "casi termina repara ventana" << endl;
 				Dibujar(ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].x, ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].y, felix2, superficie);
@@ -826,6 +826,8 @@ void* EscuchaServidor(void *arg) {
 
 				break;
 			}
+
+			delete(socketPartida);
 		}
 
 		usleep(8000);
