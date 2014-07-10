@@ -698,12 +698,12 @@ void* EscuchaServidor(void *arg) {
 	int fd = *(int *) arg;
 	int readData = 0;
 	int codigo;
-	CommunicationSocket cSocket(fd);
+	//CommunicationSocket cSocket(fd);
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
 	while (true) {
 		//cout << "Espero msj del servidor de partida ... " << endl;
-		readData = cSocket.ReceiveBloq(buffer, sizeof(buffer));
+		readData = socketPartida->ReceiveBloq(buffer, sizeof(buffer));
 		if (strlen(buffer) > 0) {
 			string aux_buffer(buffer);
 			codigo = atoi(aux_buffer.substr(0, LONGITUD_CODIGO).c_str());
@@ -831,9 +831,6 @@ void* EscuchaServidor(void *arg) {
 			//}
 
 			delete(socketPartida);
-
-			//verificarrrr
-			close(cSocket.ID);
 		}
 
 		usleep(2000);
@@ -844,7 +841,7 @@ void* EscuchaServidor(void *arg) {
 
 void * EnvioServidor(void * arg) {
 	int fd = *(int *) arg;
-	CommunicationSocket cSocket(fd);
+	//CommunicationSocket cSocket(fd);
 	bool auxSolicitudDeNuevaParitda = false;
 	cout << "inicia th EnviaServidor" << endl;
 	while (true) {
@@ -852,7 +849,10 @@ void * EnvioServidor(void * arg) {
 			string mensaje = cola_grafico.front();
 			cola_grafico.pop();
 			//cout << "Mensaje a enviar al servPartida: " << mensaje.c_str() << endl;
-			cSocket.SendBloq(mensaje.c_str(), mensaje.length());
+			
+			//cSocket.SendBloq(mensaje.c_str(), mensaje.length());
+			socketPartida->SendBloq(mensaje.c_str(), mensaje.length());
+
 		}
 
 		//si murio la partida salgo de este thread (me doy cuenta cuando solicitan una nueva partida)
@@ -864,10 +864,6 @@ void * EnvioServidor(void * arg) {
 		}*/
 		usleep(1000);
 	}
-
-	//verificarrrr
-	close(cSocket.ID);
-
 	cout << "sale el thread de EnvioServidor" << endl;
 	pthread_exit(NULL);
 }
@@ -1256,12 +1252,6 @@ void mostrarRanking(const char* ranking) {
 void inicializarNuevaPartida() {
 	vaciarColas();
 
-	if (partidasJugadas >= 1) {
-		pthread_cancel(thEscuchaServidor);
-		pthread_cancel(thEnvioServidor);
-	}
-	partidasJugadas++;
-
 	cout<<"inicializo un nueva partida. Reconecto"<<endl;
 	//Me conecto al servidor de partida.
 	try {
@@ -1272,17 +1262,18 @@ void inicializarNuevaPartida() {
 	}	
 
 	//Lanzo Threads de comunicacio con el Servidor de Partida
-	resultThEscuchaServidor = pthread_create(&thEscuchaServidor, NULL, EscuchaServidor, &socketPartida->ID);
-	if (resultThEscuchaServidor) {
-		cout << "Error no se pudo crear el thread de Escucha Servidor" << endl;
-		exit(1);
+	if (partidasJugadas == 0) {
+		resultThEscuchaServidor = pthread_create(&thEscuchaServidor, NULL, EscuchaServidor, &socketPartida->ID);
+		if (resultThEscuchaServidor) {
+			cout << "Error no se pudo crear el thread de Escucha Servidor" << endl;
+			exit(1);
+		}
+		resultThEnvioServidor = pthread_create(&thEnvioServidor, NULL, EnvioServidor, &socketPartida->ID);
+		if (resultThEnvioServidor) {
+			cout << "Error no se pudo crear el thread de Envio Servidor" << endl;
+			exit(1);
+		}
 	}
-	resultThEnvioServidor = pthread_create(&thEnvioServidor, NULL, EnvioServidor, &socketPartida->ID);
-	if (resultThEnvioServidor) {
-		cout << "Error no se pudo crear el thread de Envio Servidor" << endl;
-		exit(1);
-	}
-
 	partidasJugadas++;
 
 	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
