@@ -311,6 +311,8 @@ int main(int argc, char *argv[]) {
 		if (nuevaPartidaSolicitada() && !torneoFinalizo() && !murioServidorDelTorneo()) {
 			cout << "Solicite nueva partida" << endl;
 			//espero a que se cierre el ultimo thread de la partida anterior
+			mostrarPantalla("waitmatch");
+			sleep(8);			
 			inicializarNuevaPartida();
 			pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
 			solicitudDeNuevaParitda = false;
@@ -1283,7 +1285,7 @@ void inicializarNuevaPartida() {
 		exit(1);
 	}
 
-	partidasJugadas++;
+	//	partidasJugadas++;
 
 	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
 	esperarNombreOponente();
@@ -1343,6 +1345,7 @@ void inicializarNuevaPartida() {
 	string messageIDPartida(CD_ID_PARTIDA);
 	char aux[5];
 	sprintf(aux, "%d", idPartida);
+	cout<<"El nuevo idPartida es: "<<aux<<endl;
 	messageIDPartida.append(fillMessage(aux));
 	socketPartida->SendBloq(messageIDPartida.c_str(), messageIDPartida.length());
 

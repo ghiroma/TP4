@@ -78,6 +78,7 @@ void* receptorConexiones(void * args) {
 		cSocket = sSocket->Accept();
 		//Recibo el id de partida, para sber contra quien va a jugar.
 		cSocket->ReceiveBloq(buffer, sizeof(buffer));
+		//If()
 		cout << "Recibo menasje de nuevo cliente: " << buffer << endl;
 		message = buffer;
 		idPartida = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
