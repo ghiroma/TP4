@@ -307,7 +307,11 @@ int main(int argc, char *argv[]) {
 	bool auxTorneoFinalizado;
 
 	inicializarNuevaPartida();
-	while (salir == 'N') {
+
+	while (salir == 'N') {	
+		if(nuevaPartidaSolicitada() && torneoFinalizo()){
+			break;
+		}
 		if (nuevaPartidaSolicitada() && !torneoFinalizo() && !murioServidorDelTorneo()) {
 			cout << "Solicite nueva partida" << endl;
 			//espero a que se cierre el ultimo thread de la partida anterior
@@ -605,7 +609,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	//esperar mientras las demas partidas no han finalizado. (mostrar msj "GameOver. waiting for rankings.. ")
-	//mostrarPantalla("gameover");
+	mostrarPantalla("gameover");
 
 	while (!showWindowRanking) {
 		sleep(1);

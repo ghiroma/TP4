@@ -542,6 +542,7 @@ void caseJugadorListo(Mensaje mensaje) {
 			cout << "Error: " << err << endl;
 		}
 		Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+		cout<<"Seteo partida como jugando: "<<mensaje.partida->id<<endl;
 		mensaje.partida->estado = ESTADO_JUGANDO;
 	}
 }

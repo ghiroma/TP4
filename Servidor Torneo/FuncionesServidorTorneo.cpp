@@ -430,8 +430,8 @@ void* modoGrafico(void* data) {
 		SDL_Flip(screen);
 
 		//se acaba el tiempo y salgo del ciclo
-		//if (minutos == 0 && segundos == 0) {
-		if (torneoFinalizado()) {
+		if (minutos == 0 && segundos == 0) {
+		//if (torneoFinalizado()) {
 			break;
 		}
 		usleep(TIEMPO_DE_REDIBUJADO);
