@@ -226,7 +226,7 @@ void* timer_thread(void * args) {
 				if (message.length() > 0) {
 					Mensaje mensaje(BROADCAST, message, it->second);
 					Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-					cout << "Encole mensaje ralph a partida: " << it->second->id << endl;
+					//cout << "Encole mensaje ralph a partida: " << it->second->id << endl;
 				}
 
 				message = it->second->timer->paloma(it->second->edificio->nivel);
@@ -397,11 +397,11 @@ void caseMovimientoFelix(Mensaje mensaje) {
 		if (felixJugador == mensaje.partida->felix1) {
 			mensajeMovimiento.jugador = JUGADOR_1;
 			mensajeMovimiento.mensaje = string(Helper::fillMessage(aux1));
-			cout << "mensajeMovimiento.mensaje: " << mensajeMovimiento.mensaje << endl;
+			//cout << "mensajeMovimiento.mensaje: " << mensajeMovimiento.mensaje << endl;
 			Helper::encolar(mensajeMovimiento, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 			mensajeMovimiento.jugador = JUGADOR_2;
 			mensajeMovimiento.mensaje = string(Helper::fillMessage(aux2));
-			cout << "mensajeMovimiento.mensaje: " << mensajeMovimiento.mensaje << endl;
+			//cout << "mensajeMovimiento.mensaje: " << mensajeMovimiento.mensaje << endl;
 			Helper::encolar(mensajeMovimiento, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 		} else if (felixJugador == mensaje.partida->felix2) {
 			mensajeMovimiento.jugador = JUGADOR_1;

@@ -188,6 +188,11 @@ void* temporizadorTorneo(void* data) {
 	timeIsUp = true;
 	pthread_mutex_unlock(&mutex_timeIsUp);
 
+	if (sSocket != NULL) {
+		cout << "(torneo finalizo tiempo) Torneo -> cierro socket" << endl;
+		delete (sSocket);
+	}
+
 	//el tiempo del Torneo llego a su fin, informar a cada cliente
 	pthread_mutex_lock(&mutex_listJugadores);
 	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
@@ -280,6 +285,7 @@ void* lecturaDeResultados(void* data) {
 
 	//en este punto ya se que todas las partidas finalizaron y el tiempo de torneo tambien
 	kill(pidServidorPartida, SIGINT);
+	cout<<"KILL a partida"<<endl;
 
 	pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
 	todasLasPartidasFinalizadas = true;
@@ -643,7 +649,7 @@ void liberarRecursos() {
 	//SOCKETS
 	if (sSocket != NULL) {
 		cout << "Torneo -> cierro socket" << endl;
-		close(sSocket->ID);
+		//close(sSocket->ID);
 		//shutdown(sSocket->ID,2);
 		delete (sSocket);
 	}
