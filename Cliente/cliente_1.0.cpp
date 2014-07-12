@@ -1394,7 +1394,7 @@ bool esperarIdPartida() {
 bool esperarNombreOponente() {
 	//cout << "comienza while de espera de nombre de oponente" << endl;
 	bool recibioNombreOponente = false;
-	while (/*!recibioNombreOponente &&*/!torneoFinalizo()) {
+	while (!recibioNombreOponente && !torneoFinalizo()) {
 		pthread_mutex_lock(&mutex_nombreOponente);
 		if (nombreOponente.length() > 0) {
 			felix2_nombre = nombreOponente;

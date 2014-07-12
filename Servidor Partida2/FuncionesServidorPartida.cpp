@@ -524,7 +524,7 @@ void caseIdJugador(Mensaje mensaje) {
 	} else if (mensaje.jugador == JUGADOR_2) {
 		mensaje.partida->felix2->id = atoi(mensaje.mensaje.c_str());
 	}
-	/*if (mensaje.partida->felix1->id != 0 && mensaje.partida->felix2->id != 0) //Se puede empezar la partida.
+	if (mensaje.partida->felix1->id != 0 && mensaje.partida->felix2->id != 0) //Se puede empezar la partida.
 			{
 		string message(CD_EMPEZAR_PARTIDA);
 		message.append(Helper::fillMessage("0"));
@@ -538,7 +538,7 @@ void caseIdJugador(Mensaje mensaje) {
 		mensaje.partida->timer = new Timer();
 		cout << "Seteo partida como jugando: " << mensaje.partida->id << endl;
 		mensaje.partida->estado = ESTADO_JUGANDO;
-	}*/
+	}
 	pthread_mutex_unlock(&mutex_partidas);
 }
 
