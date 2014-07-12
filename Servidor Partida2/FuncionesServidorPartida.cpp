@@ -123,6 +123,7 @@ void * escuchaClientes(void * args) {
 	int readData = 0;
 
 	while (!stop) {
+		cout<<"Iterando escuchaclientes_thread"<<endl;
 		pthread_mutex_lock(&mutex_partidas);
 		if (!partidas.empty()) {
 			for (map<int, Partida *>::iterator it = partidas.begin(); it != partidas.end(); it++) {
@@ -165,6 +166,7 @@ void * escuchaClientes(void * args) {
 			}
 		}
 		pthread_mutex_unlock(&mutex_partidas);
+		cout<<"Finalizo thread escucha servidor"<<endl;
 		usleep(POOLING_DEADTIME);
 	}
 
@@ -210,7 +212,7 @@ void* timer_thread(void * args) {
 	string message;
 
 	while (!stop) {
-		//cout<<"Iterando timer_thread"<<endl;
+		cout<<"Iterando timer_thread"<<endl;
 		pthread_mutex_lock(&mutex_partidas);
 		for (map<int, Partida*>::iterator it = partidas.begin(); it != partidas.end(); it++) {
 
@@ -239,7 +241,7 @@ void* timer_thread(void * args) {
 			}
 		}
 		pthread_mutex_unlock(&mutex_partidas);
-		//cout<<"Fin iterando timer_thread"<<endl;
+		cout<<"Finalizo thread timer"<<endl;
 		usleep(POOLING_DEADTIME);
 	}
 	pthread_exit(0);
@@ -267,6 +269,8 @@ void * sharedMemory(void * args) {
 				//stop = true;
 				exit(1);
 			}
+
+			cout<<"Iterando sharedmemory_thread"<<endl;
 
 			pthread_mutex_lock(&mutex_partidas);
 			for (map<int, Partida*>::iterator it = partidas.begin(); it != partidas.end(); it++) {
@@ -307,6 +311,9 @@ void * sharedMemory(void * args) {
 			}
 			pthread_mutex_unlock(&mutex_partidas);
 			usleep(POOLING_DEADTIME);
+
+			cout<<"Finalizo thread shared memory"<<endl;
+
 		}
 	} catch (const char * err) {
 		cout << "Error inesperado al mapear la memoria compartida." << endl;
@@ -347,6 +354,8 @@ void* enviarMensajesCliente(void * args) {
 			}
 		}
 		usleep(POOLING_DEADTIME);
+
+		cout<<"Finalizo thread enviar msj"<<endl;
 	}
 	pthread_exit(0);
 }
