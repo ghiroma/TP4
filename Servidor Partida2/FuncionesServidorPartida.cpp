@@ -89,6 +89,7 @@ void* receptorConexiones(void * args) {
 			finder->second->cSocket2 = cSocket;
 			felix->fila = 0;
 			felix->columna = EDIFICIO_COLUMNAS - 1;
+			finder->second->edificio->ventanas[felix->fila][felix->columna].ocupado = true;
 			finder->second->felix2 = felix;
 			Mensaje mensaje(JUGADOR_2, posicionInicial2(felix), finder->second);
 			Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
@@ -99,6 +100,7 @@ void* receptorConexiones(void * args) {
 			partida->cSocket1 = cSocket;
 			felix->fila = 0;
 			felix->columna = 0;
+			partida->edificio->ventanas[felix->fila][felix->columna].ocupado = true;
 			partida->felix1 = felix;
 			partidas[partida->id] = partida;
 			//Mando posicion inicial
@@ -133,7 +135,9 @@ void * escuchaClientes(void * args) {
 						cola_mensajes_recibir.push(mensaje);
 					}
 				} else if (readData == 0) {
+					cout << "Se desconecto el jugador 1" << endl;
 					delete (it->second->cSocket1);
+					it->second->cSocket1 = NULL;
 					message = CD_OPONENTE_DESCONECTADO;
 					message.append(Helper::fillMessage("0"));
 					Mensaje mensaje(JUGADOR_2, message, it->second);
@@ -148,7 +152,9 @@ void * escuchaClientes(void * args) {
 						Mensaje mensaje(JUGADOR_2, message, it->second);
 						cola_mensajes_recibir.push(mensaje);
 					} else if (readData == 0) {
+						cout << "Se desconecto el jugador 2" << endl;
 						delete (it->second->cSocket2);
+						it->second->cSocket2 = NULL;
 						message = CD_OPONENTE_DESCONECTADO;
 						message.append(Helper::fillMessage("0"));
 						Mensaje mensaje(JUGADOR_1, message, it->second);
@@ -204,6 +210,7 @@ void* timer_thread(void * args) {
 	string message;
 
 	while (!stop) {
+		//cout<<"Iterando timer_thread"<<endl;
 		pthread_mutex_lock(&mutex_partidas);
 		for (map<int, Partida*>::iterator it = partidas.begin(); it != partidas.end(); it++) {
 
@@ -232,6 +239,7 @@ void* timer_thread(void * args) {
 			}
 		}
 		pthread_mutex_unlock(&mutex_partidas);
+		//cout<<"Fin iterando timer_thread"<<endl;
 		usleep(POOLING_DEADTIME);
 	}
 	pthread_exit(0);
@@ -321,13 +329,16 @@ void* enviarMensajesCliente(void * args) {
 			//cout << "Estoy por enviar mensaje: " << mensaje.codigo + mensaje.mensaje << "de tipo: " << mensaje.jugador << endl;
 			if (mensaje.jugador == BROADCAST) //BroadCast
 					{
-				//cout<<"Enviando mensaje broadcast a "<<mensaje.partida->id<<endl;
+				cout << "Enviando mensaje broadcast a " << mensaje.partida->id<<" codigo: "<<mensaje.codigo << endl;
+				if(mensaje.partida==NULL)
+					cout<<"La partida es null"<<endl;
+
 				if (mensaje.partida->cSocket1 != NULL) {
 					mensaje.partida->cSocket1->SendNoBloq(aux, sizeof(aux));
-				}
+				}else{cout<<"cSocket1 es null"<<endl;}
 				if (mensaje.partida->cSocket2 != NULL) {
 					mensaje.partida->cSocket2->SendNoBloq(aux, sizeof(aux));
-				}
+				}else{cout<<"cSocket2 es null"<<endl;}
 			} else if (mensaje.jugador == JUGADOR_2 && mensaje.partida->cSocket2 != NULL) //Jugador 2
 			{
 				mensaje.partida->cSocket2->SendNoBloq(aux, sizeof(aux));
@@ -506,6 +517,7 @@ void casePerdidaVida(Mensaje mensaje) {
 		}
 	}
 	if ((mensaje.partida->felix1->cantidad_vidas <= 0 && mensaje.partida->felix2->cantidad_vidas <= 0) || (mensaje.partida->felix1->cantidad_vidas <= 0 && mensaje.partida->cSocket2 == NULL) || (mensaje.partida->felix2->cantidad_vidas <= 0 && mensaje.partida->cSocket1 == NULL)) {
+		cout << "Partida id: " << mensaje.partida->id << " ha finalizado" << endl;
 		mensaje.partida->estado = ESTADO_FINALIZADO;
 	}
 }
