@@ -275,7 +275,7 @@ int main(int argc, char *argv[]) {
 		sleep(10);
 		exit(1);
 	}
-	cout<<"readdata 1:"<<readData<<endl;
+	cout << "readdata 1:" << readData << endl;
 	string aux_buffer(buffer);
 	mi_id = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO);
 	cout << "Mi ID: " << mi_id << endl;
@@ -849,9 +849,10 @@ void* EscuchaServidor(void *arg) {
 			//}
 
 			delete (socketPartida);
+			socketPartida = NULL;
 
 			//verificarrrr
-			close(cSocket.ID);
+			//close(cSocket.ID);
 		}
 
 		usleep(2000);
@@ -884,7 +885,7 @@ void * EnvioServidor(void * arg) {
 	}
 
 	//verificarrrr
-	close(cSocket.ID);
+	//close(cSocket.ID);
 
 	cout << "sale el thread de EnvioServidor" << endl;
 	pthread_exit(NULL);
@@ -1401,7 +1402,7 @@ void inicializarNuevaPartida() {
 
 	//vaciarColas();
 
-	if(torneoFinalizo()){
+	if (torneoFinalizo()) {
 		salir = 'S';
 	}
 }
@@ -1615,9 +1616,19 @@ bool cargarImagenes() {
 }
 
 void liberarRecursos() {
+	cout << "liberar recursos" << endl;
 	//SOCKET
-	delete (socketTorneo);
-	delete (socketPartida);
+	//delete (socketTorneo);
+	if (socketTorneo != NULL) {
+		//close(socketTorneo->ID);
+		delete (socketTorneo);
+	}
+
+	//delete (socketPartida);
+	if (socketPartida != NULL) {
+		//close(socketPartida->ID);
+		delete (socketPartida);
+	}
 
 	//SEM
 	pthread_mutex_destroy(&mutex_msjPuertoRecibido);
