@@ -93,7 +93,7 @@ void SIG_CHLD(int inum) {
 
 	cout << "Servidor de Partida caido" << endl;
 	cout << "Se terminara el Torneo" << endl;
-
+	exit(1);
 	/*pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
 	 todasLasPartidasFinalizadas = true;
 	 pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);
