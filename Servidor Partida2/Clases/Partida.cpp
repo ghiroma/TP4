@@ -15,6 +15,7 @@ Partida::Partida(int id) {
 	this->estado = ESTADO_NO_INICIADO;
 	this->felix1 = 0;
 	this->felix2 = 0;
+	this->timer = 0;
 	this->jugador1Listo=false;
 	this->jugador2Listo = false;
 	this->edificio = new Edificio(EDIFICIO_FILAS_1,EDIFICIO_COLUMNAS,0);
@@ -28,6 +29,7 @@ Partida::~Partida() {
 	delete(felix1);
 	delete(felix2);
 	delete(edificio);
+	delete(timer);
 	// TODO Auto-generated destructor stub
 }
 
