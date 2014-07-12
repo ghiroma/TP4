@@ -92,15 +92,15 @@ void getConfiguration(unsigned short int* port, string* ip, int* arriba, int* de
 void mostrarRanking(const char*);
 void liberarRecursos();
 void mostrarPantalla(const char*);
-void esperarNombreOponente();
-void esperarPuertoPartida();
 void vaciarColas();
-void inicializarNuevaPartida();
-bool cargarImagenes();
-void esperarIdPartida();
-bool nuevaPartidaSolicitada();
-bool torneoFinalizo();
+bool inicializarNuevaPartida();
 bool murioServidorDelTorneo();
+bool cargarImagenes();
+bool torneoFinalizo();
+bool nuevaPartidaSolicitada();
+void esperarPuertoPartida();
+bool esperarNombreOponente();
+bool esperarIdPartida();
 void esperarSTART();
 void esperarPosicionInicial();
 void inicializarVariablesDeLaPartida();
@@ -320,8 +320,6 @@ int main(int argc, char *argv[]) {
 
 	unsigned short int fila, columna;
 	unsigned short int ventana_x, ventana_y;
-	bool auxSolicitudDeNuevaPartida;
-	bool auxTorneoFinalizado;
 
 	inicializarNuevaPartida();
 
@@ -334,7 +332,10 @@ int main(int argc, char *argv[]) {
 			//espero a que se cierre el ultimo thread de la partida anterior
 			mostrarPantalla("waitmatch");
 			sleep(3);
-			inicializarNuevaPartida();
+			if (!inicializarNuevaPartida()) {
+				//si no pudo inicializar una nueva partida salgo
+				break;
+			}
 			pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
 			solicitudDeNuevaParitda = false;
 			pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
@@ -1278,7 +1279,7 @@ void mostrarRanking(const char* ranking) {
 	pthread_mutex_unlock(&mutex_mostrar_pantalla);
 }
 
-void inicializarNuevaPartida() {
+bool inicializarNuevaPartida() {
 	vaciarColas();
 
 	if (partidasJugadas >= 1) {
@@ -1286,6 +1287,25 @@ void inicializarNuevaPartida() {
 		pthread_cancel(thEnvioServidor);
 	}
 	partidasJugadas++;
+
+	//Espero id de partida (del torneo)
+	cout << "Esperando ID Partida" << endl;
+	if (esperarIdPartida()) {
+		//Le llega el Id de Partida
+		recibioIdPartida = false;
+	} else {
+		salir = 'N';
+		return false;
+	}
+
+	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
+	cout << "Esperando nombre de oponente" << endl;
+	if (esperarNombreOponente()) {
+		//recibio nombre del oponente
+	} else {
+		salir = 'N';
+		return false;
+	}
 
 	cout << "inicializo un nueva partida. Reconecto" << endl;
 	//Me conecto al servidor de partida.
@@ -1308,15 +1328,6 @@ void inicializarNuevaPartida() {
 		exit(1);
 	}
 
-	//Espero id de partida (del torneo)
-	cout << "Esperando ID Partida" << endl;
-	esperarIdPartida();
-	recibioIdPartida = false;
-
-	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
-	cout << "Esperando nombre de oponente" << endl;
-	esperarNombreOponente();
-
 	inicializarVariablesDeLaPartida();
 
 	//Mando mi IdDePartida
@@ -1327,23 +1338,25 @@ void inicializarNuevaPartida() {
 	messageIDPartida.append(fillMessage(aux));
 	cola_grafico.push(messageIDPartida);
 
+	//Espero mi posicion inicial;
+	cout << "Esperando mi posicion inicial" << endl;
+	esperarPosicionInicial();
+
 	//Mando mi ID de Jugador
 	string messageIDJugador(CD_ID_JUGADOR);
 	messageIDJugador.append(fillMessage(mi_id.c_str()));
 	cola_grafico.push(messageIDJugador);
 
-	//Espero mi posicion inicial;
-	cout << "Esperando mi posicion inicial" << endl;
-	esperarPosicionInicial();
-
-	string mensajeListo(CD_JUGADOR_LISTO);
-	mensajeListo.append(fillMessage("0"));
-	cola_grafico.push(mensajeListo);
+	/*string mensajeListo(CD_JUGADOR_LISTO);
+	 mensajeListo.append(fillMessage("0"));
+	 cola_grafico.push(mensajeListo);*/
 
 	//Espero que el Servidor de Partida me mande el mensaje de START
 	cout << "Esperar signal de START" << endl;
 	esperarSTART();
 	cout << "START - Match " << idPartida << endl;
+
+	return true;
 }
 
 void esperarPuertoPartida() {
@@ -1363,7 +1376,22 @@ void esperarPuertoPartida() {
 	//cout << "recibio el puerto:" << puertoServidorPartida << endl;
 }
 
-void esperarNombreOponente() {
+bool esperarIdPartida() {
+	//cout << "esperando id Partida" << endl;
+
+	// MEJORARRRRR
+	///
+	while (/*!recibioIdPartida &&*/!torneoFinalizo()) {
+		if (recibioIdPartida) {
+			return true;
+		}
+		usleep(10000);
+	}
+
+	return false;
+}
+
+bool esperarNombreOponente() {
 	//cout << "comienza while de espera de nombre de oponente" << endl;
 	bool recibioNombreOponente = false;
 	while (!recibioNombreOponente && !torneoFinalizo()) {
@@ -1375,26 +1403,18 @@ void esperarNombreOponente() {
 		pthread_mutex_unlock(&mutex_nombreOponente);
 		usleep(10000);
 	}
-	//cout << "f esperarNombreOponente ->recibo el nombre de mi oponente:" << felix2_nombre << endl;
-}
 
-void esperarSTART() {
-	bool empezar = false;
-	while (!empezar && !torneoFinalizo()) {
-		pthread_mutex_lock(&mutex_start);
-		empezar = start;
-		pthread_mutex_unlock(&mutex_start);
-		usleep(5000);
+	cout << "f esperarNombreOponente ->recibo el nombre de mi oponente:" << felix2_nombre << endl;
+	if (recibioNombreOponente) {
+		return true;
+	} else {
+		return false;
 	}
-
-	pthread_mutex_lock(&mutex_start);
-	start = false;
-	pthread_mutex_unlock(&mutex_start);
 }
 
 void esperarPosicionInicial() {
 	bool auxRecibioPosicionInicial = false;
-	while (!auxRecibioPosicionInicial && !torneoFinalizo()) {
+	while (!auxRecibioPosicionInicial) {
 		pthread_mutex_lock(&mutex_recibioPosicionInicial);
 		auxRecibioPosicionInicial = recibioPosicionInicial;
 		pthread_mutex_unlock(&mutex_recibioPosicionInicial);
@@ -1405,20 +1425,18 @@ void esperarPosicionInicial() {
 	pthread_mutex_unlock(&mutex_start);
 }
 
-void esperarIdPartida() {
-	//cout << "esperando id Partida" << endl;
-
-	// MEJORARRRRR
-	///
-
-	//bool recibioIdPartida = false;
-	while (!recibioIdPartida && !torneoFinalizo()) {
-
-		//recibioIdPartida = true;
-		//break;
-
-		usleep(10000);
+void esperarSTART() {
+	bool empezar = false;
+	while (!empezar) {
+		pthread_mutex_lock(&mutex_start);
+		empezar = start;
+		pthread_mutex_unlock(&mutex_start);
+		usleep(5000);
 	}
+
+	pthread_mutex_lock(&mutex_start);
+	start = false;
+	pthread_mutex_unlock(&mutex_start);
 }
 
 void vaciarColas() {

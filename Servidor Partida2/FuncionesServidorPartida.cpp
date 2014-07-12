@@ -127,23 +127,22 @@ void * escuchaClientes(void * args) {
 		if (!partidas.empty()) {
 			for (map<int, Partida *>::iterator it = partidas.begin(); it != partidas.end(); it++) {
 				//escucho los clientes.
-
 				if (it->second->cSocket1 != NULL) {
 					readData = it->second->cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
-					//readData = it->second->cSocket1->ReceiveBloq(buffer, sizeof(buffer));
 					if (readData > 0) {
 						message = buffer;
 						Mensaje mensaje(JUGADOR_1, message, it->second);
 						cola_mensajes_recibir.push(mensaje);
+					}else if (readData == 0) {
+						cout << "Se desconecto el jugador 1" << endl;
+						delete (it->second->cSocket1);
+						it->second->cSocket1 = NULL;
+						message = CD_OPONENTE_DESCONECTADO;
+						message.append(Helper::fillMessage("0"));
+						Mensaje mensaje(JUGADOR_2, message, it->second);
+						Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+
 					}
-				} else if (readData == 0) {
-					cout << "Se desconecto el jugador 1" << endl;
-					delete (it->second->cSocket1);
-					it->second->cSocket1 = NULL;
-					message = CD_OPONENTE_DESCONECTADO;
-					message.append(Helper::fillMessage("0"));
-					Mensaje mensaje(JUGADOR_2, message, it->second);
-					Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 				}
 
 				if (it->second->cSocket2 != NULL) {
@@ -161,7 +160,6 @@ void * escuchaClientes(void * args) {
 						message.append(Helper::fillMessage("0"));
 						Mensaje mensaje(JUGADOR_1, message, it->second);
 						Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-
 					}
 				}
 
@@ -264,7 +262,7 @@ void * sharedMemory(void * args) {
 			if (kill(ppid, 0) == -1) {
 				cout << "Servidor partida: Padre esta muerto" << endl;
 				//stop = true;
-				exit(1);
+				exit(0);
 			}
 
 			pthread_mutex_lock(&mutex_partidas);
@@ -527,21 +525,21 @@ void caseIdJugador(Mensaje mensaje) {
 	} else if (mensaje.jugador == JUGADOR_2) {
 		mensaje.partida->felix2->id = atoi(mensaje.mensaje.c_str());
 	}
-	/*if (mensaje.partida->felix1->id != 0 && mensaje.partida->felix2->id != 0) //Se puede empezar la partida.
-	 {
-	 string message(CD_EMPEZAR_PARTIDA);
-	 message.append(Helper::fillMessage("0"));
-	 mensaje.jugador = BROADCAST;
-	 try {
-	 mensaje.setMensaje(message);
-	 } catch (const char *err) {
-	 cout << "Error: " << err << endl;
-	 }
-	 Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-	 mensaje.partida->timer = new Timer();
-	 cout << "Seteo partida como jugando: " << mensaje.partida->id << endl;
-	 mensaje.partida->estado = ESTADO_JUGANDO;
-	 }*/
+	if (mensaje.partida->felix1->id != 0 && mensaje.partida->felix2->id != 0) //Se puede empezar la partida.
+			{
+		string message(CD_EMPEZAR_PARTIDA);
+		message.append(Helper::fillMessage("0"));
+		mensaje.jugador = BROADCAST;
+		try {
+			mensaje.setMensaje(message);
+		} catch (const char *err) {
+			cout << "Error: " << err << endl;
+		}
+		Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+		mensaje.partida->timer = new Timer();
+		cout << "Seteo partida como jugando: " << mensaje.partida->id << endl;
+		mensaje.partida->estado = ESTADO_JUGANDO;
+	}
 	pthread_mutex_unlock(&mutex_partidas);
 }
 
@@ -570,15 +568,14 @@ void caseJugadorListo(Mensaje mensaje) {
 
 void SIGINT_Handler(int inum) {
 	cout << "Serv Partida  Signal received PID:" << getpid() << endl;
-	stop = true;
-	exit(1);
+	//stop = true;
+	exit(0);
 }
 
 /*
  * Libera recursos del servidor.
  */
 void liberarRecursos() {
-	cout << "libero recursos de Servidor Partida PID:" << getpid() << endl;
 	if (puntaje != NULL)
 		shmdt(puntaje);
 	shmctl(shmIds.shmId, IPC_RMID, 0);
@@ -589,6 +586,7 @@ void liberarRecursos() {
 	pthread_mutex_destroy(&mutex_cola_mensajes_enviar);
 	pthread_mutex_destroy(&mutex_cola_mensajes_recibir);
 	pthread_mutex_destroy(&mutex_partidas);
+	cout<<"recursos Servidor Partida liberados"<<endl;
 }
 
 string posicionInicial1(Felix * felix) {
