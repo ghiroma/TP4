@@ -127,8 +127,10 @@ void * escuchaClientes(void * args) {
 		if (!partidas.empty()) {
 			for (map<int, Partida *>::iterator it = partidas.begin(); it != partidas.end(); it++) {
 				//escucho los clientes.
+
 				if (it->second->cSocket1 != NULL) {
 					readData = it->second->cSocket1->ReceiveNoBloq(buffer, sizeof(buffer));
+					//readData = it->second->cSocket1->ReceiveBloq(buffer, sizeof(buffer));
 					if (readData > 0) {
 						message = buffer;
 						Mensaje mensaje(JUGADOR_1, message, it->second);
@@ -142,11 +144,11 @@ void * escuchaClientes(void * args) {
 					message.append(Helper::fillMessage("0"));
 					Mensaje mensaje(JUGADOR_2, message, it->second);
 					Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-
 				}
 
 				if (it->second->cSocket2 != NULL) {
 					readData = it->second->cSocket2->ReceiveNoBloq(buffer, sizeof(buffer));
+					//readData = it->second->cSocket2->ReceiveBloq(buffer, sizeof(buffer));
 					if (readData > 0) {
 						message = buffer;
 						Mensaje mensaje(JUGADOR_2, message, it->second);
@@ -162,6 +164,7 @@ void * escuchaClientes(void * args) {
 
 					}
 				}
+
 			}
 		}
 		pthread_mutex_unlock(&mutex_partidas);
@@ -525,20 +528,20 @@ void caseIdJugador(Mensaje mensaje) {
 		mensaje.partida->felix2->id = atoi(mensaje.mensaje.c_str());
 	}
 	/*if (mensaje.partida->felix1->id != 0 && mensaje.partida->felix2->id != 0) //Se puede empezar la partida.
-			{
-		string message(CD_EMPEZAR_PARTIDA);
-		message.append(Helper::fillMessage("0"));
-		mensaje.jugador = BROADCAST;
-		try {
-			mensaje.setMensaje(message);
-		} catch (const char *err) {
-			cout << "Error: " << err << endl;
-		}
-		Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-		mensaje.partida->timer = new Timer();
-		cout << "Seteo partida como jugando: " << mensaje.partida->id << endl;
-		mensaje.partida->estado = ESTADO_JUGANDO;
-	}*/
+	 {
+	 string message(CD_EMPEZAR_PARTIDA);
+	 message.append(Helper::fillMessage("0"));
+	 mensaje.jugador = BROADCAST;
+	 try {
+	 mensaje.setMensaje(message);
+	 } catch (const char *err) {
+	 cout << "Error: " << err << endl;
+	 }
+	 Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+	 mensaje.partida->timer = new Timer();
+	 cout << "Seteo partida como jugando: " << mensaje.partida->id << endl;
+	 mensaje.partida->estado = ESTADO_JUGANDO;
+	 }*/
 	pthread_mutex_unlock(&mutex_partidas);
 }
 
