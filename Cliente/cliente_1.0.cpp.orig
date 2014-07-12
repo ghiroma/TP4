@@ -853,7 +853,10 @@ void* EscuchaServidor(void *arg) {
 
 			//verificarrrr
 			//close(cSocket.ID);
+<<<<<<< HEAD
+=======
 			//delete(cSocket);
+>>>>>>> a31941416013205965e36df0a18d375e25e7cbed
 		}
 
 		usleep(2000);

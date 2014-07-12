@@ -62,7 +62,7 @@ Semaforo *semPartida;
  */
 void* receptorConexiones(void * args) {
 	CommunicationSocket * cSocket;
-	Partida * partida;
+	map<int, Partida *>::iterator finder;
 	Felix * felix;
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	int idPartida = 0;
@@ -78,37 +78,34 @@ void* receptorConexiones(void * args) {
 		cSocket = sSocket->Accept();
 		//Recibo el id de partida, para sber contra quien va a jugar.
 		cSocket->ReceiveBloq(buffer, sizeof(buffer));
-		//If()
-		cout << "Recibo menasje de nuevo cliente: " << buffer << endl;
+		cout << "Recibo mensaje de nuevo cliente: " << buffer << endl;
 		message = buffer;
 		idPartida = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
 		felix = new Felix(cantVidas);
-		if (partidaPendiente(idPartida)) {
-			pthread_mutex_lock(&mutex_partidas);
-			map<int, Partida*>::iterator iterator = partidas.find(idPartida);
-			iterator->second->cSocket2 = cSocket;
+
+		pthread_mutex_lock(&mutex_partidas);
+		finder = partidas.find(idPartida);
+		if (finder != partidas.end()) {
+			finder->second->cSocket2 = cSocket;
 			felix->fila = 0;
 			felix->columna = EDIFICIO_COLUMNAS - 1;
-			iterator->second->felix2 = felix;
-			pthread_mutex_unlock(&mutex_partidas);
-			Mensaje mensaje(JUGADOR_2, posicionInicial2(felix), iterator->second);
+			finder->second->felix2 = felix;
+			Mensaje mensaje(JUGADOR_2, posicionInicial2(felix), finder->second);
 			Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 			//Mando posicion inicial.
 			cout << "Partida nro: " << idPartida << " completada" << endl;
 		} else {
-			cout << "Creando la partida y primer jugador, id partida: " << idPartida << endl;
-			partida = new Partida(idPartida);
+			Partida * partida = new Partida(idPartida);
 			partida->cSocket1 = cSocket;
 			felix->fila = 0;
 			felix->columna = 0;
 			partida->felix1 = felix;
-			pthread_mutex_lock(&mutex_partidas);
 			partidas[partida->id] = partida;
-			pthread_mutex_unlock(&mutex_partidas);
 			//Mando posicion inicial
 			Mensaje mensaje(JUGADOR_1, posicionInicial1(felix), partida);
 			Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 		}
+		pthread_mutex_unlock(&mutex_partidas);
 		usleep(POOLING_DEADTIME);
 	}
 
@@ -141,7 +138,7 @@ void * escuchaClientes(void * args) {
 					message.append(Helper::fillMessage("0"));
 					Mensaje mensaje(JUGADOR_2, message, it->second);
 					Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-					
+
 				}
 
 				if (it->second->cSocket2 != NULL) {
@@ -156,7 +153,7 @@ void * escuchaClientes(void * args) {
 						message.append(Helper::fillMessage("0"));
 						Mensaje mensaje(JUGADOR_1, message, it->second);
 						Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-						
+
 					}
 				}
 			}
@@ -165,7 +162,7 @@ void * escuchaClientes(void * args) {
 		usleep(POOLING_DEADTIME);
 	}
 
-	cout<<"escuchar clientes salio del stop"<<endl;
+	cout << "escuchar clientes salio del stop" << endl;
 	pthread_exit(0);
 }
 
@@ -204,27 +201,30 @@ void* procesarMensajesCliente(void * args) {
 }
 
 void* timer_thread(void * args) {
-	Timer timer;
 	string message;
 
 	while (!stop) {
 		pthread_mutex_lock(&mutex_partidas);
 		for (map<int, Partida*>::iterator it = partidas.begin(); it != partidas.end(); it++) {
-			message = timer.keepAlive();
-			if (message.length() > 0) {
-				Mensaje mensaje(BROADCAST, message, it->second);
-				Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-			}
 
-			if (it->second->estado == ESTADO_JUGANDO) {
-
-				message = timer.ralph(it->second->edificio->nivel);
+			if (it->second->timer != NULL) {
+				message = it->second->timer->keepAlive();
 				if (message.length() > 0) {
 					Mensaje mensaje(BROADCAST, message, it->second);
 					Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 				}
+			}
 
-				message = timer.paloma(it->second->edificio->nivel);
+			if (it->second->estado == ESTADO_JUGANDO) {
+
+				message = it->second->timer->ralph(it->second->edificio->nivel);
+				if (message.length() > 0) {
+					Mensaje mensaje(BROADCAST, message, it->second);
+					Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+					cout << "Encole mensaje ralph a partida: " << it->second->id << endl;
+				}
+
+				message = it->second->timer->paloma(it->second->edificio->nivel);
 				if (message.length() > 0) {
 					Mensaje mensaje(BROADCAST, message, it->second);
 					Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
@@ -250,7 +250,6 @@ void * sharedMemory(void * args) {
 
 		semTorneo = new Semaforo(SEMAFORO_TORNEO);
 		semPartida = new Semaforo(SEMAFORO_PARTIDA);
-		//TODO Crear semaforos.
 
 		while (stop == false) {
 
@@ -277,9 +276,6 @@ void * sharedMemory(void * args) {
 							it->second->cSocket1->SendNoBloq(mensajeFinPartida.c_str(), mensajeFinPartida.length());
 						if (it->second->cSocket2 != NULL)
 							it->second->cSocket2->SendNoBloq(mensajeFinPartida.c_str(), mensajeFinPartida.length());
-						//map<int, Partida*>::iterator auxIt = it;
-						//++it;
-						//partidas.erase(auxIt);
 						partidas.erase(it);
 						cout << "Borre la partida" << endl;
 						semTorneo->V();
@@ -316,16 +312,16 @@ void* enviarMensajesCliente(void * args) {
 
 	while (!stop) {
 		if (!cola_mensajes_enviar.empty()) {
-			//do {
 			pthread_mutex_lock(&mutex_cola_mensajes_enviar);
 			Mensaje mensaje = cola_mensajes_enviar.front();
 			cola_mensajes_enviar.pop();
 			pthread_mutex_unlock(&mutex_cola_mensajes_enviar);
 			strcpy(aux, mensaje.codigo.c_str());
 			strcat(aux, mensaje.mensaje.c_str());
-			cout << "Estoy por enviar mensaje: " << mensaje.codigo + mensaje.mensaje << "de tipo: " << mensaje.jugador << endl;
+			//cout << "Estoy por enviar mensaje: " << mensaje.codigo + mensaje.mensaje << "de tipo: " << mensaje.jugador << endl;
 			if (mensaje.jugador == BROADCAST) //BroadCast
 					{
+				//cout<<"Enviando mensaje broadcast a "<<mensaje.partida->id<<endl;
 				if (mensaje.partida->cSocket1 != NULL) {
 					mensaje.partida->cSocket1->SendNoBloq(aux, sizeof(aux));
 				}
@@ -338,7 +334,6 @@ void* enviarMensajesCliente(void * args) {
 			} else if (mensaje.jugador == JUGADOR_1 && mensaje.partida->cSocket1 != NULL) {
 				mensaje.partida->cSocket1->SendNoBloq(aux, sizeof(aux));
 			}
-			//} while (!cola_mensajes_enviar.empty());
 		}
 		usleep(POOLING_DEADTIME);
 	}
@@ -517,6 +512,7 @@ void casePerdidaVida(Mensaje mensaje) {
 
 void caseIdJugador(Mensaje mensaje) {
 	pthread_mutex_lock(&mutex_partidas);
+	cout << "Recibi id de jugador: " << atoi(mensaje.mensaje.c_str()) << endl;
 	if (mensaje.jugador == JUGADOR_1) {
 		mensaje.partida->felix1->id = atoi(mensaje.mensaje.c_str());
 	} else if (mensaje.jugador == JUGADOR_2) {
@@ -542,13 +538,14 @@ void caseJugadorListo(Mensaje mensaje) {
 			cout << "Error: " << err << endl;
 		}
 		Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-		cout<<"Seteo partida como jugando: "<<mensaje.partida->id<<endl;
+		mensaje.partida->timer = new Timer();
+		cout << "Seteo partida como jugando: " << mensaje.partida->id << endl;
 		mensaje.partida->estado = ESTADO_JUGANDO;
 	}
 }
 
 void SIGINT_Handler(int inum) {
-	cout << "Serv Partida  Signal received PID:"<<getpid()<< endl;
+	cout << "Serv Partida  Signal received PID:" << getpid() << endl;
 	stop = true;
 	exit(1);
 }
@@ -557,7 +554,7 @@ void SIGINT_Handler(int inum) {
  * Libera recursos del servidor.
  */
 void liberarRecursos() {
-	cout<<"libero recursos de Servidor Partida PID:"<<getpid()<<endl;
+	cout << "libero recursos de Servidor Partida PID:" << getpid() << endl;
 	if (puntaje != NULL)
 		shmdt(puntaje);
 	shmctl(shmIds.shmId, IPC_RMID, 0);

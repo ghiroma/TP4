@@ -10,6 +10,7 @@
 
 #include "Felix.h"
 #include "Edificio.h"
+#include "Timer.h"
 #include "CommunicationSocket.h"
 
 class Partida {
@@ -21,6 +22,7 @@ public:
 	Felix * felix1;
 	Felix * felix2;
 	Edificio * edificio;
+	Timer * timer;
 	bool jugador1Listo;
 	bool jugador2Listo;
 	int nivel;
