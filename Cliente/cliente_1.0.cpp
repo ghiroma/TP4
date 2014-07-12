@@ -1312,7 +1312,7 @@ void inicializarNuevaPartida() {
 	cout << "Esperando nombre de oponente" << endl;
 	esperarNombreOponente();
 
-	//Espero id de partida
+	//Espero id de partida (del torneo)
 	cout << "Esperando ID Partida" << endl;
 	esperarIdPartida();
 	recibioIdPartida = false;
@@ -1413,7 +1413,7 @@ void esperarIdPartida() {
 	///
 
 	//bool recibioIdPartida = false;
-	while (!recibioIdPartida /*&& !torneoFinalizo()*/) {
+	while (!recibioIdPartida && !torneoFinalizo()) {
 
 		//recibioIdPartida = true;
 		//break;
