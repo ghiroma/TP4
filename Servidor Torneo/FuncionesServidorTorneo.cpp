@@ -220,71 +220,80 @@ void* lecturaDeResultados(void* data) {
 	resumenPartida = (struct puntajesPartida *) shmat(idSHM, (char *) 0, 0);
 
 	while (true) {
-		sem_ServidorTorneoSHM.P();
-		pthread_mutex_lock(&mutex_listJugadores);
-		//si el torneo termino ok Grabo los puntajes
-		if (resumenPartida->partidaFinalizadaOK == true) {
-			//si el jugador No se desconecto le sumo su puntaje y cantPartidasJugadas
-			if (listJugadores.count(resumenPartida->idJugador1) == 1) {
-				listJugadores[resumenPartida->idJugador1]->Puntaje += resumenPartida->puntajeJugador1;
-				listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas++;
 
-				//si el otro jugador se desconecto asumo que este gano porque el otro abandono
-				if (listJugadores.count(resumenPartida->idJugador2) == 0) {
-					listJugadores[resumenPartida->idJugador1]->PartidasGanadas++;
-				}
-			}
-			//si el jugador No se desconecto le sumo su puntaje y cantPartidasJugadas
-			if (listJugadores.count(resumenPartida->idJugador2) == 1) {
-				listJugadores[resumenPartida->idJugador2]->Puntaje += resumenPartida->puntajeJugador2;
-				listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas++;
+		/*cout << "CantPartidasFinalizads = " << cantPartidasFinalizadas << endl << " idPartida = " << idPartida << endl << " torneoFinalizado = " << torneoFinalizado() << endl;
+		 if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
+		 break;
+		 }*/
+		if (sem_trywait(sem_ServidorTorneoSHM.getSem_t())) {
+			pthread_mutex_lock(&mutex_listJugadores);
+			//si el torneo termino ok Grabo los puntajes
+			if (resumenPartida->partidaFinalizadaOK == true) {
+				//si el jugador No se desconecto le sumo su puntaje y cantPartidasJugadas
+				if (listJugadores.count(resumenPartida->idJugador1) == 1) {
+					listJugadores[resumenPartida->idJugador1]->Puntaje += resumenPartida->puntajeJugador1;
+					listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas++;
 
-				//si el otro jugador se desconecto asumo que este gano porque el otro abandono
-				if (listJugadores.count(resumenPartida->idJugador1) == 0) {
-					listJugadores[resumenPartida->idJugador2]->PartidasGanadas++;
-				}
-			}
-
-			//si los dos estan vivos veo quien gano
-			if (listJugadores.count(resumenPartida->idJugador1) == 1 && listJugadores.count(resumenPartida->idJugador2) == 1) {
-				//si no es empate, veo quien gano y perdio
-				if ((listJugadores[resumenPartida->idJugador1]->Puntaje / listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas) != (listJugadores[resumenPartida->idJugador2]->Puntaje / listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas)) {
-					if ((listJugadores[resumenPartida->idJugador1]->Puntaje / listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas) > (listJugadores[resumenPartida->idJugador2]->Puntaje / listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas)) {
-						//J1 Gana
+					//si el otro jugador se desconecto asumo que este gano porque el otro abandono
+					if (listJugadores.count(resumenPartida->idJugador2) == 0) {
 						listJugadores[resumenPartida->idJugador1]->PartidasGanadas++;
-						listJugadores[resumenPartida->idJugador2]->PartidasPerdidas++;
-					} else {
-						//J2 Gana
+					}
+				}
+				//si el jugador No se desconecto le sumo su puntaje y cantPartidasJugadas
+				if (listJugadores.count(resumenPartida->idJugador2) == 1) {
+					listJugadores[resumenPartida->idJugador2]->Puntaje += resumenPartida->puntajeJugador2;
+					listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas++;
+
+					//si el otro jugador se desconecto asumo que este gano porque el otro abandono
+					if (listJugadores.count(resumenPartida->idJugador1) == 0) {
 						listJugadores[resumenPartida->idJugador2]->PartidasGanadas++;
-						listJugadores[resumenPartida->idJugador1]->PartidasPerdidas++;
+					}
+				}
+
+				//si los dos estan vivos veo quien gano
+				if (listJugadores.count(resumenPartida->idJugador1) == 1 && listJugadores.count(resumenPartida->idJugador2) == 1) {
+					//si no es empate, veo quien gano y perdio
+					if ((listJugadores[resumenPartida->idJugador1]->Puntaje / listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas) != (listJugadores[resumenPartida->idJugador2]->Puntaje / listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas)) {
+						if ((listJugadores[resumenPartida->idJugador1]->Puntaje / listJugadores[resumenPartida->idJugador1]->CantPartidasJugadas) > (listJugadores[resumenPartida->idJugador2]->Puntaje / listJugadores[resumenPartida->idJugador2]->CantPartidasJugadas)) {
+							//J1 Gana
+							listJugadores[resumenPartida->idJugador1]->PartidasGanadas++;
+							listJugadores[resumenPartida->idJugador2]->PartidasPerdidas++;
+						} else {
+							//J2 Gana
+							listJugadores[resumenPartida->idJugador2]->PartidasGanadas++;
+							listJugadores[resumenPartida->idJugador1]->PartidasPerdidas++;
+						}
 					}
 				}
 			}
-		}
 
-		//pongo a los jugadores en no JUNGADO
-		if (listJugadores.count(resumenPartida->idJugador1) == 1) {
-			listJugadores[resumenPartida->idJugador1]->Jugando = false;
-		}
-		if (listJugadores.count(resumenPartida->idJugador2) == 1) {
-			listJugadores[resumenPartida->idJugador2]->Jugando = false;
-		}
-		pthread_mutex_unlock(&mutex_listJugadores);
+			//pongo a los jugadores en no JUNGADO
+			if (listJugadores.count(resumenPartida->idJugador1) == 1) {
+				listJugadores[resumenPartida->idJugador1]->Jugando = false;
+			}
+			if (listJugadores.count(resumenPartida->idJugador2) == 1) {
+				listJugadores[resumenPartida->idJugador2]->Jugando = false;
+			}
+			pthread_mutex_unlock(&mutex_listJugadores);
 
-		///mensajes de prueba
-		cout << "CONTENIDO DE SHM" << endl;
-		cout << "id1:" << resumenPartida->idJugador1 << endl;
-		cout << "id2:" << resumenPartida->idJugador2 << endl;
-		cout << "partidaFinalizadaOK:" << resumenPartida->partidaFinalizadaOK << endl;
-		cout << "puntajeJugador1:" << resumenPartida->puntajeJugador1 << endl;
-		cout << "puntajeJugador2:" << resumenPartida->puntajeJugador2 << endl;
-		///////////////////////////////////////////////////////////////////////////////////
+			///mensajes de prueba
+			cout << "CONTENIDO DE SHM" << endl;
+			cout << "id1:" << resumenPartida->idJugador1 << endl;
+			cout << "id2:" << resumenPartida->idJugador2 << endl;
+			cout << "partidaFinalizadaOK:" << resumenPartida->partidaFinalizadaOK << endl;
+			cout << "puntajeJugador1:" << resumenPartida->puntajeJugador1 << endl;
+			cout << "puntajeJugador2:" << resumenPartida->puntajeJugador2 << endl;
+			///////////////////////////////////////////////////////////////////////////////////
 
-		cantPartidasFinalizadas++;
-		if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
-			break;
+			cantPartidasFinalizadas++;
+			//cout<<"CantPartidasFinalizads = "<<cantPartidasFinalizadas<<endl<<" idPartida = "<<idPartida<<endl<<" torneoFinalizado = "<<torneoFinalizado()<<endl;
+			//if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
+			//break;
+			//}
+			sem_ServidorPartidaSHM.V();
 		}
-		sem_ServidorPartidaSHM.V();
+		//sem_ServidorTorneoSHM.P();
+		usleep(10000);
 	}
 
 	//en este punto ya se que todas las partidas finalizaron y el tiempo de torneo tambien
@@ -582,7 +591,7 @@ void* establecerPartidas(void* data) {
 
 	while (!torneoFinalizado()) {
 		//recorro la lista de jugadores viendo a quien le puedo asignar un oponente y que comienze la partida
-
+		usleep(INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES);
 		pthread_mutex_lock(&mutex_listJugadores);
 		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 			idJugador = it->first;
@@ -632,7 +641,7 @@ void* establecerPartidas(void* data) {
 			}
 		}
 		pthread_mutex_unlock(&mutex_listJugadores);
-		usleep(INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES);
+
 	}
 	//cout << "Thread EstablecerPartidas va a hacer un Exit" << endl;
 	pthread_exit(NULL);
