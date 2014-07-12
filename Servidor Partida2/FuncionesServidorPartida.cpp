@@ -134,6 +134,7 @@ void * escuchaClientes(void * args) {
 					}
 				} else if (readData == 0) {
 					delete (it->second->cSocket1);
+					it->second->cSocket1=NULL;
 					message = CD_OPONENTE_DESCONECTADO;
 					message.append(Helper::fillMessage("0"));
 					Mensaje mensaje(JUGADOR_2, message, it->second);
@@ -149,6 +150,7 @@ void * escuchaClientes(void * args) {
 						cola_mensajes_recibir.push(mensaje);
 					} else if (readData == 0) {
 						delete (it->second->cSocket2);
+						it->second->cSocket2=NULL;
 						message = CD_OPONENTE_DESCONECTADO;
 						message.append(Helper::fillMessage("0"));
 						Mensaje mensaje(JUGADOR_1, message, it->second);
@@ -506,6 +508,7 @@ void casePerdidaVida(Mensaje mensaje) {
 		}
 	}
 	if ((mensaje.partida->felix1->cantidad_vidas <= 0 && mensaje.partida->felix2->cantidad_vidas <= 0) || (mensaje.partida->felix1->cantidad_vidas <= 0 && mensaje.partida->cSocket2 == NULL) || (mensaje.partida->felix2->cantidad_vidas <= 0 && mensaje.partida->cSocket1 == NULL)) {
+		cout<<"Partida id: "<<mensaje.partida->id<<" ha finalizado"<<endl;
 		mensaje.partida->estado = ESTADO_FINALIZADO;
 	}
 }
