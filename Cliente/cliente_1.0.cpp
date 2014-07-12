@@ -1308,15 +1308,14 @@ void inicializarNuevaPartida() {
 		exit(1);
 	}
 
-	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
-	cout << "Esperando nombre de oponente" << endl;
-	esperarNombreOponente();
-
 	//Espero id de partida (del torneo)
 	cout << "Esperando ID Partida" << endl;
 	esperarIdPartida();
 	recibioIdPartida = false;
 
+	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
+	cout << "Esperando nombre de oponente" << endl;
+	esperarNombreOponente();
 
 	inicializarVariablesDeLaPartida();
 
@@ -1367,7 +1366,7 @@ void esperarPuertoPartida() {
 void esperarNombreOponente() {
 	//cout << "comienza while de espera de nombre de oponente" << endl;
 	bool recibioNombreOponente = false;
-	while (!recibioNombreOponente /*&& !torneoFinalizo()*/) {
+	while (!recibioNombreOponente && !torneoFinalizo()) {
 		pthread_mutex_lock(&mutex_nombreOponente);
 		if (nombreOponente.length() > 0) {
 			felix2_nombre = nombreOponente;
@@ -1381,7 +1380,7 @@ void esperarNombreOponente() {
 
 void esperarSTART() {
 	bool empezar = false;
-	while (!empezar /*&& !torneoFinalizo()*/) {
+	while (!empezar && !torneoFinalizo()) {
 		pthread_mutex_lock(&mutex_start);
 		empezar = start;
 		pthread_mutex_unlock(&mutex_start);
@@ -1395,7 +1394,7 @@ void esperarSTART() {
 
 void esperarPosicionInicial() {
 	bool auxRecibioPosicionInicial = false;
-	while (!auxRecibioPosicionInicial /*&& !torneoFinalizo()*/) {
+	while (!auxRecibioPosicionInicial && !torneoFinalizo()) {
 		pthread_mutex_lock(&mutex_recibioPosicionInicial);
 		auxRecibioPosicionInicial = recibioPosicionInicial;
 		pthread_mutex_unlock(&mutex_recibioPosicionInicial);

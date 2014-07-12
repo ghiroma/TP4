@@ -585,6 +585,17 @@ void* establecerPartidas(void* data) {
 					sem_inicializarTemporizador.V();
 				}
 
+				//Le mando a los jugadores el ID de la partida
+				char auxNroPartida[LONGITUD_CONTENIDO];
+				sprintf(auxNroPartida, "%d", idPartida);
+				string message(CD_ID_PARTIDA);
+				message.append(fillMessage(auxNroPartida));
+
+				cout << "le mando a ID: " << idJugador << " - el socket:" << auxNroPartida << endl;
+				listJugadores[idJugador]->SocketAsociado->SendBloq(message.c_str(), message.length());
+				cout << "le mando a ID: " << idOponente << " - el socket:" << auxNroPartida << endl;
+				listJugadores[idOponente]->SocketAsociado->SendBloq(message.c_str(), message.length());
+
 				//Les mando el nombre de su oponente
 				char auxnombreOponente1[LONGITUD_CONTENIDO];
 				sprintf(auxnombreOponente1, "%s", listJugadores[idOponente]->Nombre.c_str());
@@ -601,16 +612,6 @@ void* establecerPartidas(void* data) {
 				cout << "le mando a ID: " << idOponente << " - el nombre oponente:" << nombreOponente2 << endl;
 				listJugadores[idOponente]->SocketAsociado->SendBloq(nombreOponente2.c_str(), nombreOponente2.length());
 
-				//Le mando a los jugadores el ID de la partida
-				char auxNroPartida[LONGITUD_CONTENIDO];
-				sprintf(auxNroPartida, "%d", idPartida);
-				string message(CD_ID_PARTIDA);
-				message.append(fillMessage(auxNroPartida));
-
-				cout << "le mando a ID: " << idJugador << " - el socket:" << auxNroPartida << endl;
-				listJugadores[idJugador]->SocketAsociado->SendBloq(message.c_str(), message.length());
-				cout << "le mando a ID: " << idOponente << " - el socket:" << auxNroPartida << endl;
-				listJugadores[idOponente]->SocketAsociado->SendBloq(message.c_str(), message.length());
 			} else {
 				//No se encontraron oponentes disponibles
 			}
