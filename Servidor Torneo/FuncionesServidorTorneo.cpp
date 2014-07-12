@@ -585,7 +585,8 @@ void* establecerPartidas(void* data) {
 			idOponente = it->second->obtenerOponente();
 
 			//si no se encuentra jugando actualmente y se encontro un oponente ("crea" una nueva partida)
-			if (idOponente > 0) {
+			if (idOponente >= 1) {
+				cout<<"se creara la partida: ("<<idJugador<<" vs "<<idOponente<<")"<<endl;
 				idPartida++;
 
 				//habilito el temporizador del torneo
@@ -621,6 +622,7 @@ void* establecerPartidas(void* data) {
 				cout << "le mando a ID: " << idOponente << " - el nombre oponente:" << nombreOponente2 << endl;
 				listJugadores[idOponente]->SocketAsociado->SendBloq(nombreOponente2.c_str(), nombreOponente2.length());
 
+				cout<<"Torneo: Termino de crear la partida "<<idPartida<<endl;
 			} else {
 				//No se encontraron oponentes disponibles
 			}

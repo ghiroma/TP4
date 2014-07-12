@@ -1294,7 +1294,7 @@ bool inicializarNuevaPartida() {
 		//Le llega el Id de Partida
 		recibioIdPartida = false;
 	} else {
-		salir = 'N';
+		salir = 'S';
 		return false;
 	}
 
@@ -1303,7 +1303,7 @@ bool inicializarNuevaPartida() {
 	if (esperarNombreOponente()) {
 		//recibio nombre del oponente
 	} else {
-		salir = 'N';
+		salir = 'S';
 		return false;
 	}
 
