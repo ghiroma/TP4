@@ -62,7 +62,7 @@ Semaforo *semPartida;
  */
 void* receptorConexiones(void * args) {
 	CommunicationSocket * cSocket;
-	/*Partida * partida;*/
+	map<int, Partida *>::iterator finder;
 	Felix * felix;
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	int idPartida = 0;
@@ -78,21 +78,19 @@ void* receptorConexiones(void * args) {
 		cSocket = sSocket->Accept();
 		//Recibo el id de partida, para sber contra quien va a jugar.
 		cSocket->ReceiveBloq(buffer, sizeof(buffer));
-		cout << "Recibo menasje de nuevo cliente: " << buffer << endl;
+		cout << "Recibo mensaje de nuevo cliente: " << buffer << endl;
 		message = buffer;
 		idPartida = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
 		felix = new Felix(cantVidas);
 
-		//buscar mejor manera de obtener una partida pendiente.
-		if (partidaPendiente(idPartida)) {
-			pthread_mutex_lock(&mutex_partidas);
-			map<int, Partida*>::iterator iterator = partidas.find(idPartida);
-			iterator->second->cSocket2 = cSocket;
+		pthread_mutex_lock(&mutex_partidas);
+		finder = partidas.find(idPartida);
+		if (finder != partidas.end()) {
+			finder->second->cSocket2 = cSocket;
 			felix->fila = 0;
 			felix->columna = EDIFICIO_COLUMNAS - 1;
-			iterator->second->felix2 = felix;
-			pthread_mutex_unlock(&mutex_partidas);
-			Mensaje mensaje(JUGADOR_2, posicionInicial2(felix), iterator->second);
+			finder->second->felix2 = felix;
+			Mensaje mensaje(JUGADOR_2, posicionInicial2(felix), finder->second);
 			Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 			//Mando posicion inicial.
 			cout << "Partida nro: " << idPartida << " completada" << endl;
@@ -102,13 +100,12 @@ void* receptorConexiones(void * args) {
 			felix->fila = 0;
 			felix->columna = 0;
 			partida->felix1 = felix;
-			pthread_mutex_lock(&mutex_partidas);
 			partidas[partida->id] = partida;
-			pthread_mutex_unlock(&mutex_partidas);
 			//Mando posicion inicial
 			Mensaje mensaje(JUGADOR_1, posicionInicial1(felix), partida);
 			Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 		}
+		pthread_mutex_unlock(&mutex_partidas);
 		usleep(POOLING_DEADTIME);
 	}
 
@@ -515,6 +512,7 @@ void casePerdidaVida(Mensaje mensaje) {
 
 void caseIdJugador(Mensaje mensaje) {
 	pthread_mutex_lock(&mutex_partidas);
+	cout << "Recibi id de jugador: " << atoi(mensaje.mensaje.c_str()) << endl;
 	if (mensaje.jugador == JUGADOR_1) {
 		mensaje.partida->felix1->id = atoi(mensaje.mensaje.c_str());
 	} else if (mensaje.jugador == JUGADOR_2) {

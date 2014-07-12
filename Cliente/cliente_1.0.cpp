@@ -851,7 +851,8 @@ void* EscuchaServidor(void *arg) {
 			delete (socketPartida);
 
 			//verificarrrr
-			close(cSocket.ID);
+			//close(cSocket.ID);
+			//delete(cSocket);
 		}
 
 		usleep(2000);
@@ -1373,7 +1374,7 @@ void inicializarNuevaPartida() {
 	 socketPartida->SendBloq(message.c_str(), message.length());
 	 */
 	string messageIDJugador(CD_ID_JUGADOR);
-	messageIDJugador.append(fillMessage("0"));
+	messageIDJugador.append(fillMessage(mi_id.c_str()));
 	cola_grafico.push(messageIDJugador);
 
 	//Espero mi posicion inicial;
