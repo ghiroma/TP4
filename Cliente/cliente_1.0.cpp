@@ -189,8 +189,6 @@ bool recibioIdPartida = false;
 CommunicationSocket * socketTorneo;
 CommunicationSocket * socketPartida;
 
-//CommunicationSocket cSocket(fd);
-
 int main(int argc, char *argv[]) {
 	atexit(liberarRecursos);
 	signal(SIGINT, handler);
@@ -308,7 +306,7 @@ int main(int argc, char *argv[]) {
 
 	inicializarNuevaPartida();
 
-	while (salir == 'N') {	
+	while (salir == 'N') {
 		if(nuevaPartidaSolicitada() && torneoFinalizo()){
 			break;
 		}
@@ -316,7 +314,7 @@ int main(int argc, char *argv[]) {
 			cout << "Solicite nueva partida" << endl;
 			//espero a que se cierre el ultimo thread de la partida anterior
 			mostrarPantalla("waitmatch");
-			sleep(8);			
+			sleep(8);
 			inicializarNuevaPartida();
 			pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
 			solicitudDeNuevaParitda = false;
@@ -516,9 +514,9 @@ int main(int argc, char *argv[]) {
 
 					felix1_reparar = 'N';
 				}
-		
+
 				Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
-			
+
 			}
 		}
 		if (felix2 == NULL)
@@ -555,9 +553,9 @@ int main(int argc, char *argv[]) {
 					//ventana_reparada(&felix2_posicion);
 					felix2_reparar = 'N';
 				}
-	
+
 				Dibujar(ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].x, ventanas_tramo1[felix2_posicion.fila][felix2_posicion.columna].y, felix2, superficie);
-	
+
 			}
 		}
 		//Dibujo las rocas
@@ -892,9 +890,9 @@ void* EscuchaTorneo(void *arg) {
 
 	while (true) {
 		//cout << "Espero msj del servidor de Torneo ... " << endl;
-		
+
 		readData = cSocket.ReceiveBloq(buffer, sizeof(buffer));
-		
+
 		if (strlen(buffer) > 0) {
 			string aux_buffer(buffer);
 
@@ -1275,7 +1273,7 @@ void inicializarNuevaPartida() {
 	} catch (const char * err) {
 		cout << "Error al querer conectar al puerto de partida" << endl;
 		exit(1);
-	}	
+	}
 
 	//Lanzo Threads de comunicacio con el Servidor de Partida
 	resultThEscuchaServidor = pthread_create(&thEscuchaServidor, NULL, EscuchaServidor, &socketPartida->ID);
@@ -1447,10 +1445,10 @@ void esperarIdPartida() {
 
 	//bool recibioIdPartida = false;
 	while (!recibioIdPartida) {
-		
+
 			//recibioIdPartida = true;
 			//break;
-		
+
 		usleep(10000);
 	}
 }

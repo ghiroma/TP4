@@ -565,7 +565,7 @@ void* establecerPartidas(void* data) {
 	cout << "Thread establecerPartidas - PID:" << getpid() << endl;
 	int idJugador;
 	int idOponente;
-	string nombreSemaforo;
+
 	while (!torneoFinalizado()) {
 		//recorro la lista de jugadores viendo a quien le puedo asignar un oponente y que comienze la partida
 
