@@ -1004,7 +1004,7 @@ void* EscuchaTeclas(void *arg) {
 		switch (evento.type) {
 
 		case SDL_KEYDOWN:
-			if (evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo) {
+			if ((evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo) && felix1_reparar !='S') {
 				//felix1_reparar = 'N';
 				if ((felix1_posicion.fila - 1) >= 0 && felix1_reparar != 'S' && felix1_vidas > 0) {
 					ostringstream ss1;
@@ -1018,7 +1018,7 @@ void* EscuchaTeclas(void *arg) {
 					cola_grafico.push(message);
 
 				}
-			} else if (evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba) {
+			} else if ((evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba) && felix1_reparar !='S') {
 				//felix1_reparar = 'N';
 				if ((felix1_posicion.fila + 1) < 3 && felix1_reparar != 'S' && felix1_vidas > 0) {
 					ostringstream ss1;
@@ -1031,7 +1031,7 @@ void* EscuchaTeclas(void *arg) {
 					//cout << "MENSAJE: " << message << endl;
 					cola_grafico.push(message);
 				}
-			} else if (evento.key.keysym.sym == SDLK_RIGHT || evento.key.keysym.sym == key_derecha) {
+			} else if ((evento.key.keysym.sym == SDLK_RIGHT || evento.key.keysym.sym == key_derecha) && felix1_reparar !='S') {
 				felix1 = felix_d1;
 				//felix1_reparar = 'N';
 				if ((felix1_posicion.columna + 1) < 5 && felix1_reparar != 'S' && felix1_vidas > 0) {
@@ -1045,7 +1045,7 @@ void* EscuchaTeclas(void *arg) {
 					//cout << "MENSAJE: " << message << endl;
 					cola_grafico.push(message);
 				}
-			} else if (evento.key.keysym.sym == SDLK_LEFT || evento.key.keysym.sym == key_izquierda) {
+			} else if ((evento.key.keysym.sym == SDLK_LEFT || evento.key.keysym.sym == key_izquierda) && felix1_reparar !='S') {
 				felix1 = felix_i1;
 				//felix1_reparar = 'N';
 				if ((felix1_posicion.columna - 1) >= 0 && felix1_reparar != 'S' && felix1_vidas > 0) {
@@ -1059,7 +1059,7 @@ void* EscuchaTeclas(void *arg) {
 					//cout << "MENSAJE: " << message << endl;
 					cola_grafico.push(message);
 				}
-			} else if ((evento.key.keysym.sym == SDLK_SPACE || evento.key.keysym.sym == key_accion) && felix1_vidas > 0) {
+			} else if ((evento.key.keysym.sym == SDLK_SPACE || evento.key.keysym.sym == key_accion) && felix1_vidas > 0 && felix1_reparar !='S') {
 				string message(CD_VENTANA_ARREGLANDO);
 				message.append(fillMessage("0"));
 				cola_grafico.push(message);
