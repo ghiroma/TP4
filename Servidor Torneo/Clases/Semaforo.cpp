@@ -75,14 +75,6 @@ int Semaforo::V() {
 void Semaforo::close() {
 	sem_close(this->sem);
 	sem_unlink(this->nombre);
-	/*if (this->pid == getpid()) {
-		if (sem_close(this->sem) == -1) {
-			cout << "Error en sem_close(" << this->nombre << ")" << endl;
-		}
-		if (sem_unlink(this->nombre) == -1) {
-			cout << "Error en sem_unlink(" << this->nombre << ")" << endl;
-		}
-	}*/
 }
 
 Semaforo::~Semaforo() {
