@@ -28,6 +28,7 @@ unsigned int puertoServidorPartida;
 int cantVidas = 0;
 ServerSocket* sSocket;
 int idSHM;
+pid_t pidServidorPartida;
 
 int main(int argc, char * argv[]) {
 	atexit(liberarRecursos);
@@ -51,7 +52,6 @@ int main(int argc, char * argv[]) {
 	thModoGrafico_data modoGraficoData;
 	pthread_t thLecturaDeResultados;
 	int resultThLecturaDeResultados;
-	pid_t pid;
 
 	signal(SIGINT, SIG_Handler);
 	signal(SIGTERM, SIG_Handler);
@@ -100,7 +100,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	///Lanzar Servidor Partida
-	if ((pid = fork()) == 0) {
+	if ((pidServidorPartida = fork()) == 0) {
 		//Proceso hijo
 		cout << "Lanzar Servidor de Partida FORK - PID:" << getpid() << endl;
 		char auxCantVidas[2];
@@ -115,7 +115,7 @@ int main(int argc, char * argv[]) {
 		execv("../Servidor Partida2/ServidorPartida", argumentos);
 		cout << "ERROR al ejecutar execv Nueva Partida" << endl;
 		exit(1);
-	} else if (pid < 0) {
+	} else if (pidServidorPartida < 0) {
 		cout << "Error al forkear" << endl;
 		exit(1);
 	}

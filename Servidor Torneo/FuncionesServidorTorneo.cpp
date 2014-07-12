@@ -40,6 +40,7 @@ list<datosPartida> partidasActivas;
 extern ServerSocket* sSocket;
 int idPartida = 0;
 puntajesPartida * resumenPartida;
+extern pid_t pidServidorPartida;
 
 SDL_Surface *screen, *background, *tiempo, *jugadores, *infoJugador_part1, *infoJugador_part2;
 SDL_Rect posDestino, posBackground, posTiempo, posJugadores;
@@ -277,7 +278,9 @@ void* lecturaDeResultados(void* data) {
 		sem_ServidorPartidaSHM.V();
 	}
 
-	//en este punto ya se que todas las partidas finalizaron
+	//en este punto ya se que todas las partidas finalizaron y el tiempo de torneo tambien
+	kill(pidServidorPartida, SIGINT);
+
 	pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
 	todasLasPartidasFinalizadas = true;
 	pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);
