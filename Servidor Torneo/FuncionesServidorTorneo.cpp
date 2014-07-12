@@ -22,6 +22,7 @@
 bool timeIsUp = false;
 bool comenzoConteo = false;
 bool todasLasPartidasFinalizadas = false;
+int cantPartidasFinalizadas = 0;
 Semaforo sem_inicializarTemporizador((char*) "/sem_inicializarTemporizador", 0);
 Semaforo sem_ServidorTorneoSHM((char*) "/ServidorTorneoSHM", 0);
 Semaforo sem_ServidorPartidaSHM((char*) "/ServidorPartidaSHM", 1);
@@ -94,7 +95,11 @@ void SIG_CHLD(int inum) {
 
 	cout << "Servidor de Partida caido" << endl;
 	cout << "Se terminara el Torneo" << endl;
-	exit(1);
+
+	if (cantPartidasFinalizadas != idPartida) {
+		exit(1);
+	}
+
 	/*pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
 	 todasLasPartidasFinalizadas = true;
 	 pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);
@@ -191,6 +196,7 @@ void* temporizadorTorneo(void* data) {
 	if (sSocket != NULL) {
 		cout << "(torneo finalizo tiempo) Torneo -> cierro socket" << endl;
 		delete (sSocket);
+		sSocket = NULL;
 	}
 
 	//el tiempo del Torneo llego a su fin, informar a cada cliente
@@ -211,8 +217,6 @@ void* temporizadorTorneo(void* data) {
  * THREAD -> Lee los resultados de las partidas
  */
 void* lecturaDeResultados(void* data) {
-	int cantPartidasFinalizadas = 0;
-
 	resumenPartida = (struct puntajesPartida *) shmat(idSHM, (char *) 0, 0);
 
 	while (true) {
@@ -285,7 +289,7 @@ void* lecturaDeResultados(void* data) {
 
 	//en este punto ya se que todas las partidas finalizaron y el tiempo de torneo tambien
 	kill(pidServidorPartida, SIGINT);
-	cout<<"KILL a partida"<<endl;
+	cout << "KILL a partida" << endl;
 
 	pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
 	todasLasPartidasFinalizadas = true;
@@ -585,7 +589,8 @@ void* establecerPartidas(void* data) {
 			idOponente = it->second->obtenerOponente();
 
 			//si no se encuentra jugando actualmente y se encontro un oponente ("crea" una nueva partida)
-			if (idOponente > 0) {
+			if (idOponente >= 1) {
+				cout << "se creara la partida: (" << idJugador << " vs " << idOponente << ")" << endl;
 				idPartida++;
 
 				//habilito el temporizador del torneo
@@ -621,6 +626,7 @@ void* establecerPartidas(void* data) {
 				cout << "le mando a ID: " << idOponente << " - el nombre oponente:" << nombreOponente2 << endl;
 				listJugadores[idOponente]->SocketAsociado->SendBloq(nombreOponente2.c_str(), nombreOponente2.length());
 
+				cout << "Torneo: Termino de crear la partida " << idPartida << endl;
 			} else {
 				//No se encontraron oponentes disponibles
 			}
