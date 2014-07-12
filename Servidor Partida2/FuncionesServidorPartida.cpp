@@ -123,7 +123,6 @@ void * escuchaClientes(void * args) {
 	int readData = 0;
 
 	while (!stop) {
-		cout<<"Iterando escuchaclientes_thread"<<endl;
 		pthread_mutex_lock(&mutex_partidas);
 		if (!partidas.empty()) {
 			for (map<int, Partida *>::iterator it = partidas.begin(); it != partidas.end(); it++) {
@@ -166,11 +165,8 @@ void * escuchaClientes(void * args) {
 			}
 		}
 		pthread_mutex_unlock(&mutex_partidas);
-		cout<<"Finalizo thread escucha servidor"<<endl;
 		usleep(POOLING_DEADTIME);
 	}
-
-	cout << "escuchar clientes salio del stop" << endl;
 	pthread_exit(0);
 }
 
@@ -212,7 +208,6 @@ void* timer_thread(void * args) {
 	string message;
 
 	while (!stop) {
-		cout<<"Iterando timer_thread"<<endl;
 		pthread_mutex_lock(&mutex_partidas);
 		for (map<int, Partida*>::iterator it = partidas.begin(); it != partidas.end(); it++) {
 
@@ -241,7 +236,6 @@ void* timer_thread(void * args) {
 			}
 		}
 		pthread_mutex_unlock(&mutex_partidas);
-		cout<<"Finalizo thread timer"<<endl;
 		usleep(POOLING_DEADTIME);
 	}
 	pthread_exit(0);
@@ -269,8 +263,6 @@ void * sharedMemory(void * args) {
 				//stop = true;
 				exit(1);
 			}
-
-			cout<<"Iterando sharedmemory_thread"<<endl;
 
 			pthread_mutex_lock(&mutex_partidas);
 			for (map<int, Partida*>::iterator it = partidas.begin(); it != partidas.end(); it++) {
@@ -312,8 +304,6 @@ void * sharedMemory(void * args) {
 			pthread_mutex_unlock(&mutex_partidas);
 			usleep(POOLING_DEADTIME);
 
-			cout<<"Finalizo thread shared memory"<<endl;
-
 		}
 	} catch (const char * err) {
 		cout << "Error inesperado al mapear la memoria compartida." << endl;
@@ -336,16 +326,12 @@ void* enviarMensajesCliente(void * args) {
 			//cout << "Estoy por enviar mensaje: " << mensaje.codigo + mensaje.mensaje << "de tipo: " << mensaje.jugador << endl;
 			if (mensaje.jugador == BROADCAST) //BroadCast
 					{
-				cout << "Enviando mensaje broadcast a " << mensaje.partida->id<<" codigo: "<<mensaje.codigo << endl;
-				if(mensaje.partida==NULL)
-					cout<<"La partida es null"<<endl;
-
 				if (mensaje.partida->cSocket1 != NULL) {
 					mensaje.partida->cSocket1->SendNoBloq(aux, sizeof(aux));
-				}else{cout<<"cSocket1 es null"<<endl;}
+				}
 				if (mensaje.partida->cSocket2 != NULL) {
 					mensaje.partida->cSocket2->SendNoBloq(aux, sizeof(aux));
-				}else{cout<<"cSocket2 es null"<<endl;}
+				}
 			} else if (mensaje.jugador == JUGADOR_2 && mensaje.partida->cSocket2 != NULL) //Jugador 2
 			{
 				mensaje.partida->cSocket2->SendNoBloq(aux, sizeof(aux));
@@ -355,7 +341,6 @@ void* enviarMensajesCliente(void * args) {
 		}
 		usleep(POOLING_DEADTIME);
 
-		cout<<"Finalizo thread enviar msj"<<endl;
 	}
 	pthread_exit(0);
 }
@@ -501,7 +486,7 @@ void casePerdidaVida(Mensaje mensaje) {
 			mensaje.mensaje = Helper::fillMessage("140");
 			mensaje.jugador = JUGADOR_2;
 			Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-			felixJugador->mover(0, 4, mensaje.partida->edificio);
+			felixJugador->mover(4, 0, mensaje.partida->edificio);
 		}
 	} else //Murio
 	{
