@@ -295,9 +295,10 @@ void * sharedMemory(void * args) {
 						puntaje->puntajeJugador1 = 0;
 						puntaje->puntajeJugador2 = 0;
 						puntaje->partidaFinalizadaOk = false;
-						map<int, Partida*>::iterator auxIt = it;
+						/*map<int, Partida*>::iterator auxIt = it;
 						++it;
-						partidas.erase(auxIt);
+						partidas.erase(auxIt);*/
+						partidas.erase(it);
 						semTorneo->V();
 					}
 				}
