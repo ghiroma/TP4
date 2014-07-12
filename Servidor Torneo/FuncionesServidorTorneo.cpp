@@ -79,27 +79,28 @@ void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* 
  * Manejador de señales
  */
 void SIG_Handler(int inum) {
-	cout << "Torneo Señal Handler PID:"<<getpid()<< endl;
+	cout << "Torneo Señal Handler PID:" << getpid() << endl;
 	exit(1);
 }
 
 /**
- * Detecta cuando un Servidor Partida murio o termino correctamente
+ * Detecta cuando un Servidor Partida murio
  */
 void SIG_CHLD(int inum) {
 	//MUERTE DE LA PARTIDA
 	int childpid = wait(NULL);
 	cout << "Señal Handler SIGCHLD - PID:" << childpid << endl;
 
-	//terminar el torneo porque se murio la partida
+	cout << "Servidor de Partida caido" << endl;
+	cout << "Se terminara el Torneo" << endl;
 
-	//mostrar rankings
+	/*pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
+	 todasLasPartidasFinalizadas = true;
+	 pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);
 
-	//que los jugadores muestren el ranking
-
-	pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
-	todasLasPartidasFinalizadas = true;
-	pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);
+	 pthread_mutex_lock(&mutex_timeIsUp);
+	 timeIsUp = true;
+	 pthread_mutex_unlock(&mutex_timeIsUp);*/
 }
 
 /**
@@ -431,7 +432,7 @@ void* modoGrafico(void* data) {
 
 		//se acaba el tiempo y salgo del ciclo
 		if (minutos == 0 && segundos == 0) {
-		//if (torneoFinalizado()) {
+			//if (torneoFinalizado()) {
 			break;
 		}
 		usleep(TIEMPO_DE_REDIBUJADO);
@@ -634,13 +635,13 @@ void mandarPuntajes() {
 }
 
 void liberarRecursos() {
-	cout<<"libero recursos de Servidor Torneo PID:"<<getpid()<<endl;
+	cout << "libero recursos de Servidor Torneo PID:" << getpid() << endl;
 	//SOCKETS
 	if (sSocket != NULL) {
-		cout<<"Torneo -> cierro socket"<<endl;
+		cout << "Torneo -> cierro socket" << endl;
 		close(sSocket->ID);
 		//shutdown(sSocket->ID,2);
-		delete(sSocket);
+		delete (sSocket);
 	}
 
 	pthread_mutex_lock(&mutex_listJugadores);

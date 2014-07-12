@@ -103,6 +103,7 @@ bool torneoFinalizo();
 bool murioServidorDelTorneo();
 void esperarSTART();
 void esperarPosicionInicial();
+void inicializarVariablesDeLaPartida();
 
 /* 
 
@@ -259,17 +260,19 @@ int main(int argc, char *argv[]) {
 
 	//Le mando mi nombre
 	socketTorneo->SendNoBloq(felix1_nombre.c_str(), sizeof(felix1_nombre));
+	perror("Mando mi nombre:");
 
 	//Recibo el ID que me asigna el Torneo
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	if (!torneoFinalizo()) {
 		readData = socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
+		perror("Recibo mi ID:");
 	} else {
 		mostrarPantalla("servernotfound");
 		sleep(10);
 		exit(1);
 	}
-	if (readData == 0) {
+	if (readData <= 0) {
 		cout << "Se ha cerrado la conexion con el servidor de torneo" << endl;
 		mostrarPantalla("servertorneodown");
 		sleep(10);
@@ -283,15 +286,17 @@ int main(int argc, char *argv[]) {
 	//Recibo el puerto del servidor de partida
 	if (!torneoFinalizo()) {
 		readData = socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
+		perror("Recibo el puerto de partida:");
 	} else {
 		mostrarPantalla("servernotfound");
 		sleep(10);
 		exit(1);
 	}
 	cout << "readdata 2:" << readData << endl;
-	if (readData == 0) {
+	if (readData <= 0) {
 		cout << "Se ha cerrado la conexion con el servidor de torneo" << endl;
-		//mostrarPantalla("servertorneodown");
+		mostrarPantalla("servertorneodown");
+		sleep(10);
 		exit(1);
 	}
 	string aux_puerto(buffer);
@@ -1304,64 +1309,18 @@ void inicializarNuevaPartida() {
 	}
 
 	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
+	cout << "Esperando nombre de oponente" << endl;
 	esperarNombreOponente();
 
 	//Espero id de partida
+	cout << "Esperando ID Partida" << endl;
 	esperarIdPartida();
 	recibioIdPartida = false;
-	//cout << "Recibi idDePartida" << endl;
 
-	//////////////////////////////////////
-	//inicializacion de variables
-	felix1_posicion.fila = 0;
-	felix1_posicion.columna = 0;
-	felix2_posicion.fila = 0;
-	felix2_posicion.columna = EDIFICIO_COLUMNAS - 1;
-	ralph_posicion.fila = 3;
-	ralph_posicion.columna = 2;
-	pajaro_desplazamiento.x = -1;
-	pajaro_desplazamiento.y = -1;
 
-	rahlp_x = PARED_X + 200;
-	rahlp_y = PARED_Y;
-	roca_siguiente = 0;
-	cant_rocas = 0;
-	ralph_destino = 0;
-	tramo = 1;
-	nivel = 1;
-	salir = 'N';
-	ralph_moverse = 'N';
-	pajaro_moverse = 'N';
-	felix1_reparar = 'N';
-	felix2_reparar = 'N';
-	ventanas_cargadas = 'N';
-	torta_aparece = 'N';
-	strcpy(felix_cartel_puntos, "0");
-	strcpy(felix_cartel_vidas, "0");
-	//felix1_nombre = ""; NO CAMBIA
-	//felix2_nombre = ""; LO RECIBO ARRIBA (me lo manda el servTorneo)
-	felix1_puntos = 0;
-	felix2_puntos = 0;
-	felix1_vidas = 3;
-	felix2_vidas = 3;
-	ventanas_reparadas = 10;
-	felix2_inicial = true;
-	felix1_inicial = true;
-
-	for (int i = 0; i < 20; i++) {
-		rocas_desplazamiento[i].x = 0;
-		rocas_desplazamiento[i].y = 0;
-	}
-	//////////////////////////////////////
+	inicializarVariablesDeLaPartida();
 
 	//Mando mi IdDePartida
-	/*	string messageIDPartida(CD_ID_PARTIDA);
-	 char aux[5];
-	 sprintf(aux, "%d", idPartida);
-	 cout << "El nuevo idPartida es: " << aux << endl;
-	 messageIDPartida.append(fillMessage(aux));
-	 socketPartida->SendBloq(messageIDPartida.c_str(), messageIDPartida.length());
-	 */
 	string messageIDPartida(CD_ID_PARTIDA);
 	char aux[5];
 	sprintf(aux, "%d", idPartida);
@@ -1370,42 +1329,22 @@ void inicializarNuevaPartida() {
 	cola_grafico.push(messageIDPartida);
 
 	//Mando mi ID de Jugador
-	/*	string message(CD_ID_JUGADOR);
-	 message.append(fillMessage(mi_id));
-	 socketPartida->SendBloq(message.c_str(), message.length());
-	 */
 	string messageIDJugador(CD_ID_JUGADOR);
 	messageIDJugador.append(fillMessage(mi_id.c_str()));
 	cola_grafico.push(messageIDJugador);
 
 	//Espero mi posicion inicial;
-	//cout << "Esperando mi posicion inicial" << endl;
+	cout << "Esperando mi posicion inicial" << endl;
 	esperarPosicionInicial();
-	//cout << "Recibi mi posicion inicial" << endl;
 
-	//Envio mensaje de listo para empezar.
-	/*	string mensajeListo(CD_JUGADOR_LISTO);
-	 mensajeListo.append(fillMessage("0"));
-	 socketPartida->SendBloq(mensajeListo.c_str(), mensajeListo.length());
-	 */
 	string mensajeListo(CD_JUGADOR_LISTO);
 	mensajeListo.append(fillMessage("0"));
 	cola_grafico.push(mensajeListo);
-
-	//cout << "Envie que estoy listo" << endl;
-
-	//inicializo la cantida de vidas
 
 	//Espero que el Servidor de Partida me mande el mensaje de START
 	cout << "Esperar signal de START" << endl;
 	esperarSTART();
 	cout << "START - Match " << idPartida << endl;
-
-	//vaciarColas();
-
-	if (torneoFinalizo()) {
-		salir = 'S';
-	}
 }
 
 void esperarPuertoPartida() {
@@ -1428,7 +1367,7 @@ void esperarPuertoPartida() {
 void esperarNombreOponente() {
 	//cout << "comienza while de espera de nombre de oponente" << endl;
 	bool recibioNombreOponente = false;
-	while (!recibioNombreOponente && !torneoFinalizo()) {
+	while (!recibioNombreOponente /*&& !torneoFinalizo()*/) {
 		pthread_mutex_lock(&mutex_nombreOponente);
 		if (nombreOponente.length() > 0) {
 			felix2_nombre = nombreOponente;
@@ -1442,7 +1381,7 @@ void esperarNombreOponente() {
 
 void esperarSTART() {
 	bool empezar = false;
-	while (!empezar && !torneoFinalizo()) {
+	while (!empezar /*&& !torneoFinalizo()*/) {
 		pthread_mutex_lock(&mutex_start);
 		empezar = start;
 		pthread_mutex_unlock(&mutex_start);
@@ -1456,7 +1395,7 @@ void esperarSTART() {
 
 void esperarPosicionInicial() {
 	bool auxRecibioPosicionInicial = false;
-	while (!auxRecibioPosicionInicial && !torneoFinalizo()) {
+	while (!auxRecibioPosicionInicial /*&& !torneoFinalizo()*/) {
 		pthread_mutex_lock(&mutex_recibioPosicionInicial);
 		auxRecibioPosicionInicial = recibioPosicionInicial;
 		pthread_mutex_unlock(&mutex_recibioPosicionInicial);
@@ -1474,7 +1413,7 @@ void esperarIdPartida() {
 	///
 
 	//bool recibioIdPartida = false;
-	while (!recibioIdPartida && !torneoFinalizo()) {
+	while (!recibioIdPartida /*&& !torneoFinalizo()*/) {
 
 		//recibioIdPartida = true;
 		//break;
@@ -1666,4 +1605,47 @@ bool murioServidorDelTorneo() {
 	estado = murioServidorTorneo;
 	pthread_mutex_unlock(&mutex_murioServidorTorneo);
 	return estado;
+}
+
+void inicializarVariablesDeLaPartida() {
+	//inicializacion de variables
+	felix1_posicion.fila = 0;
+	felix1_posicion.columna = 0;
+	felix2_posicion.fila = 0;
+	felix2_posicion.columna = EDIFICIO_COLUMNAS - 1;
+	ralph_posicion.fila = 3;
+	ralph_posicion.columna = 2;
+	pajaro_desplazamiento.x = -1;
+	pajaro_desplazamiento.y = -1;
+
+	rahlp_x = PARED_X + 200;
+	rahlp_y = PARED_Y;
+	roca_siguiente = 0;
+	cant_rocas = 0;
+	ralph_destino = 0;
+	tramo = 1;
+	nivel = 1;
+	salir = 'N';
+	ralph_moverse = 'N';
+	pajaro_moverse = 'N';
+	felix1_reparar = 'N';
+	felix2_reparar = 'N';
+	ventanas_cargadas = 'N';
+	torta_aparece = 'N';
+	strcpy(felix_cartel_puntos, "0");
+	strcpy(felix_cartel_vidas, "0");
+	//felix1_nombre = ""; NO CAMBIA
+	//felix2_nombre = ""; LO RECIBO ARRIBA (me lo manda el servTorneo)
+	felix1_puntos = 0;
+	felix2_puntos = 0;
+	felix1_vidas = 3;
+	felix2_vidas = 3;
+	ventanas_reparadas = 10;
+	felix2_inicial = true;
+	felix1_inicial = true;
+
+	for (int i = 0; i < 20; i++) {
+		rocas_desplazamiento[i].x = 0;
+		rocas_desplazamiento[i].y = 0;
+	}
 }
