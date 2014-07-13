@@ -16,7 +16,7 @@ static const int INTERVALOS_RALPH = 5;
 static const int INTERVALOS_PALOMA = 20;
 static const int INTERVALOS_TORTA = 60;
 static const int INTERVALOS_PERSIANA = 35;
-static const int INTERVALOS_INVENCIBILIDAD = 5;
+static const int INTERVALOS_INVENCIBILIDAD = 4;
 
 static const int JUGADOR_1 = 1;
 static const int JUGADOR_2 = 2;

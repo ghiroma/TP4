@@ -379,14 +379,7 @@ void caseMovimientoFelix(Mensaje mensaje) {
 	int nuevaFila = felixJugador->fila + fila;
 	int nuevaColumna = felixJugador->columna + columna;
 
-	if (felixJugador->mover(nuevaColumna,nuevaFila, edificioJugador)) {
-
-		/*if (!edificioJugador->ventanas[nuevaFila][nuevaColumna].ocupado && nuevaFila >= 0 && nuevaColumna >= 0 && fila < edificioJugador->filas && nuevaColumna < edificioJugador->columnas && !(nuevaFila == 0 && nuevaColumna == 2)) {
-		 //Puede moverse ahi.
-		 edificioJugador->ventanas[felixJugador->fila][felixJugador->columna].ocupado = false;
-		 edificioJugador->ventanas[nuevaFila][nuevaColumna].ocupado = true;
-		 felixJugador->fila += fila;
-		 felixJugador->columna += columna;*/
+	if (felixJugador->mover(nuevaColumna, nuevaFila, edificioJugador)) {
 
 //Construyo nuevo mensaje a enviar.
 		char auxFila[2];
