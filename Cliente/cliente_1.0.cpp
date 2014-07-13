@@ -31,6 +31,7 @@ pthread_mutex_t mutex_torneoFinalizado = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_solicitudDeNuevaParitda = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_partidaFinalizada = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_murioServidorTorneo = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_cantVidas = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_mutex_t mutex_cola_grafico = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cola_ralph = PTHREAD_MUTEX_INITIALIZER;
@@ -150,8 +151,8 @@ string felix1_nombre = "";
 string felix2_nombre = "";
 short int felix1_puntos = 0;
 short int felix2_puntos = 0;
-short int felix1_vidas = 3;
-short int felix2_vidas = 3;
+short int felix1_vidas = 0;
+short int felix2_vidas = 0;
 short int ventanas_reparadas = 10;
 bool felix2_inicial = true;
 bool felix1_inicial = true;
@@ -810,6 +811,12 @@ void* EscuchaServidor(void *arg) {
 				start = true;
 				pthread_mutex_unlock(&mutex_start);
 				break;
+			case CD_CANTIDAD_VIDAS_I:
+				pthread_mutex_lock(&mutex_cantVidas);
+				felix1_vidas = atoi(aux_buffer.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str());
+				felix2_vidas = felix1_vidas;
+				pthread_mutex_unlock(&mutex_cantVidas);
+				break;
 			case CD_POSICION_INICIAL_I:
 				felix1_posicion.columna = atoi(aux_buffer.substr(5, 1).c_str());
 				felix1_posicion.fila = atoi(aux_buffer.substr(6, 1).c_str());
@@ -1007,11 +1014,13 @@ void* EscuchaTeclas(void *arg) {
 			if ((evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo) && felix1_reparar !='S') {
 				//felix1_reparar = 'N';
 				if ((felix1_posicion.fila - 1) >= 0 && felix1_reparar != 'S' && felix1_vidas > 0) {
-					ostringstream ss1;
+					/*ostringstream ss1;
 					ostringstream ss2;
 					ss1 << felix1_posicion.columna;
 					ss2 << felix1_posicion.fila - 1;
-					string aux(ss1.str() + ss2.str());
+					string aux(ss1.str() + ss2.str());*/
+					char aux[3];
+					sprintf(aux,"%d",-1);
 					string message(CD_MOVIMIENTO_FELIX);
 					message.append(fillMessage(aux));
 					//cout << "MENSAJE: " << message << endl;
@@ -1021,11 +1030,13 @@ void* EscuchaTeclas(void *arg) {
 			} else if ((evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba) && felix1_reparar !='S') {
 				//felix1_reparar = 'N';
 				if ((felix1_posicion.fila + 1) < 3 && felix1_reparar != 'S' && felix1_vidas > 0) {
-					ostringstream ss1;
+					/*ostringstream ss1;
 					ostringstream ss2;
 					ss1 << felix1_posicion.columna;
 					ss2 << felix1_posicion.fila + 1;
-					string aux(ss1.str() + ss2.str());
+					string aux(ss1.str() + ss2.str());*/
+					char aux[3];
+					sprintf(aux,"%d",1);
 					string message(CD_MOVIMIENTO_FELIX);
 					message.append(fillMessage(aux));
 					//cout << "MENSAJE: " << message << endl;
@@ -1035,12 +1046,14 @@ void* EscuchaTeclas(void *arg) {
 				felix1 = felix_d1;
 				//felix1_reparar = 'N';
 				if ((felix1_posicion.columna + 1) < 5 && felix1_reparar != 'S' && felix1_vidas > 0) {
-					ostringstream ss1;
+					/*ostringstream ss1;
 					ostringstream ss2;
 					ss1 << felix1_posicion.columna + 1;
 					ss2 << felix1_posicion.fila;
-					string aux(ss1.str() + ss2.str());
+					string aux(ss1.str() + ss2.str());*/
 					string message(CD_MOVIMIENTO_FELIX);
+					char aux[5];
+					sprintf(aux,"%d",100);
 					message.append(fillMessage(aux));
 					//cout << "MENSAJE: " << message << endl;
 					cola_grafico.push(message);
@@ -1049,12 +1062,14 @@ void* EscuchaTeclas(void *arg) {
 				felix1 = felix_i1;
 				//felix1_reparar = 'N';
 				if ((felix1_posicion.columna - 1) >= 0 && felix1_reparar != 'S' && felix1_vidas > 0) {
-					ostringstream ss1;
+					/*ostringstream ss1;
 					ostringstream ss2;
 					ss1 << felix1_posicion.columna - 1;
 					ss2 << felix1_posicion.fila;
-					string aux(ss1.str() + ss2.str());
+					string aux(ss1.str() + ss2.str());*/
+					char aux[5];
 					string message(CD_MOVIMIENTO_FELIX);
+					sprintf(aux,"%d",-100);
 					message.append(fillMessage(aux));
 					//cout << "MENSAJE: " << message << endl;
 					cola_grafico.push(message);
@@ -1347,6 +1362,9 @@ bool inicializarNuevaPartida() {
 	messageIDJugador.append(fillMessage(mi_id.c_str()));
 	cola_grafico.push(messageIDJugador);
 
+	//Espero la cantidad de vidas.
+
+
 	/*string mensajeListo(CD_JUGADOR_LISTO);
 	 mensajeListo.append(fillMessage("0"));
 	 cola_grafico.push(mensajeListo);*/
@@ -1374,6 +1392,18 @@ void esperarPuertoPartida() {
 	}
 	msjPuertoRecibido = false;
 	//cout << "recibio el puerto:" << puertoServidorPartida << endl;
+}
+
+bool esperarCantVidas()
+{
+	while(!torneoFinalizo()){
+		if(felix1_vidas!=0)
+		{
+			return true;
+		}
+		usleep(10000);
+	}
+	return false;
 }
 
 bool esperarIdPartida() {
@@ -1655,8 +1685,8 @@ void inicializarVariablesDeLaPartida() {
 	//felix2_nombre = ""; LO RECIBO ARRIBA (me lo manda el servTorneo)
 	felix1_puntos = 0;
 	felix2_puntos = 0;
-	felix1_vidas = 3;
-	felix2_vidas = 3;
+	felix1_vidas = 0;
+	felix2_vidas = 0;
 	ventanas_reparadas = 10;
 	felix2_inicial = true;
 	felix1_inicial = true;

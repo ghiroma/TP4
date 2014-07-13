@@ -225,7 +225,7 @@ void* lecturaDeResultados(void* data) {
 		 if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
 		 break;
 		 }*/
-		if (sem_trywait(sem_ServidorTorneoSHM.getSem_t())) {
+		if (sem_trywait(sem_ServidorTorneoSHM.getSem_t())!=-1) {
 			pthread_mutex_lock(&mutex_listJugadores);
 			//si el torneo termino ok Grabo los puntajes
 			if (resumenPartida->partidaFinalizadaOK == true) {

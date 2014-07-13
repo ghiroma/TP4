@@ -49,17 +49,6 @@ void caseJugadorListo(Mensaje mensaje);
 void* timer_thread(void* argument);
 string posicionInicial1(Felix *);
 string posicionInicial2(Felix *);
-
-/*void* receiver1_thread(void * argument);
-void* receiver2_thread(void * argument);
-void* sender1_thread(void * arguments);
-void* sender2_thread(void * arguments);
-void* validator_thread(void * argument);
-void* sharedMemory_thread(void * arguments);
-void caseMovimientoFelix(int jugador, string *message);
-void casePerdidaVida(int nroJugador);
-void caseVentanaArreglada(int nroJugador);
-void caseVentanaArreglando(int jugador);*/
 void SIGINT_Handler(int inum);
 void liberarRecursos();
 bool tramoFinalizado(Edificio * edificio);
