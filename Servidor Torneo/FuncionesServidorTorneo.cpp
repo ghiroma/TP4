@@ -221,9 +221,9 @@ void* lecturaDeResultados(void* data) {
 
 	while (true) {
 
-		//if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
-		//	break;
-		//}
+		if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
+			break;
+		}
 		if (sem_trywait(sem_ServidorTorneoSHM.getSem_t()) != -1) {
 			pthread_mutex_lock(&mutex_listJugadores);
 			//si el torneo termino ok Grabo los puntajes
@@ -286,9 +286,9 @@ void* lecturaDeResultados(void* data) {
 
 			cantPartidasFinalizadas++;
 			cout << "CantPartidasFinalizads = " << cantPartidasFinalizadas << endl << " idPartida = " << idPartida << endl << " torneoFinalizado = " << torneoFinalizado() << endl;
-			if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
+			/*if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
 				break;
-			}
+			}*/
 			sem_ServidorPartidaSHM.V();
 		}
 		//sem_ServidorTorneoSHM.P();
