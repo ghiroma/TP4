@@ -804,6 +804,7 @@ void* EscuchaServidor(void *arg) {
 			case CD_FIN_PARTIDA_I:
 				pthread_mutex_lock(&mutex_partidaFinalizada);
 				solicitudDeNuevaParitda = true;
+				felix2_nombre = "";
 				pthread_mutex_unlock(&mutex_partidaFinalizada);
 				break;
 			case CD_EMPEZAR_PARTIDA_I:
@@ -1272,6 +1273,8 @@ void mostrarPantalla(const char* nombrPantalla) {
 		exit(1);
 	}
 	pthread_mutex_unlock(&mutex_mostrar_pantalla);
+
+	cout<<"Fin mostrarPantalla"<<endl;
 }
 
 void mostrarRanking(const char* ranking) {

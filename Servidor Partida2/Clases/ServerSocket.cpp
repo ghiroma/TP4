@@ -79,6 +79,8 @@ CommunicationSocket* ServerSocket::Accept()
   struct sockaddr_in clientData;
   unsigned int clientDataLen = sizeof(clientData);
   int csSocket = accept(this->ID,(struct sockaddr*) &clientData, &clientDataLen);
+  if(csSocket<=0)
+	  throw "Error en accept";
   return new CommunicationSocket(csSocket,&clientData);
 }
 

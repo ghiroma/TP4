@@ -145,6 +145,8 @@ void * escuchaClientes(void * args) {
 						cout << "Se desconecto el jugador 1" << endl;
 						delete (it->second->cSocket1);
 						it->second->cSocket1 = NULL;
+						//Libero la posicion donde estaba el jugador.
+						it->second->edificio->ventanas[it->second->felix1->fila][it->second->felix1->columna].ocupado=false;
 						message = CD_OPONENTE_DESCONECTADO;
 						message.append(Helper::fillMessage("0"));
 						Mensaje mensaje(JUGADOR_2, message, it->second);
@@ -163,6 +165,7 @@ void * escuchaClientes(void * args) {
 						cout << "Se desconecto el jugador 2" << endl;
 						delete (it->second->cSocket2);
 						it->second->cSocket2 = NULL;
+						it->second->edificio->ventanas[it->second->felix2->fila][it->second->felix2->columna].ocupado=false;
 						message = CD_OPONENTE_DESCONECTADO;
 						message.append(Helper::fillMessage("0"));
 						Mensaje mensaje(JUGADOR_1, message, it->second);
