@@ -324,7 +324,7 @@ int main(int argc, char *argv[]) {
 
 	inicializarNuevaPartida();
 
-	while (salir == 'N') {
+	while (salir == 'N' && !murioServidorDelTorneo()) {
 		if (nuevaPartidaSolicitada() && torneoFinalizo()) {
 			break;
 		}
@@ -627,6 +627,12 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	if (murioServidorDelTorneo()) {
+		mostrarPantalla("servertorneodown");
+		sleep(10);
+		exit(1);
+	}
+
 	//esperar mientras las demas partidas no han finalizado. (mostrar msj "GameOver. waiting for rankings.. ")
 	mostrarPantalla("gameover");
 
@@ -638,8 +644,6 @@ int main(int argc, char *argv[]) {
 	cout << "Ingrese un tecla para terminar: ";
 	getchar();
 
-	//Liberar recursos
-	//liberarRecursos();
 	exit(1);
 }
 
@@ -814,7 +818,7 @@ void* EscuchaServidor(void *arg) {
 				break;
 			case CD_CANTIDAD_VIDAS_I:
 				pthread_mutex_lock(&mutex_cantVidas);
-				felix1_vidas = atoi(aux_buffer.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str());
+				felix1_vidas = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
 				felix2_vidas = felix1_vidas;
 				pthread_mutex_unlock(&mutex_cantVidas);
 				break;
@@ -983,12 +987,13 @@ void* EscuchaTorneo(void *arg) {
 				break;
 			}
 		} else if (readData == 0) {
+			pthread_mutex_lock(&mutex_murioServidorTorneo);
 			murioServidorTorneo = true;
+			pthread_mutex_unlock(&mutex_murioServidorTorneo);
 			cout << "Murio el servidor torneo" << endl;
-			/// dar aviso de que murio y cerrar todo
-			mostrarPantalla("servertorneodown");
-			sleep(10);
-			exit(1);
+
+			//salgo del thread sino me llega todo el tiempo el mensaje vacio
+			pthread_exit(NULL);
 		}
 		usleep(1000);
 	}
@@ -1012,70 +1017,70 @@ void* EscuchaTeclas(void *arg) {
 		switch (evento.type) {
 
 		case SDL_KEYDOWN:
-			if ((evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo) && felix1_reparar !='S') {
+			if ((evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo) && felix1_reparar != 'S') {
 				//felix1_reparar = 'N';
 				if ((felix1_posicion.fila - 1) >= 0 && felix1_reparar != 'S' && felix1_vidas > 0) {
 					/*ostringstream ss1;
-					ostringstream ss2;
-					ss1 << felix1_posicion.columna;
-					ss2 << felix1_posicion.fila - 1;
-					string aux(ss1.str() + ss2.str());*/
+					 ostringstream ss2;
+					 ss1 << felix1_posicion.columna;
+					 ss2 << felix1_posicion.fila - 1;
+					 string aux(ss1.str() + ss2.str());*/
 					char aux[3];
-					sprintf(aux,"%d",-1);
+					sprintf(aux, "%d", -1);
 					string message(CD_MOVIMIENTO_FELIX);
 					message.append(fillMessage(aux));
 					//cout << "MENSAJE: " << message << endl;
 					cola_grafico.push(message);
 
 				}
-			} else if ((evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba) && felix1_reparar !='S') {
+			} else if ((evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba) && felix1_reparar != 'S') {
 				//felix1_reparar = 'N';
 				if ((felix1_posicion.fila + 1) < 3 && felix1_reparar != 'S' && felix1_vidas > 0) {
 					/*ostringstream ss1;
-					ostringstream ss2;
-					ss1 << felix1_posicion.columna;
-					ss2 << felix1_posicion.fila + 1;
-					string aux(ss1.str() + ss2.str());*/
+					 ostringstream ss2;
+					 ss1 << felix1_posicion.columna;
+					 ss2 << felix1_posicion.fila + 1;
+					 string aux(ss1.str() + ss2.str());*/
 					char aux[3];
-					sprintf(aux,"%d",1);
+					sprintf(aux, "%d", 1);
 					string message(CD_MOVIMIENTO_FELIX);
 					message.append(fillMessage(aux));
 					//cout << "MENSAJE: " << message << endl;
 					cola_grafico.push(message);
 				}
-			} else if ((evento.key.keysym.sym == SDLK_RIGHT || evento.key.keysym.sym == key_derecha) && felix1_reparar !='S') {
+			} else if ((evento.key.keysym.sym == SDLK_RIGHT || evento.key.keysym.sym == key_derecha) && felix1_reparar != 'S') {
 				felix1 = felix_d1;
 				//felix1_reparar = 'N';
 				if ((felix1_posicion.columna + 1) < 5 && felix1_reparar != 'S' && felix1_vidas > 0) {
 					/*ostringstream ss1;
-					ostringstream ss2;
-					ss1 << felix1_posicion.columna + 1;
-					ss2 << felix1_posicion.fila;
-					string aux(ss1.str() + ss2.str());*/
+					 ostringstream ss2;
+					 ss1 << felix1_posicion.columna + 1;
+					 ss2 << felix1_posicion.fila;
+					 string aux(ss1.str() + ss2.str());*/
 					string message(CD_MOVIMIENTO_FELIX);
 					char aux[5];
-					sprintf(aux,"%d",100);
+					sprintf(aux, "%d", 100);
 					message.append(fillMessage(aux));
 					//cout << "MENSAJE: " << message << endl;
 					cola_grafico.push(message);
 				}
-			} else if ((evento.key.keysym.sym == SDLK_LEFT || evento.key.keysym.sym == key_izquierda) && felix1_reparar !='S') {
+			} else if ((evento.key.keysym.sym == SDLK_LEFT || evento.key.keysym.sym == key_izquierda) && felix1_reparar != 'S') {
 				felix1 = felix_i1;
 				//felix1_reparar = 'N';
 				if ((felix1_posicion.columna - 1) >= 0 && felix1_reparar != 'S' && felix1_vidas > 0) {
 					/*ostringstream ss1;
-					ostringstream ss2;
-					ss1 << felix1_posicion.columna - 1;
-					ss2 << felix1_posicion.fila;
-					string aux(ss1.str() + ss2.str());*/
+					 ostringstream ss2;
+					 ss1 << felix1_posicion.columna - 1;
+					 ss2 << felix1_posicion.fila;
+					 string aux(ss1.str() + ss2.str());*/
 					char aux[5];
 					string message(CD_MOVIMIENTO_FELIX);
-					sprintf(aux,"%d",-100);
+					sprintf(aux, "%d", -100);
 					message.append(fillMessage(aux));
 					//cout << "MENSAJE: " << message << endl;
 					cola_grafico.push(message);
 				}
-			} else if ((evento.key.keysym.sym == SDLK_SPACE || evento.key.keysym.sym == key_accion) && felix1_vidas > 0 && felix1_reparar !='S') {
+			} else if ((evento.key.keysym.sym == SDLK_SPACE || evento.key.keysym.sym == key_accion) && felix1_vidas > 0 && felix1_reparar != 'S') {
 				string message(CD_VENTANA_ARREGLANDO);
 				message.append(fillMessage("0"));
 				cola_grafico.push(message);
@@ -1273,8 +1278,6 @@ void mostrarPantalla(const char* nombrPantalla) {
 		exit(1);
 	}
 	pthread_mutex_unlock(&mutex_mostrar_pantalla);
-
-	cout<<"Fin mostrarPantalla"<<endl;
 }
 
 void mostrarRanking(const char* ranking) {
@@ -1367,7 +1370,6 @@ bool inicializarNuevaPartida() {
 
 	//Espero la cantidad de vidas.
 
-
 	/*string mensajeListo(CD_JUGADOR_LISTO);
 	 mensajeListo.append(fillMessage("0"));
 	 cola_grafico.push(mensajeListo);*/
@@ -1397,11 +1399,9 @@ void esperarPuertoPartida() {
 	//cout << "recibio el puerto:" << puertoServidorPartida << endl;
 }
 
-bool esperarCantVidas()
-{
-	while(!torneoFinalizo()){
-		if(felix1_vidas!=0)
-		{
+bool esperarCantVidas() {
+	while (!torneoFinalizo()) {
+		if (felix1_vidas != 0) {
 			return true;
 		}
 		usleep(10000);
