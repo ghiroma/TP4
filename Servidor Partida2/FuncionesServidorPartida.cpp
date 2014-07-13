@@ -79,44 +79,48 @@ void* receptorConexiones(void * args) {
 
 	while (!stop) {
 		cout << "Esperando cliente" << endl;
-		cSocket = sSocket->Accept();
-		//Recibo el id de partida, para sber contra quien va a jugar.
-		cSocket->ReceiveBloq(buffer, sizeof(buffer));
-		cout << "Recibo mensaje de nuevo cliente: " << buffer << endl;
-		message = buffer;
-		idPartida = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
-		felix = new Felix(cantVidas);
+		try {
+			cSocket = sSocket->Accept();
+			//Recibo el id de partida, para sber contra quien va a jugar.
+			cSocket->ReceiveBloq(buffer, sizeof(buffer));
+			cout << "Recibo mensaje de nuevo cliente: " << buffer << endl;
+			message = buffer;
+			idPartida = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
+			felix = new Felix(cantVidas);
 
-		pthread_mutex_lock(&mutex_partidas);
-		finder = partidas.find(idPartida);
-		if (finder != partidas.end()) {
-			finder->second->cSocket2 = cSocket;
-			felix->fila = 0;
-			felix->columna = EDIFICIO_COLUMNAS - 1;
-			finder->second->edificio->ventanas[felix->fila][felix->columna].ocupado = true;
-			finder->second->felix2 = felix;
-			Mensaje mensaje(JUGADOR_2, posicionInicial2(felix), finder->second);
-			Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-			mensaje.setMensaje(messageCantVidas);
-			Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-			//Mando posicion inicial.
-			cout << "Partida nro: " << idPartida << " completada" << endl;
-		} else {
-			Partida * partida = new Partida(idPartida);
-			partida->cSocket1 = cSocket;
-			felix->fila = 0;
-			felix->columna = 0;
-			partida->edificio->ventanas[felix->fila][felix->columna].ocupado = true;
-			partida->felix1 = felix;
-			partidas[partida->id] = partida;
-			//Mando posicion inicial
-			Mensaje mensaje(JUGADOR_1, posicionInicial1(felix), partida);
-			Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-			mensaje.setMensaje(messageCantVidas);
-			Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+			pthread_mutex_lock(&mutex_partidas);
+			finder = partidas.find(idPartida);
+			if (finder != partidas.end()) {
+				finder->second->cSocket2 = cSocket;
+				felix->fila = 0;
+				felix->columna = EDIFICIO_COLUMNAS - 1;
+				finder->second->edificio->ventanas[felix->fila][felix->columna].ocupado = true;
+				finder->second->felix2 = felix;
+				Mensaje mensaje(JUGADOR_2, posicionInicial2(felix), finder->second);
+				Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+				mensaje.setMensaje(messageCantVidas);
+				Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+				//Mando posicion inicial.
+				cout << "Partida nro: " << idPartida << " completada" << endl;
+			} else {
+				Partida * partida = new Partida(idPartida);
+				partida->cSocket1 = cSocket;
+				felix->fila = 0;
+				felix->columna = 0;
+				partida->edificio->ventanas[felix->fila][felix->columna].ocupado = true;
+				partida->felix1 = felix;
+				partidas[partida->id] = partida;
+				//Mando posicion inicial
+				Mensaje mensaje(JUGADOR_1, posicionInicial1(felix), partida);
+				Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+				mensaje.setMensaje(messageCantVidas);
+				Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+			}
+			pthread_mutex_unlock(&mutex_partidas);
+			usleep(POOLING_DEADTIME);
+		} catch (...) {
+			break;
 		}
-		pthread_mutex_unlock(&mutex_partidas);
-		usleep(POOLING_DEADTIME);
 	}
 
 	pthread_exit(0);
@@ -146,7 +150,7 @@ void * escuchaClientes(void * args) {
 						delete (it->second->cSocket1);
 						it->second->cSocket1 = NULL;
 						//Libero la posicion donde estaba el jugador.
-						it->second->edificio->ventanas[it->second->felix1->fila][it->second->felix1->columna].ocupado=false;
+						it->second->edificio->ventanas[it->second->felix1->fila][it->second->felix1->columna].ocupado = false;
 						message = CD_OPONENTE_DESCONECTADO;
 						message.append(Helper::fillMessage("0"));
 						Mensaje mensaje(JUGADOR_2, message, it->second);
@@ -165,7 +169,7 @@ void * escuchaClientes(void * args) {
 						cout << "Se desconecto el jugador 2" << endl;
 						delete (it->second->cSocket2);
 						it->second->cSocket2 = NULL;
-						it->second->edificio->ventanas[it->second->felix2->fila][it->second->felix2->columna].ocupado=false;
+						it->second->edificio->ventanas[it->second->felix2->fila][it->second->felix2->columna].ocupado = false;
 						message = CD_OPONENTE_DESCONECTADO;
 						message.append(Helper::fillMessage("0"));
 						Mensaje mensaje(JUGADOR_1, message, it->second);

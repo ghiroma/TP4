@@ -41,6 +41,7 @@ bool partidasFinalizadas();
 void mandarPuntajes();
 void liberarRecursos();
 void mostrarPantalla(const char*);
+bool seguirAceptandoNuevosJugadores();
 //THREADS
 void* temporizadorTorneo(void* data);
 void* lecturaDeResultados(void* data);
