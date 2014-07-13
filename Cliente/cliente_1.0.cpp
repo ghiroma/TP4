@@ -635,6 +635,7 @@ int main(int argc, char *argv[]) {
 
 	//esperar mientras las demas partidas no han finalizado. (mostrar msj "GameOver. waiting for rankings.. ")
 	mostrarPantalla("gameover");
+	sleep(3);
 
 	while (!showWindowRanking) {
 		sleep(1);
