@@ -95,10 +95,9 @@ void SIG_CHLD(int inum) {
 	int childpid = wait(NULL);
 	cout << "Señal Handler SIGCHLD - PID:" << childpid << endl;
 
-	cout << "Servidor de Partida caido" << endl;
-	cout << "Se terminara el Torneo" << endl;
-
 	if (cantPartidasFinalizadas != idPartida) {
+		cout << "Servidor de Partida caido" << endl;
+		cout << "Se terminara el Torneo" << endl;
 		exit(1);
 	}
 }
@@ -287,8 +286,8 @@ void* lecturaDeResultados(void* data) {
 			cantPartidasFinalizadas++;
 			cout << "CantPartidasFinalizads = " << cantPartidasFinalizadas << endl << " idPartida = " << idPartida << endl << " torneoFinalizado = " << torneoFinalizado() << endl;
 			/*if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
-				break;
-			}*/
+			 break;
+			 }*/
 			sem_ServidorPartidaSHM.V();
 		}
 		//sem_ServidorTorneoSHM.P();
