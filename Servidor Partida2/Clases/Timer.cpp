@@ -24,20 +24,12 @@ Timer::Timer() {
 	this->columnaPersianaAnterior = -1;
 }
 
-bool Timer::TimeDifference(int timeDifference, time_t startingTime) {
-	if ((time(0) - startingTime) > timeDifference) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
 string Timer::ralph(int nivel) {
 	string message;
 	char aux[5];
 
 	if (nivel == 0) {
-		if (TimeDifference(INTERVALOS_RALPH, this->startingTimeRalph)) {
+		if (Helper::timeDifference(INTERVALOS_RALPH, this->startingTimeRalph)) {
 			message.append(CD_MOVIMIENTO_RALPH);
 			sprintf(aux, "%d", this->randomRalphMovement());
 			message.append(Helper::fillMessage(aux));
@@ -52,7 +44,7 @@ string Timer::paloma(int nivel) {
 	char aux[5];
 
 	if (nivel == 0) {
-		if (TimeDifference(INTERVALOS_PALOMA, this->startingTimePaloma)) {
+		if (Helper::timeDifference(INTERVALOS_PALOMA, this->startingTimePaloma)) {
 			message.append(CD_PALOMA);
 			sprintf(aux, "%d", randomPaloma(nivel));
 			message.append(Helper::fillMessage(aux));
@@ -66,7 +58,7 @@ string Timer::paloma(int nivel) {
 string Timer::keepAlive() {
 	string message;
 
-	if (TimeDifference(INTERVALOS_KEEPALIVE, this->startingTimeKeepAlive)) {
+	if (Helper::timeDifference(INTERVALOS_KEEPALIVE, this->startingTimeKeepAlive)) {
 		message.append(CD_ACK);
 		message.append(Helper::fillMessage("0"));
 		this->startingTimeKeepAlive = time(0);

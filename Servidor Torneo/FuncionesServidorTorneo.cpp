@@ -221,11 +221,10 @@ void* lecturaDeResultados(void* data) {
 
 	while (true) {
 
-		/*cout << "CantPartidasFinalizads = " << cantPartidasFinalizadas << endl << " idPartida = " << idPartida << endl << " torneoFinalizado = " << torneoFinalizado() << endl;
-		 if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
-		 break;
-		 }*/
-		if (sem_trywait(sem_ServidorTorneoSHM.getSem_t())) {
+		if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
+			break;
+		}
+		if (sem_trywait(sem_ServidorTorneoSHM.getSem_t()) != -1) {
 			pthread_mutex_lock(&mutex_listJugadores);
 			//si el torneo termino ok Grabo los puntajes
 			if (resumenPartida->partidaFinalizadaOK == true) {
@@ -556,6 +555,12 @@ void* aceptarJugadores(void* data) {
 
 	while (true) {
 		cout << "va a bloquearse esperando al JUGADOR" << endl;
+		try {
+		//int fd = accept(sSocket->ID, NULL, NULL);
+		//if (fd <= 0)
+			//break;
+		//throw "Error en accept";
+		//CommunicationSocket * cSocket = new CommunicationSocket(fd);
 		CommunicationSocket * cSocket = sSocket->Accept();
 		cout << "va a bloquearse esperando el nombre" << endl;
 		cSocket->ReceiveBloq(nombreJugador, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
@@ -576,7 +581,13 @@ void* aceptarJugadores(void* data) {
 
 		cout << "Se agregara el jugador NRO:" << clientId << " NOMBRE: " << nombreJugador << endl;
 		agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
+		} catch (...) {
+		 //cout<<"Error en accept"<<endl;
+			break;
+		 }
 	}
+
+	cout << "Esta por salir thread de aceptar clientes" << endl;
 
 	pthread_exit(NULL);
 }

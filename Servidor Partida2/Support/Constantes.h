@@ -16,6 +16,7 @@ static const int INTERVALOS_RALPH = 5;
 static const int INTERVALOS_PALOMA = 20;
 static const int INTERVALOS_TORTA = 60;
 static const int INTERVALOS_PERSIANA = 35;
+static const int INTERVALOS_INVENCIBILIDAD = 4;
 
 static const int JUGADOR_1 = 1;
 static const int JUGADOR_2 = 2;
@@ -55,6 +56,7 @@ static const char* CD_ID_PARTIDA = "60";
 static const char* CD_JUGADOR_LISTO ="61";
 static const char* CD_EMPEZAR_PARTIDA = "62";
 static const char* CD_FIN_PARTIDA = "33";
+static const char* CD_CANTIDAD_VIDAS = "24";
 
 static const int CD_RANKING_I = 80;
 static const int CD_MOVIMIENTO_FELIX_I = 4;
