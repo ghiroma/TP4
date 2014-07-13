@@ -31,6 +31,7 @@ pthread_mutex_t mutex_timeIsUp = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_comenzoConteo = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_todasLasPartidasFinalizadas = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_partidasActivas = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_seguirAceptandoJugadores = PTHREAD_MUTEX_INITIALIZER;
 
 extern pthread_mutex_t mutex_listJugadores;
 extern map<int,
@@ -42,6 +43,7 @@ extern ServerSocket* sSocket;
 int idPartida = 0;
 puntajesPartida * resumenPartida;
 extern pid_t pidServidorPartida;
+bool seguirAceptandoJugadores = true;
 
 SDL_Surface *screen, *background, *tiempo, *jugadores, *infoJugador_part1, *infoJugador_part2;
 SDL_Rect posDestino, posBackground, posTiempo, posJugadores;
@@ -99,14 +101,6 @@ void SIG_CHLD(int inum) {
 	if (cantPartidasFinalizadas != idPartida) {
 		exit(1);
 	}
-
-	/*pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
-	 todasLasPartidasFinalizadas = true;
-	 pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);
-
-	 pthread_mutex_lock(&mutex_timeIsUp);
-	 timeIsUp = true;
-	 pthread_mutex_unlock(&mutex_timeIsUp);*/
 }
 
 /**
@@ -193,11 +187,13 @@ void* temporizadorTorneo(void* data) {
 	timeIsUp = true;
 	pthread_mutex_unlock(&mutex_timeIsUp);
 
-	if (sSocket != NULL) {
-		cout << "(torneo finalizo tiempo) Torneo -> cierro socket" << endl;
-		delete (sSocket);
-		sSocket = NULL;
-	}
+	/*
+	 * no va porque da error en el cliente y este no sabe cuando muere mal el torneo
+	 * if (sSocket != NULL) {
+	 cout << "(torneo finalizo tiempo) Torneo -> cierro socket" << endl;
+	 delete (sSocket);
+	 sSocket = NULL;
+	 }*/
 
 	//el tiempo del Torneo llego a su fin, informar a cada cliente
 	pthread_mutex_lock(&mutex_listJugadores);
@@ -209,7 +205,11 @@ void* temporizadorTorneo(void* data) {
 	}
 	pthread_mutex_unlock(&mutex_listJugadores);
 
-	pthread_cancel(torneo->thAceptarJugadores);
+	pthread_mutex_lock(&mutex_seguirAceptandoJugadores);
+	seguirAceptandoJugadores = false;
+	pthread_mutex_unlock(&mutex_seguirAceptandoJugadores);
+	//pthread_cancel(torneo->thAceptarJugadores);
+
 	pthread_exit(NULL);
 }
 
@@ -221,9 +221,9 @@ void* lecturaDeResultados(void* data) {
 
 	while (true) {
 
-		if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
-			break;
-		}
+		//if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
+		//	break;
+		//}
 		if (sem_trywait(sem_ServidorTorneoSHM.getSem_t()) != -1) {
 			pthread_mutex_lock(&mutex_listJugadores);
 			//si el torneo termino ok Grabo los puntajes
@@ -285,10 +285,10 @@ void* lecturaDeResultados(void* data) {
 			///////////////////////////////////////////////////////////////////////////////////
 
 			cantPartidasFinalizadas++;
-			//cout<<"CantPartidasFinalizads = "<<cantPartidasFinalizadas<<endl<<" idPartida = "<<idPartida<<endl<<" torneoFinalizado = "<<torneoFinalizado()<<endl;
-			//if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
-			//break;
-			//}
+			cout << "CantPartidasFinalizads = " << cantPartidasFinalizadas << endl << " idPartida = " << idPartida << endl << " torneoFinalizado = " << torneoFinalizado() << endl;
+			if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
+				break;
+			}
 			sem_ServidorPartidaSHM.V();
 		}
 		//sem_ServidorTorneoSHM.P();
@@ -360,8 +360,6 @@ void* modoGrafico(void* data) {
 
 	int minutos = torneo->duracion;
 	int segundos = 0;
-	//int minutos = 0;
-	//int segundos = 20;
 	posTiempo.x = 50;
 	posTiempo.y = 140;
 	char txtTiempo[10];
@@ -453,7 +451,6 @@ void* modoGrafico(void* data) {
 
 		//se acaba el tiempo y salgo del ciclo
 		if (minutos == 0 && segundos == 0) {
-			//if (torneoFinalizado()) {
 			break;
 		}
 		usleep(TIEMPO_DE_REDIBUJADO);
@@ -553,14 +550,9 @@ void* aceptarJugadores(void* data) {
 	char nombreJugador[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	char aux[LONGITUD_CONTENIDO];
 
-	while (true) {
+	while (seguirAceptandoNuevosJugadores()) {
 		cout << "va a bloquearse esperando al JUGADOR" << endl;
-		try {
-		//int fd = accept(sSocket->ID, NULL, NULL);
-		//if (fd <= 0)
-			//break;
-		//throw "Error en accept";
-		//CommunicationSocket * cSocket = new CommunicationSocket(fd);
+		//try {
 		CommunicationSocket * cSocket = sSocket->Accept();
 		cout << "va a bloquearse esperando el nombre" << endl;
 		cSocket->ReceiveBloq(nombreJugador, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
@@ -581,10 +573,10 @@ void* aceptarJugadores(void* data) {
 
 		cout << "Se agregara el jugador NRO:" << clientId << " NOMBRE: " << nombreJugador << endl;
 		agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
-		} catch (...) {
-		 //cout<<"Error en accept"<<endl;
-			break;
-		 }
+		//} catch (...) {
+		//cout<<"Error en accept"<<endl;
+		//	break;
+		//}
 	}
 
 	cout << "Esta por salir thread de aceptar clientes" << endl;
@@ -675,8 +667,6 @@ void liberarRecursos() {
 	//SOCKETS
 	if (sSocket != NULL) {
 		cout << "Torneo -> cierro socket" << endl;
-		//close(sSocket->ID);
-		//shutdown(sSocket->ID,2);
 		delete (sSocket);
 	}
 
@@ -720,6 +710,14 @@ void mostrarPantalla(const char* nombrPantalla) {
 	}
 	SDL_BlitSurface(background, NULL, screen, &posBackground);
 	SDL_Flip(screen);
+}
+
+bool seguirAceptandoNuevosJugadores() {
+	bool estado;
+	pthread_mutex_lock(&mutex_seguirAceptandoJugadores);
+	estado = seguirAceptandoJugadores;
+	pthread_mutex_unlock(&mutex_seguirAceptandoJugadores);
+	return estado;
 }
 
 //AUXILIARES

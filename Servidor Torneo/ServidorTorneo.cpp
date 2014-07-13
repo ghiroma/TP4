@@ -166,13 +166,11 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
-	//pthread_join(thLecturaDeResultados, NULL);
 	pthread_join(thModoGrafico, NULL);
 
 	//mandar a cada cliente su puntaje y ranking
 	mandarPuntajes();
 
-	//pthread_join(thkeepAliveJugadores, NULL);
 
 	//Bloqueo en espera de que ingrese una tecla para cerrar la pantalla
 	cout << "Ingrese una tecla para finalizar: ";
