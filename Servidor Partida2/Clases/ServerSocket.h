@@ -14,7 +14,7 @@ class ServerSocket
 {
 public:
   int ID;
-  ServerSocket (unsigned int port, char * ip);
+  ServerSocket(unsigned int port, bool blocking);
   ServerSocket (unsigned int port);
   CommunicationSocket* Accept();
   char * ShowHostName();

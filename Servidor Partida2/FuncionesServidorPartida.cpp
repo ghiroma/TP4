@@ -78,49 +78,50 @@ void* receptorConexiones(void * args) {
 	}
 
 	while (!stop) {
-		cout << "Esperando cliente" << endl;
 		try {
 			cSocket = sSocket->Accept();
-			//Recibo el id de partida, para sber contra quien va a jugar.
-			cSocket->ReceiveBloq(buffer, sizeof(buffer));
-			cout << "Recibo mensaje de nuevo cliente: " << buffer << endl;
-			message = buffer;
-			idPartida = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
-			felix = new Felix(cantVidas);
+			if (cSocket != NULL){
+				//Recibo el id de partida, para sber contra quien va a jugar.
+				cSocket->ReceiveBloq(buffer, sizeof(buffer));
+				cout << "Recibo mensaje de nuevo cliente: " << buffer << endl;
+				message = buffer;
+				idPartida = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
+				felix = new Felix(cantVidas);
 
-			pthread_mutex_lock(&mutex_partidas);
-			finder = partidas.find(idPartida);
-			if (finder != partidas.end()) {
-				finder->second->cSocket2 = cSocket;
-				felix->fila = 0;
-				felix->columna = EDIFICIO_COLUMNAS - 1;
-				finder->second->edificio->ventanas[felix->fila][felix->columna].ocupado = true;
-				finder->second->felix2 = felix;
-				Mensaje mensaje(JUGADOR_2, posicionInicial2(felix), finder->second);
-				Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-				mensaje.setMensaje(messageCantVidas);
-				Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-				//Mando posicion inicial.
-				cout << "Partida nro: " << idPartida << " completada" << endl;
-			} else {
-				Partida * partida = new Partida(idPartida);
-				partida->cSocket1 = cSocket;
-				felix->fila = 0;
-				felix->columna = 0;
-				partida->edificio->ventanas[felix->fila][felix->columna].ocupado = true;
-				partida->felix1 = felix;
-				partidas[partida->id] = partida;
-				//Mando posicion inicial
-				Mensaje mensaje(JUGADOR_1, posicionInicial1(felix), partida);
-				Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-				mensaje.setMensaje(messageCantVidas);
-				Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+				pthread_mutex_lock(&mutex_partidas);
+				finder = partidas.find(idPartida);
+				if (finder != partidas.end()) {
+					finder->second->cSocket2 = cSocket;
+					felix->fila = 0;
+					felix->columna = EDIFICIO_COLUMNAS - 1;
+					finder->second->edificio->ventanas[felix->fila][felix->columna].ocupado = true;
+					finder->second->felix2 = felix;
+					Mensaje mensaje(JUGADOR_2, posicionInicial2(felix), finder->second);
+					Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+					mensaje.setMensaje(messageCantVidas);
+					Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+					//Mando posicion inicial.
+					cout << "Partida nro: " << idPartida << " completada" << endl;
+				} else {
+					Partida * partida = new Partida(idPartida);
+					partida->cSocket1 = cSocket;
+					felix->fila = 0;
+					felix->columna = 0;
+					partida->edificio->ventanas[felix->fila][felix->columna].ocupado = true;
+					partida->felix1 = felix;
+					partidas[partida->id] = partida;
+					//Mando posicion inicial
+					Mensaje mensaje(JUGADOR_1, posicionInicial1(felix), partida);
+					Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+					mensaje.setMensaje(messageCantVidas);
+					Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+				}
+				pthread_mutex_unlock(&mutex_partidas);
 			}
-			pthread_mutex_unlock(&mutex_partidas);
-			usleep(POOLING_DEADTIME);
 		} catch (...) {
 			break;
 		}
+		usleep(POOLING_DEADTIME);
 	}
 
 	pthread_exit(0);
@@ -274,6 +275,12 @@ void * sharedMemory(void * args) {
 
 			//Verifico si el padre esta vivo
 			if (kill(ppid, 0) == -1) {
+				pthread_mutex_lock(&mutex_partidas);
+				for (map<int, Partida *>::iterator it = partidas.begin(); it != partidas.end(); it++) {
+					delete (it->second);
+					partidas.erase(it);
+				}
+				pthread_mutex_unlock(&mutex_partidas);
 				cout << "Servidor partida: Padre esta muerto" << endl;
 				//stop = true;
 				exit(0);
@@ -581,8 +588,8 @@ void caseJugadorListo(Mensaje mensaje) {
 
 void SIGINT_Handler(int inum) {
 	cout << "Serv Partida  Signal received PID:" << getpid() << endl;
-	//stop = true;
-	exit(0);
+	stop = true;
+	//exit(0);
 }
 
 /*

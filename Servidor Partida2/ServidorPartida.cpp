@@ -68,7 +68,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	try {
-		sSocket = new ServerSocket(puerto);
+		sSocket = new ServerSocket(puerto,false);
 	} catch (const char* err) {
 		cout << "Error al querer conectar al puerto: " << puerto << endl;
 		exit(1);
