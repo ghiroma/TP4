@@ -33,7 +33,6 @@ pid_t pidServidorPartida;
 int main(int argc, char * argv[]) {
 	atexit(liberarRecursos);
 
-	cout << "Comienza servidor Torneo PID:" << getpid() << endl;
 	string ip = "";
 	int duracionTorneo = 0;
 	int tiempoInmunidad = 0;
@@ -102,7 +101,6 @@ int main(int argc, char * argv[]) {
 	///Lanzar Servidor Partida
 	if ((pidServidorPartida = fork()) == 0) {
 		//Proceso hijo
-		cout << "Lanzar Servidor de Partida FORK - PID:" << getpid() << endl;
 		char auxCantVidas[2];
 		sprintf(auxCantVidas, "%d", cantVidas);
 		char auxPuertoServidorPartida[LONGITUD_CONTENIDO];
@@ -175,6 +173,5 @@ int main(int argc, char * argv[]) {
 	//Bloqueo en espera de que ingrese una tecla para cerrar la pantalla
 	cout << "Ingrese una tecla para finalizar: ";
 	getchar();
-	cout << "Fin proceso Servidor Torneo" << endl;
-	exit(1);
+	exit(0);
 }

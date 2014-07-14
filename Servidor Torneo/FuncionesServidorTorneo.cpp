@@ -85,11 +85,7 @@ void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* 
  * Manejador de señales
  */
 void SIG_Handler(int inum) {
-	cout << "Torneo Señal Handler PID:" << getpid() << endl;
-
 	kill(pidServidorPartida, SIGINT);
-	cout << "KILL a partida desde SIGHandler Torneo" << endl;
-
 	wait(NULL);
 	exit(1);
 }
@@ -100,16 +96,11 @@ void SIG_Handler(int inum) {
 void SIG_CHLD(int inum) {
 	//MUERTE DE LA PARTIDA
 	int childpid = wait(NULL);
-	cout << "Señal Handler SIGCHLD - PID:" << childpid << endl;
 
-	cout << "cantPartidasFinalizadas:" << cantPartidasFinalizadas << " - idPartida:" << idPartida << endl;
 	if (cantPartidasFinalizadas != idPartida || (cantPartidasFinalizadas == 0 && idPartida == 0)) {
 		pthread_mutex_lock(&mutex_murioServidorPartida);
 		murioServidorPartida = true;
 		pthread_mutex_unlock(&mutex_murioServidorPartida);
-
-		cout << "Servidor de Partida caido" << endl;
-		cout << "Se terminara el Torneo" << endl;
 
 		mostrarPantalla("servermatchdown");
 		sleep(5);
@@ -197,7 +188,6 @@ bool murioServidorDeLaPartida() {
  * THREAD -> Controla el tiempo que debe durar el torneo
  */
 void* temporizadorTorneo(void* data) {
-	cout << "Thread temporizadorTorneo - PID:" << getpid() << endl;
 	struct thTemporizador_data *torneo;
 	torneo = (struct thTemporizador_data *) data;
 
@@ -227,7 +217,6 @@ void* temporizadorTorneo(void* data) {
 		string message(CD_FIN_TORNEO);
 		message.append(fillMessage("1"));
 		it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
-		cout << "mande CD_FIN_TORNEO a" << it->second->Id << " . Nombre:" << it->second->Nombre << endl;
 	}
 	pthread_mutex_unlock(&mutex_listJugadores);
 
@@ -302,16 +291,15 @@ void* lecturaDeResultados(void* data) {
 			pthread_mutex_unlock(&mutex_listJugadores);
 
 			///mensajes de prueba
-			cout << "CONTENIDO DE SHM" << endl;
+			/*cout << "CONTENIDO DE SHM" << endl;
 			cout << "id1:" << resumenPartida->idJugador1 << endl;
 			cout << "id2:" << resumenPartida->idJugador2 << endl;
 			cout << "partidaFinalizadaOK:" << resumenPartida->partidaFinalizadaOK << endl;
 			cout << "puntajeJugador1:" << resumenPartida->puntajeJugador1 << endl;
-			cout << "puntajeJugador2:" << resumenPartida->puntajeJugador2 << endl;
+			cout << "puntajeJugador2:" << resumenPartida->puntajeJugador2 << endl;*/
 			///////////////////////////////////////////////////////////////////////////////////
 
 			cantPartidasFinalizadas++;
-			cout << "CantPartidasFinalizads = " << cantPartidasFinalizadas << endl << " idPartida = " << idPartida << endl << " torneoFinalizado = " << torneoFinalizado() << endl;
 			/*if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
 			 break;
 			 }*/
@@ -324,7 +312,6 @@ void* lecturaDeResultados(void* data) {
 	//en este punto ya se que todas las partidas finalizaron y el tiempo de torneo tambien
 	if (!murioServidorDeLaPartida()) {
 		kill(pidServidorPartida, SIGINT);
-		cout << "KILL a partida" << endl;
 	}
 
 	pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
@@ -338,7 +325,6 @@ void* lecturaDeResultados(void* data) {
  * THREAD -> Modo Grafico
  */
 void* modoGrafico(void* data) {
-	cout << "Thread modoGrafico - PID:" << getpid() << endl;
 	struct thModoGrafico_data *torneo;
 	torneo = (struct thModoGrafico_data *) data;
 
@@ -539,7 +525,6 @@ void* modoGrafico(void* data) {
  * THREAD -> KEEPALIVE Jugadores - Actualiza la lista de jugadores quitando los que ya no estan activos
  */
 void* keepAliveJugadores(void*) {
-	cout << "Thread keepAliveJugadores - PID:" << getpid() << endl;
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
 	int readDataCode;
@@ -557,7 +542,6 @@ void* keepAliveJugadores(void*) {
 
 			if (readDataCode == 0) {
 				//El jugador se desconecto
-				cout << "Voy a eliminar a: " << it->first << endl;
 				quitarJugador(it->first);
 			} else {
 
@@ -575,7 +559,6 @@ void* keepAliveJugadores(void*) {
  * THREAD -> Aceptar las conexiones de nuevos jugadores al torneo
  */
 void* aceptarJugadores(void* data) {
-	cout << "Thread aceptarJugadores - PID:" << getpid() << endl;
 	int clientId = 0;
 
 	cout << sSocket->ShowHostName() << endl;
@@ -584,12 +567,9 @@ void* aceptarJugadores(void* data) {
 	char aux[LONGITUD_CONTENIDO];
 
 	while (seguirAceptandoNuevosJugadores() && !murioServidorDeLaPartida()) {
-		cout << "va a bloquearse esperando al JUGADOR" << endl;
 		//try {
 		CommunicationSocket * cSocket = sSocket->Accept();
-		cout << "va a bloquearse esperando el nombre" << endl;
 		cSocket->ReceiveBloq(nombreJugador, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
-		cout << "se conecto:" << nombreJugador << endl;
 		clientId++;
 
 		//Mandarle el ID al Jugador
@@ -604,15 +584,12 @@ void* aceptarJugadores(void* data) {
 		messagePuertoPartida.append(fillMessage(aux));
 		cSocket->SendNoBloq(messagePuertoPartida.c_str(), messagePuertoPartida.length());
 
-		cout << "Se agregara el jugador NRO:" << clientId << " NOMBRE: " << nombreJugador << endl;
 		agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
 		//} catch (...) {
 		//cout<<"Error en accept"<<endl;
 		//	break;
 		//}
 	}
-
-	cout << "Esta por salir thread de aceptar clientes" << endl;
 
 	pthread_exit(NULL);
 }
@@ -621,7 +598,6 @@ void* aceptarJugadores(void* data) {
  * THREAD -> Crea los servidores de partidas
  */
 void* establecerPartidas(void* data) {
-	cout << "Thread establecerPartidas - PID:" << getpid() << endl;
 	int idJugador;
 	int idOponente;
 
@@ -635,7 +611,6 @@ void* establecerPartidas(void* data) {
 
 			//si no se encuentra jugando actualmente y se encontro un oponente ("crea" una nueva partida)
 			if (idOponente >= 1) {
-				cout << "se creara la partida: (" << idJugador << " vs " << idOponente << ")" << endl;
 				idPartida++;
 
 				//habilito el temporizador del torneo
@@ -650,9 +625,7 @@ void* establecerPartidas(void* data) {
 				string message(CD_ID_PARTIDA);
 				message.append(fillMessage(auxNroPartida));
 
-				cout << "le mando a ID: " << idJugador << " - el socket:" << auxNroPartida << endl;
 				listJugadores[idJugador]->SocketAsociado->SendBloq(message.c_str(), message.length());
-				cout << "le mando a ID: " << idOponente << " - el socket:" << auxNroPartida << endl;
 				listJugadores[idOponente]->SocketAsociado->SendBloq(message.c_str(), message.length());
 
 				//Les mando el nombre de su oponente
@@ -666,12 +639,9 @@ void* establecerPartidas(void* data) {
 				string nombreOponente2(CD_NOMBRE);
 				nombreOponente2.append(fillMessage(auxnombreOponente2));
 
-				cout << "le mando a ID: " << idJugador << " - el nombre oponente:" << nombreOponente1 << endl;
 				listJugadores[idJugador]->SocketAsociado->SendBloq(nombreOponente1.c_str(), nombreOponente1.length());
-				cout << "le mando a ID: " << idOponente << " - el nombre oponente:" << nombreOponente2 << endl;
 				listJugadores[idOponente]->SocketAsociado->SendBloq(nombreOponente2.c_str(), nombreOponente2.length());
 
-				cout << "Torneo: Termino de crear la partida " << idPartida << endl;
 			} else {
 				//No se encontraron oponentes disponibles
 			}
@@ -690,16 +660,13 @@ void mandarPuntajes() {
 		string message(CD_RANKING);
 		message.append(fillMessage(intToString(it->second->Ranking)));
 		it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
-		cout << "MANDO RANKING #" << it->second->Ranking << " al Jugador:" << it->second->Id << endl;
 	}
 	pthread_mutex_unlock(&mutex_listJugadores);
 }
 
 void liberarRecursos() {
-	cout << "libero recursos de Servidor Torneo PID:" << getpid() << endl;
 	//SOCKETS
 	if (sSocket != NULL) {
-		cout << "Torneo -> cierro socket" << endl;
 		delete (sSocket);
 	}
 

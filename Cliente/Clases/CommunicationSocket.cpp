@@ -32,7 +32,6 @@ CommunicationSocket::CommunicationSocket (unsigned short int port, char * ip)
 	}
 	else
 	{
-	    std::cout<<"IP"<<ip<<std::endl;
 		caddress.sin_addr.s_addr = inet_addr(ip);
 	}
 

@@ -31,7 +31,7 @@ using namespace std;
 
 int main(int argc, char * argv[]) {
 
-	cout<<"Servidor Partida iniciado"<<endl;
+	//cout<<"Servidor Partida iniciado"<<endl;
 
 	pthread_t thread_receptorConexiones;
 	pthread_t thread_escuchaClientes;
@@ -83,7 +83,7 @@ int main(int argc, char * argv[]) {
 
 	pthread_join(thread_receptorConexiones,NULL);
 
-	cout << "Partida finalizada." << endl;
+	//cout << "Partida finalizada." << endl;
 	return 0;
 }
 

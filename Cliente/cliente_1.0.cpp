@@ -238,10 +238,8 @@ int main(int argc, char *argv[]) {
 	mostrarPantalla("waitmatch");
 
 	//Conexion con el servidor de torneo.
-	cout << "Intentando conectarme al torneo" << endl;
 	int reintentar = 3;
 	do {
-		cout << "Esperando servidor" << endl;
 		try {
 			socketTorneo = new CommunicationSocket(puertoTorneo, (char*) ip.c_str());
 			reintentar = 0;
@@ -257,7 +255,6 @@ int main(int argc, char *argv[]) {
 			sleep(5);
 		}
 	} while (reintentar != 0);
-	cout << "Conectado" << endl;
 
 	//Le mando mi nombre
 	socketTorneo->SendNoBloq(felix1_nombre.c_str(), sizeof(felix1_nombre));
@@ -277,10 +274,8 @@ int main(int argc, char *argv[]) {
 		sleep(10);
 		exit(1);
 	}
-	cout << "readdata 1:" << readData << endl;
 	string aux_buffer(buffer);
 	mi_id = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO);
-	cout << "Mi ID: " << mi_id << endl;
 
 	//Recibo el puerto del servidor de partida
 	if (!torneoFinalizo()) {
@@ -290,7 +285,6 @@ int main(int argc, char *argv[]) {
 		sleep(10);
 		exit(1);
 	}
-	cout << "readdata 2:" << readData << endl;
 	if (readData <= 0) {
 		cout << "Se ha cerrado la conexion con el servidor de torneo" << endl;
 		mostrarPantalla("servertorneodown");
@@ -299,7 +293,6 @@ int main(int argc, char *argv[]) {
 	}
 	string aux_puerto(buffer);
 	puertoServidorPartida = atoi(aux_puerto.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
-	cout << "Servidor de partida: " << puertoServidorPartida << endl;
 
 	//Thread para escuchar al servidor de Torneo.
 	resultThEscuchaTorneo = pthread_create(&thEscuchaTorneo, NULL, EscuchaTorneo, &socketTorneo->ID);
@@ -750,7 +743,6 @@ void* EscuchaServidor(void *arg) {
 			case CD_OPONENTE_DESCONECTADO_I:
 				felix2_vidas = 0;
 				felix2_puntos = 0;
-				cout << "SE DESCONECTO MI OPONENETE" << endl;
 				break;
 			case CD_PERDIDA_VIDA_I:
 				if (buffer[4] == '1') {
@@ -871,7 +863,6 @@ void* EscuchaTorneo(void *arg) {
 	int readData = 0;
 	const char* mensajeNombre;
 	char auxNombreOponente[6];
-	cout << "FD: " << fd << endl;
 	CommunicationSocket cSocket(fd);
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	bzero(buffer, sizeof(buffer));
@@ -891,12 +882,10 @@ void* EscuchaTorneo(void *arg) {
 			case CD_PUERTO_PARTIDA_I:
 				pthread_mutex_lock(&mutex_msjPuertoRecibido);
 				puertoServidorPartida = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
-				cout << "Puerto: " << puertoServidorPartida << endl;
 				msjPuertoRecibido = true;
 				pthread_mutex_unlock(&mutex_msjPuertoRecibido);
 				break;
 			case CD_RANKING_I:
-				cout << "RANKING #" << aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str() << endl;
 				ranking = aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str();
 				salir = 'S';
 				showWindowRanking = true;
@@ -904,7 +893,6 @@ void* EscuchaTorneo(void *arg) {
 				pthread_exit(NULL);
 				break;
 			case CD_ID_PARTIDA_I:
-				cout << "IDPartida: " << aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO) << endl;
 				idPartida = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
 				recibioIdPartida = true;
 				break;
@@ -927,7 +915,6 @@ void* EscuchaTorneo(void *arg) {
 			case CD_FIN_TORNEO_I:
 				//que no busque mas establecer partidas
 				torneoFinalizado = true;
-				cout << "Fin de Toreno:" << aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str() << endl;
 				break;
 			case CD_ACK_I:
 				string message(CD_ACK);
@@ -940,7 +927,6 @@ void* EscuchaTorneo(void *arg) {
 			pthread_mutex_lock(&mutex_murioServidorTorneo);
 			murioServidorTorneo = true;
 			pthread_mutex_unlock(&mutex_murioServidorTorneo);
-			cout << "Murio el servidor torneo" << endl;
 
 			//salgo del thread sino me llega todo el tiempo el mensaje vacio
 			pthread_exit(NULL);
@@ -1285,7 +1271,6 @@ bool inicializarNuevaPartida() {
 	//Espero que el Servidor de Partida me mande el mensaje de START
 	//cout << "Esperar signal de START" << endl;
 	esperarSTART();
-	cout << "START - Match " << idPartida << endl;
 
 	return true;
 }

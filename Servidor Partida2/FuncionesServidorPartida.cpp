@@ -83,7 +83,6 @@ void* receptorConexiones(void * args) {
 			if (cSocket != NULL) {
 				//Recibo el id de partida, para sber contra quien va a jugar.
 				cSocket->ReceiveBloq(buffer, sizeof(buffer));
-				cout << "Recibo mensaje de nuevo cliente: " << buffer << endl;
 				message = buffer;
 				idPartida = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
 				felix = new Felix(cantVidas);
@@ -101,7 +100,6 @@ void* receptorConexiones(void * args) {
 					mensaje.setMensaje(messageCantVidas);
 					Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 					//Mando posicion inicial.
-					cout << "Partida nro: " << idPartida << " completada" << endl;
 				} else {
 					Partida * partida = new Partida(idPartida);
 					partida->cSocket1 = cSocket;
@@ -147,7 +145,6 @@ void * escuchaClientes(void * args) {
 						Mensaje mensaje(JUGADOR_1, message, it->second);
 						cola_mensajes_recibir.push(mensaje);
 					} else if (readData == 0) {
-						cout << "Se desconecto el jugador 1" << endl;
 						delete (it->second->cSocket1);
 						it->second->cSocket1 = NULL;
 						//Libero la posicion donde estaba el jugador.
@@ -167,7 +164,6 @@ void * escuchaClientes(void * args) {
 						Mensaje mensaje(JUGADOR_2, message, it->second);
 						cola_mensajes_recibir.push(mensaje);
 					} else if (readData == 0) {
-						cout << "Se desconecto el jugador 2" << endl;
 						delete (it->second->cSocket2);
 						it->second->cSocket2 = NULL;
 						it->second->edificio->ventanas[it->second->felix2->fila][it->second->felix2->columna].ocupado = false;
@@ -241,7 +237,6 @@ void* timer_thread(void * args) {
 				if (message.length() > 0) {
 					Mensaje mensaje(BROADCAST, message, it->second);
 					Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
-					//cout << "Encole mensaje ralph a partida: " << it->second->id << endl;
 				}
 
 				message = it->second->timer->paloma(it->second->edificio->nivel);
@@ -275,7 +270,6 @@ void * sharedMemory(void * args) {
 
 			//Verifico si el padre esta vivo
 			if (kill(ppid, 0) == -1) {
-				cout << "SRV PARTIDA: Murio padre" << endl;
 				pthread_mutex_lock(&mutex_partidas);
 				if (!partidas.empty()) {
 					/*for (map<int, Partida *>::iterator it = partidas.begin(); it != partidas.end(); it++) {
@@ -284,11 +278,8 @@ void * sharedMemory(void * args) {
 					}*/
 					partidas.clear();
 				}
-				cout << "Termino de iterar y limpiar partidas" << endl;
 				pthread_mutex_unlock(&mutex_partidas);
-				cout << "Servidor partida: Padre esta muerto" << endl;
-				//stop = true;
-				exit(0);
+				exit(1);
 			}
 
 			pthread_mutex_lock(&mutex_partidas);
@@ -302,13 +293,11 @@ void * sharedMemory(void * args) {
 						puntaje->partidaFinalizadaOk = true;
 						string mensajeFinPartida(CD_FIN_PARTIDA);
 						mensajeFinPartida.append(Helper::fillMessage("0"));
-						cout << "Envio mensaje de fin de partida" << endl;
 						if (it->second->cSocket1 != NULL)
 							it->second->cSocket1->SendNoBloq(mensajeFinPartida.c_str(), mensajeFinPartida.length());
 						if (it->second->cSocket2 != NULL)
 							it->second->cSocket2->SendNoBloq(mensajeFinPartida.c_str(), mensajeFinPartida.length());
 						partidas.erase(it);
-						cout << "Borre la partida" << endl;
 						semTorneo->V();
 					}
 					//End usar semaforos para sincronizar.
@@ -348,7 +337,6 @@ void* enviarMensajesCliente(void * args) {
 			pthread_mutex_unlock(&mutex_cola_mensajes_enviar);
 			strcpy(aux, mensaje.codigo.c_str());
 			strcat(aux, mensaje.mensaje.c_str());
-			//cout << "Estoy por enviar mensaje: " << mensaje.codigo + mensaje.mensaje << "de tipo: " << mensaje.jugador << endl;
 			if (mensaje.jugador == BROADCAST) //BroadCast
 					{
 				if (mensaje.partida->cSocket1 != NULL) {
@@ -418,11 +406,9 @@ void caseMovimientoFelix(Mensaje mensaje) {
 		if (felixJugador == mensaje.partida->felix1) {
 			mensajeMovimiento.jugador = JUGADOR_1;
 			mensajeMovimiento.mensaje = string(Helper::fillMessage(aux1));
-			//cout << "mensajeMovimiento.mensaje: " << mensajeMovimiento.mensaje << endl;
 			Helper::encolar(mensajeMovimiento, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 			mensajeMovimiento.jugador = JUGADOR_2;
 			mensajeMovimiento.mensaje = string(Helper::fillMessage(aux2));
-			//cout << "mensajeMovimiento.mensaje: " << mensajeMovimiento.mensaje << endl;
 			Helper::encolar(mensajeMovimiento, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 		} else if (felixJugador == mensaje.partida->felix2) {
 			mensajeMovimiento.jugador = JUGADOR_1;
@@ -537,14 +523,12 @@ void casePerdidaVida(Mensaje mensaje) {
 		}
 	}
 	if ((mensaje.partida->felix1->cantidad_vidas <= 0 && mensaje.partida->felix2->cantidad_vidas <= 0) || (mensaje.partida->felix1->cantidad_vidas <= 0 && mensaje.partida->cSocket2 == NULL) || (mensaje.partida->felix2->cantidad_vidas <= 0 && mensaje.partida->cSocket1 == NULL)) {
-		cout << "Partida id: " << mensaje.partida->id << " ha finalizado" << endl;
 		mensaje.partida->estado = ESTADO_FINALIZADO;
 	}
 }
 
 void caseIdJugador(Mensaje mensaje) {
 	pthread_mutex_lock(&mutex_partidas);
-	cout << "Recibi id de jugador: " << atoi(mensaje.mensaje.c_str()) << endl;
 	if (mensaje.jugador == JUGADOR_1) {
 		mensaje.partida->felix1->id = atoi(mensaje.mensaje.c_str());
 	} else if (mensaje.jugador == JUGADOR_2) {
@@ -562,7 +546,6 @@ void caseIdJugador(Mensaje mensaje) {
 		}
 		Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 		mensaje.partida->timer = new Timer();
-		cout << "Seteo partida como jugando: " << mensaje.partida->id << endl;
 		mensaje.partida->estado = ESTADO_JUGANDO;
 	}
 	pthread_mutex_unlock(&mutex_partidas);
@@ -586,15 +569,12 @@ void caseJugadorListo(Mensaje mensaje) {
 		}
 		Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
 		mensaje.partida->timer = new Timer();
-		cout << "Seteo partida como jugando: " << mensaje.partida->id << endl;
 		mensaje.partida->estado = ESTADO_JUGANDO;
 	}
 }
 
 void SIGINT_Handler(int inum) {
-	cout << "Serv Partida  Signal received PID:" << getpid() << endl;
 	stop = true;
-	//exit(0);
 }
 
 /*
@@ -611,7 +591,6 @@ void liberarRecursos() {
 	pthread_mutex_destroy(&mutex_cola_mensajes_enviar);
 	pthread_mutex_destroy(&mutex_cola_mensajes_recibir);
 	pthread_mutex_destroy(&mutex_partidas);
-	cout << "recursos Servidor Partida liberados" << endl;
 }
 
 string posicionInicial1(Felix * felix) {
