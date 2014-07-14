@@ -112,8 +112,7 @@ void SIG_CHLD(int inum) {
 		cout << "Se terminara el Torneo" << endl;
 
 		mostrarPantalla("servermatchdown");
-		sleep(10);
-		//exit(1);
+		sleep(5);
 	}
 	exit(1);
 }
