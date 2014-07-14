@@ -32,6 +32,7 @@ pthread_mutex_t mutex_comenzoConteo = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_todasLasPartidasFinalizadas = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_partidasActivas = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_seguirAceptandoJugadores = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_murioServidorPartida = PTHREAD_MUTEX_INITIALIZER;
 
 extern pthread_mutex_t mutex_listJugadores;
 extern map<int,
@@ -44,6 +45,7 @@ int idPartida = 0;
 puntajesPartida * resumenPartida;
 extern pid_t pidServidorPartida;
 bool seguirAceptandoJugadores = true;
+bool murioServidorPartida = false;
 
 SDL_Surface *screen, *background, *tiempo, *jugadores, *infoJugador_part1, *infoJugador_part2;
 SDL_Rect posDestino, posBackground, posTiempo, posJugadores;
@@ -100,11 +102,20 @@ void SIG_CHLD(int inum) {
 	int childpid = wait(NULL);
 	cout << "Señal Handler SIGCHLD - PID:" << childpid << endl;
 
-	if (cantPartidasFinalizadas != idPartida) {
+	cout << "cantPartidasFinalizadas:" << cantPartidasFinalizadas << " - idPartida:" << idPartida << endl;
+	if (cantPartidasFinalizadas != idPartida || (cantPartidasFinalizadas == 0 && idPartida == 0)) {
+		pthread_mutex_lock(&mutex_murioServidorPartida);
+		murioServidorPartida = true;
+		pthread_mutex_unlock(&mutex_murioServidorPartida);
+
 		cout << "Servidor de Partida caido" << endl;
 		cout << "Se terminara el Torneo" << endl;
-		exit(1);
+
+		mostrarPantalla("servermatchdown");
+		sleep(10);
+		//exit(1);
 	}
+	exit(1);
 }
 
 /**
@@ -169,6 +180,17 @@ bool partidasFinalizadas() {
 	return estado;
 }
 
+/**
+ * Verificar si murio el servidor de partida
+ */
+bool murioServidorDeLaPartida() {
+	bool estado;
+	pthread_mutex_lock(&mutex_murioServidorPartida);
+	estado = murioServidorPartida;
+	pthread_mutex_unlock(&mutex_murioServidorPartida);
+	return estado;
+}
+
 /////////////////////////////// THREADS ////////////////////////////
 
 /**
@@ -223,12 +245,12 @@ void* temporizadorTorneo(void* data) {
 void* lecturaDeResultados(void* data) {
 	resumenPartida = (struct puntajesPartida *) shmat(idSHM, (char *) 0, 0);
 
-	while (true) {
+	while (!murioServidorDeLaPartida()) {
 
 		if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
 			break;
 		}
-		if (sem_trywait(sem_ServidorTorneoSHM.getSem_t()) != -1) {
+		if (!murioServidorDeLaPartida() && sem_trywait(sem_ServidorTorneoSHM.getSem_t()) != -1) {
 			pthread_mutex_lock(&mutex_listJugadores);
 			//si el torneo termino ok Grabo los puntajes
 			if (resumenPartida->partidaFinalizadaOK == true) {
@@ -300,8 +322,10 @@ void* lecturaDeResultados(void* data) {
 	}
 
 	//en este punto ya se que todas las partidas finalizaron y el tiempo de torneo tambien
-	kill(pidServidorPartida, SIGINT);
-	cout << "KILL a partida" << endl;
+	if (!murioServidorDeLaPartida()) {
+		kill(pidServidorPartida, SIGINT);
+		cout << "KILL a partida" << endl;
+	}
 
 	pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
 	todasLasPartidasFinalizadas = true;
@@ -451,7 +475,12 @@ void* modoGrafico(void* data) {
 		SDL_BlitSurface(jugadores, NULL, background, &posJugadores);
 
 		SDL_BlitSurface(background, NULL, screen, &posBackground);
-		SDL_Flip(screen);
+
+		if (!murioServidorDeLaPartida()) {
+			SDL_Flip(screen);
+		} else {
+			pthread_exit(NULL);
+		}
 
 		//se acaba el tiempo y salgo del ciclo
 		if (minutos == 0 && segundos == 0) {
@@ -519,7 +548,7 @@ void* keepAliveJugadores(void*) {
 	string content;
 	message.append(fillMessage(content));
 
-	while (!partidasFinalizadas()) {
+	while (!partidasFinalizadas() && !murioServidorDeLaPartida()) {
 		//Para cada jugador ver si me responden la señal de KEEPALIVE
 		pthread_mutex_lock(&mutex_listJugadores);
 		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
@@ -554,7 +583,7 @@ void* aceptarJugadores(void* data) {
 	char nombreJugador[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	char aux[LONGITUD_CONTENIDO];
 
-	while (seguirAceptandoNuevosJugadores()) {
+	while (seguirAceptandoNuevosJugadores() && !murioServidorDeLaPartida()) {
 		cout << "va a bloquearse esperando al JUGADOR" << endl;
 		//try {
 		CommunicationSocket * cSocket = sSocket->Accept();
@@ -596,7 +625,7 @@ void* establecerPartidas(void* data) {
 	int idJugador;
 	int idOponente;
 
-	while (!torneoFinalizado()) {
+	while (!torneoFinalizado() && !murioServidorDeLaPartida()) {
 		//recorro la lista de jugadores viendo a quien le puedo asignar un oponente y que comienze la partida
 		usleep(INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES);
 		pthread_mutex_lock(&mutex_listJugadores);
