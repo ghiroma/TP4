@@ -267,7 +267,6 @@ int main(int argc, char *argv[]) {
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	if (!torneoFinalizo()) {
 		readData = socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
-		perror("Recibo mi ID:");
 	} else {
 		mostrarPantalla("servernotfound");
 		sleep(10);
@@ -287,7 +286,6 @@ int main(int argc, char *argv[]) {
 	//Recibo el puerto del servidor de partida
 	if (!torneoFinalizo()) {
 		readData = socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
-		perror("Recibo el puerto de partida:");
 	} else {
 		mostrarPantalla("servernotfound");
 		sleep(10);
@@ -303,8 +301,6 @@ int main(int argc, char *argv[]) {
 	string aux_puerto(buffer);
 	puertoServidorPartida = atoi(aux_puerto.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
 	cout << "Servidor de partida: " << puertoServidorPartida << endl;
-
-	//socketPArtida
 
 	//Thread para escuchar al servidor de Torneo.
 	resultThEscuchaTorneo = pthread_create(&thEscuchaTorneo, NULL, EscuchaTorneo, &socketTorneo->ID);
@@ -329,8 +325,7 @@ int main(int argc, char *argv[]) {
 			break;
 		}
 		if (nuevaPartidaSolicitada() && !torneoFinalizo() && !murioServidorDelTorneo()) {
-			cout << "Solicite nueva partida" << endl;
-			//espero a que se cierre el ultimo thread de la partida anterior
+			//Solicite nueva partida;
 			mostrarPantalla("waitmatch");
 			sleep(3);
 			if (!inicializarNuevaPartida()) {
@@ -473,7 +468,6 @@ int main(int argc, char *argv[]) {
 		Dibujar(ventanas_tramo1[2][ralph_posicion.columna].x, PARED_Y - 100, ralph, superficie);
 
 		//Dibujo la pajaro
-
 		if (pajaro == pajaro_1)
 			pajaro = pajaro_2;
 		else
@@ -535,11 +529,10 @@ int main(int argc, char *argv[]) {
 
 					felix1_reparar = 'N';
 				}
-
 				Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
-
 			}
 		}
+
 		if (felix2 == NULL)
 			felix2 = felix_d2;
 
@@ -593,8 +586,6 @@ int main(int argc, char *argv[]) {
 				}
 			}
 		}
-		//Ojo, hay que poner el delay porque sino el proceso no tiene tiempos muertos y
-		// el uso del procesador se me va al chori.
 		if (hayChoque()) {
 			//felix1_posicion.fila = 0;
 			//felix1_posicion.columna = 0;
@@ -724,7 +715,7 @@ void DibujarVentanas(struct ventana ventanas[][5], unsigned short int cant_filas
  * THREAD -> Escucha mensajes del servidor de Partida
  */
 void* EscuchaServidor(void *arg) {
-	cout << "inicia th EscuchaServidor" << endl;
+	//cout << "inicia th EscuchaServidor" << endl;
 	int fd = *(int *) arg;
 	int readData = 0;
 	int codigo;
@@ -737,10 +728,6 @@ void* EscuchaServidor(void *arg) {
 		if (strlen(buffer) > 0) {
 			string aux_buffer(buffer);
 			codigo = atoi(aux_buffer.substr(0, LONGITUD_CODIGO).c_str());
-
-			if (aux_buffer.compare("9900000") != 0) {
-				//cout << "Escucho Servidor Partida, recibi: " << buffer << endl;
-			}
 
 			switch (codigo) {
 			case CD_MOVIMIENTO_RALPH_I:
@@ -850,42 +837,22 @@ void* EscuchaServidor(void *arg) {
 			nombreOponente = "";
 			pthread_mutex_unlock(&mutex_nombreOponente);
 
-			cout << "Termino la partida" << endl;
-
-			//si no se llego a fin del torneo
-			//pthread_mutex_lock(&mutex_torneoFinalizado);
-			//bool torneoFin = torneoFinalizado;
-			//pthread_mutex_unlock(&mutex_torneoFinalizado);
-			//if (!torneoFin) {
-			//mostrar pantalla Esperando partida
-			//mostrarPantalla("waitmatch");
-
-			//pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
-			//solicitudDeNuevaParitda = true;
-			//pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
-
-			//break;
-			//}
+			//cout << "Termino la partida" << endl;
 
 			delete (socketPartida);
 			socketPartida = NULL;
-
-			//verificarrrr
-			//close(cSocket.ID);
-			//delete(cSocket);
 		}
 
 		usleep(2000);
 	}
-	cout << "sale el thread de escucharServidor" << endl;
+	//cout << "sale el thread de escucharServidor" << endl;
 	pthread_exit(NULL);
 }
 
 void * EnvioServidor(void * arg) {
 	int fd = *(int *) arg;
 	CommunicationSocket cSocket(fd);
-	//bool auxSolicitudDeNuevaParitda = false;
-	cout << "inicia th EnviaServidor" << endl;
+	//cout << "inicia th EnviaServidor" << endl;
 	while (true) {
 		if (!cola_grafico.empty()) {
 			string mensaje = cola_grafico.front();
@@ -893,21 +860,10 @@ void * EnvioServidor(void * arg) {
 			//cout << "Mensaje a enviar al servPartida: " << mensaje.c_str() << endl;
 			cSocket.SendBloq(mensaje.c_str(), mensaje.length());
 		}
-
-		//si murio la partida salgo de este thread (me doy cuenta cuando solicitan una nueva partida)
-		/*pthread_mutex_lock(&mutex_solicitudDeNuevaParitda);
-		 auxSolicitudDeNuevaParitda = solicitudDeNuevaParitda;
-		 pthread_mutex_unlock(&mutex_solicitudDeNuevaParitda);
-		 if (auxSolicitudDeNuevaParitda) {
-		 break;
-		 }*/
 		usleep(1000);
 	}
 
-	//verificarrrr
-	//close(cSocket.ID);
-
-	cout << "sale el thread de EnvioServidor" << endl;
+	//cout << "sale el thread de EnvioServidor" << endl;
 	pthread_exit(NULL);
 }
 
@@ -924,16 +880,10 @@ void* EscuchaTorneo(void *arg) {
 	int auxIndice;
 
 	while (true) {
-		//cout << "Espero msj del servidor de Torneo ... " << endl;
-
 		readData = cSocket.ReceiveBloq(buffer, sizeof(buffer));
 
 		if (strlen(buffer) > 0) {
 			string aux_buffer(buffer);
-
-			if (aux_buffer.compare("9900000") != 0) {
-				//cout << "Escucho servidor TORNEO, recibi: " << buffer << endl;
-			}
 
 			int codigo = atoi((aux_buffer.substr(0, LONGITUD_CODIGO).c_str()));
 			switch (codigo) {
@@ -1003,7 +953,6 @@ void* EscuchaTorneo(void *arg) {
 }
 
 void* EscuchaTeclas(void *arg) {
-
 	SDL_Event evento; //Con esta variable reconozco si se apreto una tecla o se apreto el mouse.
 	SDL_keysym keysym; //Con esta variable reconzco el codigo de la tecla que se apreto.
 	short int f1_fila;
@@ -1019,66 +968,37 @@ void* EscuchaTeclas(void *arg) {
 
 		case SDL_KEYDOWN:
 			if ((evento.key.keysym.sym == SDLK_DOWN || evento.key.keysym.sym == key_abajo) && felix1_reparar != 'S') {
-				//felix1_reparar = 'N';
 				if ((felix1_posicion.fila - 1) >= 0 && felix1_reparar != 'S' && felix1_vidas > 0) {
-					/*ostringstream ss1;
-					 ostringstream ss2;
-					 ss1 << felix1_posicion.columna;
-					 ss2 << felix1_posicion.fila - 1;
-					 string aux(ss1.str() + ss2.str());*/
 					char aux[3];
 					sprintf(aux, "%d", -1);
 					string message(CD_MOVIMIENTO_FELIX);
 					message.append(fillMessage(aux));
-					//cout << "MENSAJE: " << message << endl;
 					cola_grafico.push(message);
-
 				}
 			} else if ((evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba) && felix1_reparar != 'S') {
-				//felix1_reparar = 'N';
 				if ((felix1_posicion.fila + 1) < 3 && felix1_reparar != 'S' && felix1_vidas > 0) {
-					/*ostringstream ss1;
-					 ostringstream ss2;
-					 ss1 << felix1_posicion.columna;
-					 ss2 << felix1_posicion.fila + 1;
-					 string aux(ss1.str() + ss2.str());*/
 					char aux[3];
 					sprintf(aux, "%d", 1);
 					string message(CD_MOVIMIENTO_FELIX);
 					message.append(fillMessage(aux));
-					//cout << "MENSAJE: " << message << endl;
 					cola_grafico.push(message);
 				}
 			} else if ((evento.key.keysym.sym == SDLK_RIGHT || evento.key.keysym.sym == key_derecha) && felix1_reparar != 'S') {
 				felix1 = felix_d1;
-				//felix1_reparar = 'N';
 				if ((felix1_posicion.columna + 1) < 5 && felix1_reparar != 'S' && felix1_vidas > 0) {
-					/*ostringstream ss1;
-					 ostringstream ss2;
-					 ss1 << felix1_posicion.columna + 1;
-					 ss2 << felix1_posicion.fila;
-					 string aux(ss1.str() + ss2.str());*/
 					string message(CD_MOVIMIENTO_FELIX);
 					char aux[5];
 					sprintf(aux, "%d", 100);
 					message.append(fillMessage(aux));
-					//cout << "MENSAJE: " << message << endl;
 					cola_grafico.push(message);
 				}
 			} else if ((evento.key.keysym.sym == SDLK_LEFT || evento.key.keysym.sym == key_izquierda) && felix1_reparar != 'S') {
 				felix1 = felix_i1;
-				//felix1_reparar = 'N';
 				if ((felix1_posicion.columna - 1) >= 0 && felix1_reparar != 'S' && felix1_vidas > 0) {
-					/*ostringstream ss1;
-					 ostringstream ss2;
-					 ss1 << felix1_posicion.columna - 1;
-					 ss2 << felix1_posicion.fila;
-					 string aux(ss1.str() + ss2.str());*/
 					char aux[5];
 					string message(CD_MOVIMIENTO_FELIX);
 					sprintf(aux, "%d", -100);
 					message.append(fillMessage(aux));
-					//cout << "MENSAJE: " << message << endl;
 					cola_grafico.push(message);
 				}
 			} else if ((evento.key.keysym.sym == SDLK_SPACE || evento.key.keysym.sym == key_accion) && felix1_vidas > 0 && felix1_reparar != 'S') {
@@ -1099,7 +1019,6 @@ void* EscuchaTeclas(void *arg) {
 }
 
 char ventana_reparada(struct posicion *felix_posicion) {
-
 	//cout << "Ventana Sana valor " << ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana << endl;
 	if (ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].tipo_ventana != 0) {
 		if (ventanas_tramo1[felix_posicion->fila][felix_posicion->columna].sana < 1) {
@@ -1117,16 +1036,13 @@ char ventana_reparada(struct posicion *felix_posicion) {
 }
 
 void handler(int senial) {
-
 	switch (senial) {
 	case SIGINT:
 		break;
 	}
-
 }
 
 void PantallaIntermedia(char cod) {
-
 	while (salir == 'N') {
 		switch (cod) {
 		case '0':
@@ -1144,7 +1060,6 @@ void PantallaIntermedia(char cod) {
 }
 
 char CambiaTramo() {
-
 	pantalla_juego.x = 0;
 	pantalla_juego.y = 0;
 	pantalla_juego.w = ANCHO_PANTALLA;
@@ -1153,7 +1068,7 @@ char CambiaTramo() {
 
 	pantalla_texto.x = 10;
 	pantalla_texto.y = 10;
-	texto = TTF_RenderText_Solid(fuente, "Cambio de tramo, puto!", color_texto);
+	texto = TTF_RenderText_Solid(fuente, "Cambio de tramo", color_texto);
 	SDL_BlitSurface(texto, NULL, superficie, &pantalla_texto);
 	SDL_Flip(superficie);
 
@@ -1163,7 +1078,6 @@ char CambiaTramo() {
 }
 
 char CambiaNivel() {
-
 	pantalla_juego.x = 0;
 	pantalla_juego.y = 0;
 	pantalla_juego.w = ANCHO_PANTALLA;
@@ -1172,7 +1086,7 @@ char CambiaNivel() {
 
 	pantalla_texto.x = 10;
 	pantalla_texto.y = 10;
-	texto = TTF_RenderText_Solid(fuente, "Cambio de nivel, gay", color_texto);
+	texto = TTF_RenderText_Solid(fuente, "Cambio de nivel", color_texto);
 	SDL_BlitSurface(texto, NULL, superficie, &pantalla_texto);
 	SDL_Flip(superficie);
 
@@ -1311,7 +1225,7 @@ bool inicializarNuevaPartida() {
 	partidasJugadas++;
 
 	//Espero id de partida (del torneo)
-	cout << "Esperando ID Partida" << endl;
+	//cout << "Esperando ID Partida" << endl;
 	if (esperarIdPartida()) {
 		//Le llega el Id de Partida
 		recibioIdPartida = false;
@@ -1321,7 +1235,7 @@ bool inicializarNuevaPartida() {
 	}
 
 	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
-	cout << "Esperando nombre de oponente" << endl;
+	//cout << "Esperando nombre de oponente" << endl;
 	if (esperarNombreOponente()) {
 		//recibio nombre del oponente
 	} else {
@@ -1329,7 +1243,7 @@ bool inicializarNuevaPartida() {
 		return false;
 	}
 
-	cout << "inicializo un nueva partida. Reconecto" << endl;
+	//cout << "inicializo un nueva partida. Reconecto" << endl;
 	//Me conecto al servidor de partida.
 	try {
 		socketPartida = new CommunicationSocket(puertoServidorPartida, (char*) ip.c_str());
@@ -1356,12 +1270,12 @@ bool inicializarNuevaPartida() {
 	string messageIDPartida(CD_ID_PARTIDA);
 	char aux[5];
 	sprintf(aux, "%d", idPartida);
-	cout << "El nuevo idPartida es: " << aux << endl;
+	//cout << "El nuevo idPartida es: " << aux << endl;
 	messageIDPartida.append(fillMessage(aux));
 	cola_grafico.push(messageIDPartida);
 
 	//Espero mi posicion inicial;
-	cout << "Esperando mi posicion inicial" << endl;
+	//cout << "Esperando mi posicion inicial" << endl;
 	esperarPosicionInicial();
 
 	//Mando mi ID de Jugador
@@ -1369,14 +1283,8 @@ bool inicializarNuevaPartida() {
 	messageIDJugador.append(fillMessage(mi_id.c_str()));
 	cola_grafico.push(messageIDJugador);
 
-	//Espero la cantidad de vidas.
-
-	/*string mensajeListo(CD_JUGADOR_LISTO);
-	 mensajeListo.append(fillMessage("0"));
-	 cola_grafico.push(mensajeListo);*/
-
 	//Espero que el Servidor de Partida me mande el mensaje de START
-	cout << "Esperar signal de START" << endl;
+	//cout << "Esperar signal de START" << endl;
 	esperarSTART();
 	cout << "START - Match " << idPartida << endl;
 
@@ -1412,23 +1320,19 @@ bool esperarCantVidas() {
 
 bool esperarIdPartida() {
 	//cout << "esperando id Partida" << endl;
-
-	// MEJORARRRRR
-	///
-	while (/*!recibioIdPartida &&*/!torneoFinalizo()) {
+	while (!torneoFinalizo() && !murioServidorDelTorneo()) {
 		if (recibioIdPartida) {
 			return true;
 		}
 		usleep(10000);
 	}
-
 	return false;
 }
 
 bool esperarNombreOponente() {
 	//cout << "comienza while de espera de nombre de oponente" << endl;
 	bool recibioNombreOponente = false;
-	while (!recibioNombreOponente && !torneoFinalizo()) {
+	while (!recibioNombreOponente && !torneoFinalizo() && !murioServidorDelTorneo()) {
 		pthread_mutex_lock(&mutex_nombreOponente);
 		if (nombreOponente.length() > 0) {
 			felix2_nombre = nombreOponente;
@@ -1438,7 +1342,7 @@ bool esperarNombreOponente() {
 		usleep(10000);
 	}
 
-	cout << "f esperarNombreOponente ->recibo el nombre de mi oponente:" << felix2_nombre << endl;
+	//cout << "esperarNombreOponente ->recibo el nombre de mi oponente:" << felix2_nombre << endl;
 	if (recibioNombreOponente) {
 		return true;
 	} else {
@@ -1448,7 +1352,7 @@ bool esperarNombreOponente() {
 
 void esperarPosicionInicial() {
 	bool auxRecibioPosicionInicial = false;
-	while (!auxRecibioPosicionInicial) {
+	while (!auxRecibioPosicionInicial && !murioServidorDelTorneo()) {
 		pthread_mutex_lock(&mutex_recibioPosicionInicial);
 		auxRecibioPosicionInicial = recibioPosicionInicial;
 		pthread_mutex_unlock(&mutex_recibioPosicionInicial);
@@ -1461,7 +1365,7 @@ void esperarPosicionInicial() {
 
 void esperarSTART() {
 	bool empezar = false;
-	while (!empezar) {
+	while (!empezar && !murioServidorDelTorneo()) {
 		pthread_mutex_lock(&mutex_start);
 		empezar = start;
 		pthread_mutex_unlock(&mutex_start);
@@ -1607,17 +1511,13 @@ bool cargarImagenes() {
 }
 
 void liberarRecursos() {
-	cout << "liberar recursos" << endl;
+	//cout << "liberar recursos" << endl;
 	//SOCKET
-	//delete (socketTorneo);
 	if (socketTorneo != NULL) {
-		//close(socketTorneo->ID);
 		delete (socketTorneo);
 	}
 
-	//delete (socketPartida);
 	if (socketPartida != NULL) {
-		//close(socketPartida->ID);
 		delete (socketPartida);
 	}
 
