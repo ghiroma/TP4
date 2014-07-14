@@ -84,6 +84,11 @@ void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* 
  */
 void SIG_Handler(int inum) {
 	cout << "Torneo Señal Handler PID:" << getpid() << endl;
+
+	kill(pidServidorPartida, SIGINT);
+	cout << "KILL a partida desde SIGHandler Torneo" << endl;
+
+	wait(NULL);
 	exit(1);
 }
 
