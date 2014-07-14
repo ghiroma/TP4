@@ -113,8 +113,9 @@ void SIG_CHLD(int inum) {
 
 		mostrarPantalla("servermatchdown");
 		sleep(5);
+		exit(1);
 	}
-	exit(1);
+	//exit(1);
 }
 
 /**
