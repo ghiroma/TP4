@@ -80,7 +80,7 @@ void* receptorConexiones(void * args) {
 	while (!stop) {
 		try {
 			cSocket = sSocket->Accept();
-			if (cSocket != NULL){
+			if (cSocket != NULL) {
 				//Recibo el id de partida, para sber contra quien va a jugar.
 				cSocket->ReceiveBloq(buffer, sizeof(buffer));
 				cout << "Recibo mensaje de nuevo cliente: " << buffer << endl;
@@ -275,11 +275,16 @@ void * sharedMemory(void * args) {
 
 			//Verifico si el padre esta vivo
 			if (kill(ppid, 0) == -1) {
+				cout << "SRV PARTIDA: Murio padre" << endl;
 				pthread_mutex_lock(&mutex_partidas);
-				for (map<int, Partida *>::iterator it = partidas.begin(); it != partidas.end(); it++) {
-					delete (it->second);
-					partidas.erase(it);
+				if (!partidas.empty()) {
+					/*for (map<int, Partida *>::iterator it = partidas.begin(); it != partidas.end(); it++) {
+						delete(it->second);
+						cout << "Partida borrada con delete" << endl;
+					}*/
+					partidas.clear();
 				}
+				cout << "Termino de iterar y limpiar partidas" << endl;
 				pthread_mutex_unlock(&mutex_partidas);
 				cout << "Servidor partida: Padre esta muerto" << endl;
 				//stop = true;
