@@ -42,6 +42,8 @@ void mandarPuntajes();
 void liberarRecursos();
 void mostrarPantalla(const char*);
 bool seguirAceptandoNuevosJugadores();
+bool murioServidorDeLaPartida();
+
 //THREADS
 void* temporizadorTorneo(void* data);
 void* lecturaDeResultados(void* data);
