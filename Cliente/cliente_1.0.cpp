@@ -261,7 +261,6 @@ int main(int argc, char *argv[]) {
 
 	//Le mando mi nombre
 	socketTorneo->SendNoBloq(felix1_nombre.c_str(), sizeof(felix1_nombre));
-	perror("Mando mi nombre:");
 
 	//Recibo el ID que me asigna el Torneo
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
