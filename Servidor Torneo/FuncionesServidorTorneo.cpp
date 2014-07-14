@@ -46,6 +46,7 @@ puntajesPartida * resumenPartida;
 extern pid_t pidServidorPartida;
 bool seguirAceptandoJugadores = true;
 bool murioServidorPartida = false;
+bool servidorTorneoSIGINT = false;
 
 SDL_Surface *screen, *background, *tiempo, *jugadores, *infoJugador_part1, *infoJugador_part2;
 SDL_Rect posDestino, posBackground, posTiempo, posJugadores;
@@ -85,9 +86,8 @@ void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* 
  * Manejador de señales
  */
 void SIG_Handler(int inum) {
+	servidorTorneoSIGINT = true;
 	kill(pidServidorPartida, SIGINT);
-	wait(NULL);
-	exit(1);
 }
 
 /**
@@ -107,6 +107,10 @@ void SIG_CHLD(int inum) {
 		exit(1);
 	}
 	//exit(1);
+
+	if(servidorTorneoSIGINT == true){
+		exit(1);
+	}
 }
 
 /**
