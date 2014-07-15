@@ -48,9 +48,11 @@ bool seguirAceptandoJugadores = true;
 bool murioServidorPartida = false;
 bool servidorTorneoSIGINT = false;
 
-SDL_Surface *screen, *background, *tiempo, *jugadores, *infoJugador_part1, *infoJugador_part2;
-SDL_Rect posDestino, posBackground, posTiempo, posJugadores;
-TTF_Font *font;
+extern SDL_Surface *screen, *background;
+SDL_Surface *tiempo, *jugadores, *infoJugador_part1, *infoJugador_part2;
+SDL_Rect posDestino, posTiempo, posJugadores;
+extern SDL_Rect posBackground;
+extern TTF_Font *font;
 
 using namespace std;
 
@@ -328,12 +330,21 @@ void* lecturaDeResultados(void* data) {
 /**
  * THREAD -> Modo Grafico
  */
+SDL_Color colorNegro, colorBlanco;
+int minutos;
+int segundos;
+char txtTiempo[10];
+char txtPlayers[10];
+char txtInfoJugador[MAX_LENGT_TXT_INFO_JUGADOR];
+int cantPlayersConectados;
+multimap<float, int> rankings;
+
 void* modoGrafico(void* data) {
 	struct thModoGrafico_data *torneo;
 	torneo = (struct thModoGrafico_data *) data;
 
+	/*
 	SDL_Color colorNegro, colorBlanco;
-
 	//Colores
 	colorNegro.r = colorNegro.g = colorNegro.b = 0;
 	colorBlanco.r = colorBlanco.g = colorBlanco.b = 255;
@@ -348,6 +359,7 @@ void* modoGrafico(void* data) {
 	posBackground.x = 0;
 	posBackground.y = 0;
 
+	
 	//Inicio modo video
 	if (SDL_Init(SDL_INIT_VIDEO) == -1) {
 		printf("Error al iniciar SDL: %s\n", SDL_GetError());
@@ -358,6 +370,7 @@ void* modoGrafico(void* data) {
 		printf("Error al iniciar SDL_TTF\n");
 		pthread_exit(NULL);
 	}
+	
 
 	//Defino las propiedades de la pantalla del juego
 	screen = SDL_SetVideoMode(ANCHO_PANTALLA_SERVIDOR, ALTO_PANTALLA_SERVIDOR, BPP_SERVIDOR, SDL_HWSURFACE);
@@ -375,19 +388,22 @@ void* modoGrafico(void* data) {
 		printf("Error abriendo la fuente ttf: %s\n", SDL_GetError());
 		pthread_exit(NULL);
 	}
+	*/
 
-	int minutos = torneo->duracion;
-	int segundos = 0;
+	//int minutos = torneo->duracion;
+	//int segundos = 0;
+	minutos = torneo->duracion;
+	segundos = 0;
 	posTiempo.x = 50;
 	posTiempo.y = 140;
-	char txtTiempo[10];
+	//char txtTiempo[10];
 	sprintf(txtTiempo, "TIME %02d:%02d", minutos, segundos);
 	tiempo = TTF_RenderText_Solid(font, txtTiempo, colorBlanco);
 	SDL_BlitSurface(tiempo, NULL, background, &posTiempo);
 
 	posJugadores.x = 530;
 	posJugadores.y = 140;
-	char txtPlayers[10];
+	//char txtPlayers[10];
 	sprintf(txtPlayers, "Players: %d", 0);
 	jugadores = TTF_RenderText_Solid(font, txtPlayers, colorBlanco);
 	SDL_BlitSurface(jugadores, NULL, background, &posJugadores);
@@ -397,9 +413,9 @@ void* modoGrafico(void* data) {
 	SDL_BlitSurface(background, NULL, screen, &posBackground);
 	SDL_Flip(screen);
 
-	char txtInfoJugador[MAX_LENGT_TXT_INFO_JUGADOR];
-	int cantPlayersConectados;
-	multimap<float, int> rankings;
+	//char txtInfoJugador[MAX_LENGT_TXT_INFO_JUGADOR];
+	//int cantPlayersConectados;
+	//multimap<float, int> rankings;
 	bool actualizarTiempo = false;
 	while (true) {
 		background = SDL_LoadBMP("Img/background.bmp");

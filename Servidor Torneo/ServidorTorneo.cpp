@@ -29,6 +29,10 @@ int cantVidas = 0;
 ServerSocket* sSocket;
 int idSHM;
 pid_t pidServidorPartida;
+SDL_Surface *screen, *background;
+TTF_Font *font;
+SDL_Rect posBackground;
+extern SDL_Color colorNegro, colorBlanco;
 
 int main(int argc, char * argv[]) {
 	atexit(liberarRecursos);
@@ -131,6 +135,52 @@ int main(int argc, char * argv[]) {
 		cout << "Error no se pudo crear el thread keepAliveJugadores" << endl;
 		exit(1);
 	}
+
+
+	/////////////////// Preparacion de la parte Grafica /////////////////////
+	//Colores
+	colorNegro.r = colorNegro.g = colorNegro.b = 0;
+	colorBlanco.r = colorBlanco.g = colorBlanco.b = 255;
+
+	background = SDL_LoadBMP("Img/background.bmp");
+	//verificamos si ha ocurrido algun error cargando la imagen
+	if (background == NULL) {
+		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
+		pthread_exit(NULL);
+	}
+
+	posBackground.x = 0;
+	posBackground.y = 0;
+
+	//Inicio modo video
+	if (SDL_Init(SDL_INIT_VIDEO) == -1) {
+		printf("Error al iniciar SDL: %s\n", SDL_GetError());
+		pthread_exit(NULL);
+	}
+	//Inicio modo texto grafico
+	if (TTF_Init() < 0) {
+		printf("Error al iniciar SDL_TTF\n");
+		pthread_exit(NULL);
+	}
+	
+
+	//Defino las propiedades de la pantalla del juego
+	screen = SDL_SetVideoMode(ANCHO_PANTALLA_SERVIDOR, ALTO_PANTALLA_SERVIDOR, BPP_SERVIDOR, SDL_HWSURFACE);
+	if (screen == NULL) {
+		printf("Error estableciendo el modo de video: %s\n", SDL_GetError());
+		pthread_exit(NULL);
+	}
+
+	//Seteo el titulo de la pantalla
+	SDL_WM_SetCaption("Ralph Tournament SERVIDOR", NULL);
+
+	//Cargo la fuente
+	font = TTF_OpenFont("./Img/DejaVuSans.ttf", 24);
+	if (font == NULL) {
+		printf("Error abriendo la fuente ttf: %s\n", SDL_GetError());
+		pthread_exit(NULL);
+	}
+	/////////////////////////////////////////////////////////////////////////
 
 	//Lanzar THREAD ModoGrafico SDL
 	modoGraficoData.duracion = duracionTorneo;
