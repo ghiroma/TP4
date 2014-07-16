@@ -23,6 +23,9 @@ ServerSocket::ServerSocket(unsigned int port, bool blocking) {
 	else
 		this->ID = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 
+	int iSetOption = 1;
+	setsockopt(this->ID, SOL_SOCKET, SO_REUSEADDR, (char*)&iSetOption,sizeof(iSetOption));
+
 	if (this->ID >= 0) {
 		struct sockaddr_in laddress;
 		laddress.sin_addr.s_addr = INADDR_ANY;

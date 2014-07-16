@@ -270,15 +270,6 @@ void * sharedMemory(void * args) {
 
 			//Verifico si el padre esta vivo
 			if (kill(ppid, 0) == -1) {
-				pthread_mutex_lock(&mutex_partidas);
-				if (!partidas.empty()) {
-					/*for (map<int, Partida *>::iterator it = partidas.begin(); it != partidas.end(); it++) {
-						delete(it->second);
-						cout << "Partida borrada con delete" << endl;
-					}*/
-					partidas.clear();
-				}
-				pthread_mutex_unlock(&mutex_partidas);
 				exit(1);
 			}
 
@@ -297,6 +288,7 @@ void * sharedMemory(void * args) {
 							it->second->cSocket1->SendNoBloq(mensajeFinPartida.c_str(), mensajeFinPartida.length());
 						if (it->second->cSocket2 != NULL)
 							it->second->cSocket2->SendNoBloq(mensajeFinPartida.c_str(), mensajeFinPartida.length());
+						delete(it->second);
 						partidas.erase(it);
 						semTorneo->V();
 					}
@@ -310,6 +302,10 @@ void * sharedMemory(void * args) {
 						puntaje->puntajeJugador1 = 0;
 						puntaje->puntajeJugador2 = 0;
 						puntaje->partidaFinalizadaOk = false;
+						delete (it->second->cSocket1);
+						it->second->cSocket1 = NULL;
+						delete (it->second->cSocket2);
+						it->second->cSocket2 = NULL;
 						partidas.erase(it);
 						semTorneo->V();
 					}
@@ -456,6 +452,7 @@ void caseVentanaArreglada(Mensaje mensaje) {
 		message.append(Helper::fillMessage("0"));
 		mensaje.setMensaje(message);
 		Helper::encolar(mensaje, &cola_mensajes_enviar, &mutex_cola_mensajes_enviar);
+		mensaje.partida->estado = ESTADO_FINALIZADO;
 	}
 
 }
@@ -585,8 +582,19 @@ void liberarRecursos() {
 		shmdt(puntaje);
 	shmctl(shmIds.shmId, IPC_RMID, 0);
 	delete (sSocket);
+	sSocket = NULL;
 	delete (semPartida);
+	semPartida = NULL;
 	delete (semTorneo);
+	semTorneo = NULL;
+
+	pthread_mutex_lock(&mutex_partidas);
+	for (map<int, Partida*>::iterator it = partidas.begin(); it != partidas.end(); it++) {
+		delete(it->second);
+	}
+	partidas.clear();
+	pthread_mutex_unlock(&mutex_partidas);
+
 	pthread_mutex_destroy(&mutex_edificio);
 	pthread_mutex_destroy(&mutex_cola_mensajes_enviar);
 	pthread_mutex_destroy(&mutex_cola_mensajes_recibir);

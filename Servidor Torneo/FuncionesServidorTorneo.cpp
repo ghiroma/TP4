@@ -110,7 +110,7 @@ void SIG_CHLD(int inum) {
 	}
 	//exit(1);
 
-	if(servidorTorneoSIGINT == true){
+	if (servidorTorneoSIGINT == true) {
 		exit(1);
 	}
 }
@@ -298,13 +298,12 @@ void* lecturaDeResultados(void* data) {
 
 			///mensajes de prueba
 			/*cout << "CONTENIDO DE SHM" << endl;
-			cout << "id1:" << resumenPartida->idJugador1 << endl;
-			cout << "id2:" << resumenPartida->idJugador2 << endl;
-			cout << "partidaFinalizadaOK:" << resumenPartida->partidaFinalizadaOK << endl;
-			cout << "puntajeJugador1:" << resumenPartida->puntajeJugador1 << endl;
-			cout << "puntajeJugador2:" << resumenPartida->puntajeJugador2 << endl;*/
+			 cout << "id1:" << resumenPartida->idJugador1 << endl;
+			 cout << "id2:" << resumenPartida->idJugador2 << endl;
+			 cout << "partidaFinalizadaOK:" << resumenPartida->partidaFinalizadaOK << endl;
+			 cout << "puntajeJugador1:" << resumenPartida->puntajeJugador1 << endl;
+			 cout << "puntajeJugador2:" << resumenPartida->puntajeJugador2 << endl;*/
 			///////////////////////////////////////////////////////////////////////////////////
-
 			cantPartidasFinalizadas++;
 			/*if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
 			 break;
@@ -344,51 +343,51 @@ void* modoGrafico(void* data) {
 	torneo = (struct thModoGrafico_data *) data;
 
 	/*
-	SDL_Color colorNegro, colorBlanco;
-	//Colores
-	colorNegro.r = colorNegro.g = colorNegro.b = 0;
-	colorBlanco.r = colorBlanco.g = colorBlanco.b = 255;
+	 SDL_Color colorNegro, colorBlanco;
+	 //Colores
+	 colorNegro.r = colorNegro.g = colorNegro.b = 0;
+	 colorBlanco.r = colorBlanco.g = colorBlanco.b = 255;
 
-	background = SDL_LoadBMP("Img/background.bmp");
-	//verificamos si ha ocurrido algun error cargando la imagen
-	if (background == NULL) {
-		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
-		pthread_exit(NULL);
-	}
+	 background = SDL_LoadBMP("Img/background.bmp");
+	 //verificamos si ha ocurrido algun error cargando la imagen
+	 if (background == NULL) {
+	 printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
+	 pthread_exit(NULL);
+	 }
 
-	posBackground.x = 0;
-	posBackground.y = 0;
+	 posBackground.x = 0;
+	 posBackground.y = 0;
 
-	
-	//Inicio modo video
-	if (SDL_Init(SDL_INIT_VIDEO) == -1) {
-		printf("Error al iniciar SDL: %s\n", SDL_GetError());
-		pthread_exit(NULL);
-	}
-	//Inicio modo texto grafico
-	if (TTF_Init() < 0) {
-		printf("Error al iniciar SDL_TTF\n");
-		pthread_exit(NULL);
-	}
-	
 
-	//Defino las propiedades de la pantalla del juego
-	screen = SDL_SetVideoMode(ANCHO_PANTALLA_SERVIDOR, ALTO_PANTALLA_SERVIDOR, BPP_SERVIDOR, SDL_HWSURFACE);
-	if (screen == NULL) {
-		printf("Error estableciendo el modo de video: %s\n", SDL_GetError());
-		pthread_exit(NULL);
-	}
+	 //Inicio modo video
+	 if (SDL_Init(SDL_INIT_VIDEO) == -1) {
+	 printf("Error al iniciar SDL: %s\n", SDL_GetError());
+	 pthread_exit(NULL);
+	 }
+	 //Inicio modo texto grafico
+	 if (TTF_Init() < 0) {
+	 printf("Error al iniciar SDL_TTF\n");
+	 pthread_exit(NULL);
+	 }
 
-	//Seteo el titulo de la pantalla
-	SDL_WM_SetCaption("Ralph Tournament SERVIDOR", NULL);
 
-	//Cargo la fuente
-	font = TTF_OpenFont("./Img/DejaVuSans.ttf", 24);
-	if (font == NULL) {
-		printf("Error abriendo la fuente ttf: %s\n", SDL_GetError());
-		pthread_exit(NULL);
-	}
-	*/
+	 //Defino las propiedades de la pantalla del juego
+	 screen = SDL_SetVideoMode(ANCHO_PANTALLA_SERVIDOR, ALTO_PANTALLA_SERVIDOR, BPP_SERVIDOR, SDL_HWSURFACE);
+	 if (screen == NULL) {
+	 printf("Error estableciendo el modo de video: %s\n", SDL_GetError());
+	 pthread_exit(NULL);
+	 }
+
+	 //Seteo el titulo de la pantalla
+	 SDL_WM_SetCaption("Ralph Tournament SERVIDOR", NULL);
+
+	 //Cargo la fuente
+	 font = TTF_OpenFont("./Img/DejaVuSans.ttf", 24);
+	 if (font == NULL) {
+	 printf("Error abriendo la fuente ttf: %s\n", SDL_GetError());
+	 pthread_exit(NULL);
+	 }
+	 */
 
 	//int minutos = torneo->duracion;
 	//int segundos = 0;
@@ -623,7 +622,6 @@ void* establecerPartidas(void* data) {
 
 	while (!torneoFinalizado() && !murioServidorDeLaPartida()) {
 		//recorro la lista de jugadores viendo a quien le puedo asignar un oponente y que comienze la partida
-		usleep(INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES);
 		pthread_mutex_lock(&mutex_listJugadores);
 		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 			idJugador = it->first;
@@ -667,7 +665,7 @@ void* establecerPartidas(void* data) {
 			}
 		}
 		pthread_mutex_unlock(&mutex_listJugadores);
-
+		usleep(INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES);
 	}
 	//cout << "Thread EstablecerPartidas va a hacer un Exit" << endl;
 	pthread_exit(NULL);

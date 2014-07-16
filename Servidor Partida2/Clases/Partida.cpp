@@ -7,6 +7,7 @@
 
 #include "Partida.h"
 #include "../Support/Constantes.h"
+#include <iostream>
 
 Partida::Partida(int id) {
 	// TODO Auto-generated constructor stub
