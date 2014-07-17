@@ -239,9 +239,11 @@ void *validator2_thread(void* arguments) {
 				caseVentanaArreglando(JUGADOR_2);
 				break;
 			case CD_ID_JUGADOR_I:
+			{
 				int id = atoi(message.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str());
 				caseIdJugador(JUGADOR_2,id);
 				break;
+			}
 			case CD_JUGADOR_LISTO_I:
 				caseJugadorListo(JUGADOR_2);
 				break;
@@ -276,9 +278,11 @@ void *validator1_thread(void * argument) {
 				caseVentanaArreglando(JUGADOR_1);
 				break;
 			case CD_ID_JUGADOR_I:
+			{
 				int id = atoi(message.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str());
 				caseIdJugador(JUGADOR_1,id);
 				break;
+			}
 			case CD_JUGADOR_LISTO_I:
 				caseJugadorListo(JUGADOR_1);
 				break;

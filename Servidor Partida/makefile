@@ -2,8 +2,8 @@ CC=g++
 CFLAGS = -I ./src/includes -pthread
 LFLAGS = -L ./src/libs -pthread
 
-all:FuncionesServidorPartida.o ServidorPartida.o CommunicationSocket.o Helper.o ServerSocket.o Felix.o Edificio.o Ventana.o Semaforo.o Helper.o Timer.o
-	$(CC) $(LFLAGS) -o ServidorPartida FuncionesServidorPartida.o Helper.o ServidorPartida.o CommunicationSocket.o ServerSocket.o Felix.o Edificio.o Ventana.o Semaforo.o Helper.o Timer.o
+all:FuncionesServidorPartida.o ServidorPartida.o CommunicationSocket.o Helper.o ServerSocket.o Felix.o Edificio.o Ventana.o Semaforo.o Timer.o
+	$(CC) $(LFLAGS) -o ServidorPartida FuncionesServidorPartida.o Helper.o ServidorPartida.o CommunicationSocket.o ServerSocket.o Felix.o Edificio.o Ventana.o Semaforo.o Timer.o
 FuncionesServidorPartida.o:FuncionesServidorPartida.cpp
 	$(CC) $(CFLAGS) -c FuncionesServidorPartida.cpp
 ServidorPartida.o:ServidorPartida.cpp
@@ -24,8 +24,6 @@ Helper.o:Support/Helper.cpp
 	$(CC) $(CFLAGS) -c Support/Helper.cpp
 Timer.o:Clases/Timer.cpp
 	$(CC) $(CFLAGS) -c Clases/Timer.cpp
-Helper.o:Support/Helper.cpp
-	$(CC) $(CFLAGS) -c Support/Helper.cpp
 
 .PHONY: clean
 clean:

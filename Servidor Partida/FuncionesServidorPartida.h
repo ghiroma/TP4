@@ -11,6 +11,7 @@
 #include "Clases/CommunicationSocket.h"
 #include "Clases/Edificio.h"
 #include "Clases/Felix.h"
+#include "Clases/Semaforo.h"
 #include <time.h>
 #include <queue>
 #include <string>
@@ -53,7 +54,7 @@ void casePerdidaVida(int nroJugador);
 void caseVentanaArreglada(int nroJugador);
 void caseVentanaArreglando(int jugador);
 void caseJugadorListo(int jugador);
-void caseIdJugador(int jugador);
+void caseIdJugador(int jugador,int id);
 void SIGINT_Handler(int inum);
 void liberarRecursos();
 bool tramoFinalizado(Edificio * edificio);
