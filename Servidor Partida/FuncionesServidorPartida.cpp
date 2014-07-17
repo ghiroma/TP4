@@ -332,8 +332,14 @@ sharedMemory_thread(void * arguments) {
 				//Termino la partida asi que envio mensaje a clientes de terminar.
 				string message(CD_FIN_PARTIDA);
 				message.append(Helper::fillMessage("0"));
-				Helper::encolar(&message,&sender1_queue,&mutex_sender1);
-				Helper::encolar(&message,&sender2_queue,&mutex_sender2);
+				if(cSocket1!=NULL)
+					cSocket1->SendBloq(message.c_str(),message.length());
+				if(cSocket2!=NULL)
+						cSocket2->SendBloq(message.c_str(),message.length());
+				//Helper::encolar(&message,&sender1_queue,&mutex_sender1);
+				//Helper::encolar(&message,&sender2_queue,&mutex_sender2);
+
+				cout<<"Menasje fin de partida enviado"<<endl;
 
 				semaforoPartida->P();
 				puntaje->idJugador1 = felix1->id;
@@ -353,7 +359,7 @@ sharedMemory_thread(void * arguments) {
 		}
 	} catch (const char * err) {
 		cout << "Error inesperado: " << err << " los puntos de esta partida no se veran reflejados en el torneo." << endl;
-		/*exit(1);*/
+		exit(1);
 	}
 	pthread_exit(0);
 }

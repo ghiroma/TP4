@@ -786,6 +786,7 @@ void* EscuchaServidor(void *arg) {
 			case CD_ID_JUGADOR_I:
 				break;
 			case CD_FIN_PARTIDA_I:
+				cout<<"Recibi mensaje fin de partida"<<endl;
 				pthread_mutex_lock(&mutex_partidaFinalizada);
 				solicitudDeNuevaParitda = true;
 				felix2_nombre = "";
