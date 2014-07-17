@@ -239,7 +239,8 @@ void *validator2_thread(void* arguments) {
 				caseVentanaArreglando(JUGADOR_2);
 				break;
 			case CD_ID_JUGADOR_I:
-				caseIdJugador(JUGADOR_2);
+				int id = atoi(message.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str());
+				caseIdJugador(JUGADOR_2,id);
 				break;
 			case CD_JUGADOR_LISTO_I:
 				caseJugadorListo(JUGADOR_2);
@@ -275,7 +276,8 @@ void *validator1_thread(void * argument) {
 				caseVentanaArreglando(JUGADOR_1);
 				break;
 			case CD_ID_JUGADOR_I:
-				caseIdJugador(JUGADOR_1);
+				int id = atoi(message.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str());
+				caseIdJugador(JUGADOR_1,id);
 				break;
 			case CD_JUGADOR_LISTO_I:
 				caseJugadorListo(JUGADOR_1);
@@ -401,7 +403,9 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("200"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
+			pthread_mutex_lock(&mutex_edificio);
 			felix1->mover(0, 0, edificio);
+			pthread_mutex_unlock(&mutex_edificio);
 		} else {
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
@@ -425,7 +429,9 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("140"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
+			pthread_mutex_lock(&mutex_edificio);
 			felix2->mover(0, EDIFICIO_COLUMNAS - 1, edificio);
+			pthread_mutex_unlock(&mutex_edificio);
 		} else {
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
@@ -485,17 +491,18 @@ void caseVentanaArreglando(int jugador) {
 	}
 }
 
-void caseIdJugador(int jugador) {
+void caseIdJugador(int jugador,int id) {
 	string message(CD_CANTIDAD_VIDAS);
 	char aux[5];
 	sprintf(aux, "%d", cantVidas);
 	message.append(Helper::fillMessage(aux));
 
 	if (jugador == JUGADOR_1) {
+		felix1 = new Felix(cantVidas,id);
 		cSocket1->SendBloq(posicionInicial1().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
 		cSocket1->SendBloq(CD_CANTIDAD_VIDAS, LONGITUD_CODIGO + LONGITUD_CONTENIDO);
 	} else if (jugador == JUGADOR_2) {
-
+		felix2 = new Felix(cantVidas,id);
 		cSocket2->SendBloq(posicionInicial2().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
 		cSocket2->SendBloq(CD_CANTIDAD_VIDAS, LONGITUD_CODIGO + LONGITUD_CONTENIDO);
 	}
@@ -523,7 +530,7 @@ void SIGINT_Handler(int inum) {
 void liberarRecursos() {
 	if (puntaje != NULL)
 		shmdt(puntaje);
-	shmctl(shmId, IPC_RMID, 0);
+	//shmctl(shmId, IPC_RMID, 0);
 	delete (cSocket1);
 	cSocket1 = NULL;
 	delete (cSocket2);
