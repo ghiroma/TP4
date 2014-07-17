@@ -279,21 +279,21 @@ int main(int argc, char *argv[]) {
 	mi_id = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO);
 
 	//Recibo el puerto del servidor de partida
-	if (!torneoFinalizo()) {
-		readData = socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
-	} else {
-		mostrarPantalla("servernotfound");
-		sleep(10);
-		exit(1);
-	}
-	if (readData <= 0) {
-		cout << "Se ha cerrado la conexion con el servidor de torneo" << endl;
-		mostrarPantalla("servertorneodown");
-		sleep(10);
-		exit(1);
-	}
-	string aux_puerto(buffer);
-	puertoServidorPartida = atoi(aux_puerto.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
+	/*if (!torneoFinalizo()) {
+	 readData = socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
+	 } else {
+	 mostrarPantalla("servernotfound");
+	 sleep(10);
+	 exit(1);
+	 }*/
+	/*	if (readData <= 0) {
+	 cout << "Se ha cerrado la conexion con el servidor de torneo" << endl;
+	 mostrarPantalla("servertorneodown");
+	 sleep(10);
+	 exit(1);
+	 }
+	 string aux_puerto(buffer);
+	 puertoServidorPartida = atoi(aux_puerto.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());*/
 
 	//Thread para escuchar al servidor de Torneo.
 	resultThEscuchaTorneo = pthread_create(&thEscuchaTorneo, NULL, EscuchaTorneo, &socketTorneo->ID);
@@ -789,6 +789,7 @@ void* EscuchaServidor(void *arg) {
 				pthread_mutex_lock(&mutex_partidaFinalizada);
 				solicitudDeNuevaParitda = true;
 				felix2_nombre = "";
+				puertoServidorPartida = 0;
 				pthread_mutex_unlock(&mutex_partidaFinalizada);
 				break;
 			case CD_EMPEZAR_PARTIDA_I:
@@ -798,7 +799,7 @@ void* EscuchaServidor(void *arg) {
 				break;
 			case CD_CANTIDAD_VIDAS_I:
 				pthread_mutex_lock(&mutex_cantVidas);
-				cout<<"Recibi mi cantidad de vidas"<<endl;
+				cout << "Recibi mi cantidad de vidas" << endl;
 				felix1_vidas = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
 				felix2_vidas = felix1_vidas;
 				pthread_mutex_unlock(&mutex_cantVidas);
@@ -1231,6 +1232,9 @@ bool inicializarNuevaPartida() {
 		return false;
 	}
 
+	esperarPuertoPartida();
+	cout << "Recibi el puerto de partida: " << puertoServidorPartida << endl;
+
 	//cout << "inicializo un nueva partida. Reconecto" << endl;
 	//Me conecto al servidor de partida.
 	try {
@@ -1267,31 +1271,31 @@ bool inicializarNuevaPartida() {
 	messageIDJugador.append(fillMessage(mi_id.c_str()));
 	cola_grafico.push(messageIDJugador);
 
-	cout<<"Mande mi id"<<endl;
+	cout << "Mande mi id" << endl;
 
 	//Espero mi posicion inicial;
 	//cout << "Esperando mi posicion inicial" << endl;
 	esperarPosicionInicial();
 
-	cout<<"Recibi mi posicion inicial"<<endl;
+	cout << "Recibi mi posicion inicial" << endl;
 
 	//Espero la cantidad de vidas
 	esperarCantVidas();
 
-	cout<<"Recibi la cantidad de vidas"<<endl;
+	cout << "Recibi la cantidad de vidas" << endl;
 
 	//Mando que estoy listo.
 	string messageListo(CD_JUGADOR_LISTO);
 	messageListo.append(fillMessage("0"));
 	cola_grafico.push(messageListo);
 
-	cout<<"Envie mensaje de listo"<<endl;
+	cout << "Envie mensaje de listo" << endl;
 
 	//Espero que el Servidor de Partida me mande el mensaje de START
 	//cout << "Esperar signal de START" << endl;
 	esperarSTART();
 
-	cout<<"Recibo mensaje de empezar"<<endl;
+	cout << "Recibo mensaje de empezar" << endl;
 
 	return true;
 }

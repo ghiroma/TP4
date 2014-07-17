@@ -12,12 +12,15 @@
 #include "Clases/Edificio.h"
 #include "Clases/Felix.h"
 #include "Clases/Semaforo.h"
+#include "Clases/ServerSocket.h"
 #include <time.h>
 #include <queue>
 #include <string>
 #include <semaphore.h>
 
 using namespace std;
+
+extern ServerSocket * sSocket;
 
 extern int cantVidas;
 
@@ -33,7 +36,8 @@ extern Felix * felix2;
 
 extern Edificio *edificio;
 
-extern Semaforo * semaforo;
+extern Semaforo * semaforoPartida;
+extern Semaforo * semaforoTorneo;
 
 extern pthread_mutex_t mutex_receiver1;
 extern pthread_mutex_t mutex_receiver2;
