@@ -57,7 +57,6 @@ int main(int argc, char * argv[]) {
 	int resultThLecturaDeResultados;
 
 	signal(SIGINT, SIG_Handler);
-	signal(SIGTERM, SIG_Handler);
 	signal(SIGCHLD, SIG_CHLD);
 
 	//Obtener configuracion
@@ -71,11 +70,11 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
-	puertoServidorPartida = puertoServidorTorneo + 1;
+	puertoServidorPartida = puertoServidorTorneo;
 	cout << "puertoServidorTorneo: " << puertoServidorTorneo << endl;
 
 	//Creo el bloque de memoria compartida
-	key_t key = ftok("/bin/ls", puertoServidorPartida);
+	key_t key = ftok("/bin/ls", puertoServidorTorneo);           /////////////////////////cambiar a una constante
 	if (key == -1) {
 		cout << "Error al generar clave de memoria compartida" << endl;
 		exit(1);
@@ -103,7 +102,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	///Lanzar Servidor Partida
-	if ((pidServidorPartida = fork()) == 0) {
+	/*if ((pidServidorPartida = fork()) == 0) {
 		//Proceso hijo
 		char auxCantVidas[2];
 		sprintf(auxCantVidas, "%d", cantVidas);
@@ -114,13 +113,13 @@ int main(int argc, char * argv[]) {
 
 		char *argumentos[] = { nombreEjecutable, auxPuertoServidorPartida, auxCantVidas, NULL };
 		//execv("../Servidor Partida2/Debug/Servidor Partida2", argumentos);
-		execv("../Servidor Partida2/ServidorPartida", argumentos);
+		execv("../Servidor Partida/ServidorPartida", argumentos);
 		cout << "ERROR al ejecutar execv Nueva Partida" << endl;
 		exit(1);
 	} else if (pidServidorPartida < 0) {
 		cout << "Error al forkear" << endl;
 		exit(1);
-	}
+	}*/
 
 	//Lanzar THREAD establecer partidas
 	resultThEstablecerPartidas = pthread_create(&thEstablecerPartidas, NULL, establecerPartidas, NULL);

@@ -944,7 +944,7 @@ void* EscuchaTeclas(void *arg) {
 	short int f1_colu;
 
 	//Lupeo escuchando el teclado.
-	while (SDL_WaitEvent(&evento) != 0) {
+	while (!murioServidorDelTorneo() && SDL_WaitEvent(&evento) != 0) {
 
 		f1_fila = felix1_posicion.fila;
 		f1_colu = felix1_posicion.columna;
@@ -1513,9 +1513,8 @@ void liberarRecursos() {
 	pthread_mutex_destroy(&mutex_murioServidorTorneo);
 
 	//SDL
-	SDL_Quit();
 	TTF_Quit();
-
+	SDL_Quit();
 }
 
 bool nuevaPartidaSolicitada() {

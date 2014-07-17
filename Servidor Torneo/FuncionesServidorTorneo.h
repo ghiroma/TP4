@@ -26,10 +26,10 @@ struct puntajesPartida {
 	bool partidaFinalizadaOK;
 };
 
-struct datosPartida {
+/*struct datosPartida {
 	int idShm;
 	pid_t pidPartida;
-};
+};*/
 
 void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* tiempoInmunidad, int* cantVidas);
 void SIG_Handler(int inum);
