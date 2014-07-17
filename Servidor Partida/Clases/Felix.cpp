@@ -6,6 +6,8 @@
  */
 
 #include "Felix.h"
+#include "../Support/Helper.h"
+#include "../Support/Constantes.h"
 #include <iostream>
 
 using namespace std;
@@ -16,6 +18,7 @@ Felix::Felix(int cantVidas) {
 	this->columna = 0;
 	this->puntaje_parcial = 0;
 	this->cantidad_vidas = cantVidas;
+	this->ultimoChoque = 0;
 }
 
 Felix::Felix(int cantVidas, int id) {
@@ -24,6 +27,7 @@ Felix::Felix(int cantVidas, int id) {
 	this->columna = 0;
 	this->puntaje_parcial = 0;
 	this->cantidad_vidas = cantVidas;
+	this->ultimoChoque = 0;
 }
 
 bool Felix::mover(int columna, int fila, Edificio * edificio) {
@@ -39,7 +43,7 @@ bool Felix::mover(int columna, int fila, Edificio * edificio) {
 	 && !edificio->ventanas[fila][columna].persiana) {*/
 
 	if (fila < edificio->filas && fila >= 0 && columna < edificio->columnas && columna >= 0) {
-		if (edificio->ventanas[fila][columna].ocupado == false && !(fila==0 && columna==2)) {
+		if (edificio->ventanas[fila][columna].ocupado == false && !(fila == 0 && columna == 2)) {
 			edificio->ventanas[this->fila][this->columna].ocupado = false;
 			edificio->ventanas[fila][columna].ocupado = true;
 			this->columna = columna;
@@ -56,19 +60,28 @@ bool Felix::reparar(Edificio * edificio) {
 
 		if (edificio->ventanas[this->fila][this->columna].ventanaRota > 0) {
 			edificio->ventanas[this->fila][this->columna].ventanaRota--;
-			this->puntaje_parcial=this->puntaje_parcial +10;
+			this->puntaje_parcial = this->puntaje_parcial + 10;
 			return true;
 		}
 	}
 	return false;
 }
 
-bool Felix::perderVida() {
-	this->cantidad_vidas--;
-	if (this->cantidad_vidas <= 0) {
-		return true;
+/*
+ * Devuelve 1 si pierde vida
+ * Devuelve -1 si muere
+ * Devuelve 0 si no pierde vida
+ */
+int Felix::perderVida() {
+	if (Helper::timeDifference(INTERVALOS_INVENCIBILIDAD, this->ultimoChoque)) {
+		this->cantidad_vidas--;
+		if (this->cantidad_vidas <= 0) {
+			return -1;
+		}
+		this->ultimoChoque = time(0);
+		return 1;
 	}
-	return false;
+	return 0;
 }
 
 Felix::~Felix() {
