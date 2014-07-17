@@ -19,6 +19,14 @@ Helper::~Helper() {
 	// TODO Auto-generated destructor stub
 }
 
+bool Helper::timeDifference(int timeDifference, time_t startingTime) {
+	if ((time(0) - startingTime) > timeDifference) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
 string Helper::fillMessage(string message) {
 	string content;
 	int cantCeros = LONGITUD_CONTENIDO - message.length();
