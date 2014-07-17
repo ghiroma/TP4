@@ -31,6 +31,9 @@ using namespace std;
 
 pid_t pid;
 
+key_t shmId;
+
+int cantVidas;
 int filaPreviaPersiana = 0;
 int columnaPreviaPersiana = 0;
 
@@ -39,6 +42,8 @@ bool cliente1_conectado = true;
 bool cliente2_conectado = true;
 bool cliente1_jugando = true;
 bool cliente2_jugando = true;
+bool cliente1_listo = false;
+bool cliente2_listo = false;
 
 queue<string> receiver1_queue;
 queue<string> receiver2_queue;
@@ -53,6 +58,8 @@ Felix *felix2;
 
 Edificio *edificio;
 
+Semaforo * semaforo;
+
 pthread_mutex_t mutex_receiver1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_receiver2 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_sender1 = PTHREAD_MUTEX_INITIALIZER;
@@ -61,7 +68,6 @@ pthread_mutex_t mutex_sender2 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_edificio = PTHREAD_MUTEX_INITIALIZER;
 
 struct puntajes * puntaje;
-struct idsSharedResources shmIds;
 
 /*
  * Thread encargado de enviar los mensajes de los sucesos del juego no pertenecientes
@@ -80,18 +86,21 @@ timer_thread(void* arg) {
 			Helper::encolar(&message, &sender2_queue, &mutex_sender2);
 		}
 
-		message = timer.ralph(edificio->nivel);
-		if (message.length() > 0) {
-			Helper::encolar(&message, &sender1_queue, &mutex_sender1);
-			Helper::encolar(&message, &sender2_queue, &mutex_sender2);
-		}
+		if (cliente1_listo == true && cliente2_listo == true) {
 
-		message = timer.paloma(edificio->nivel);
-		if (message.length() > 0) {
-			Helper::encolar(&message, &sender1_queue, &mutex_sender1);
-			Helper::encolar(&message, &sender2_queue, &mutex_sender2);
-		}
+			message = timer.ralph(edificio->nivel);
+			if (message.length() > 0) {
+				Helper::encolar(&message, &sender1_queue, &mutex_sender1);
+				Helper::encolar(&message, &sender2_queue, &mutex_sender2);
+			}
 
+			message = timer.paloma(edificio->nivel);
+			if (message.length() > 0) {
+				Helper::encolar(&message, &sender1_queue, &mutex_sender1);
+				Helper::encolar(&message, &sender2_queue, &mutex_sender2);
+			}
+
+		}
 		usleep(POOLING_DEADTIME);
 	}
 
@@ -103,12 +112,12 @@ timer_thread(void* arg) {
  */
 void*
 sender1_thread(void * arguments) {
-	while (stop == false && cliente1_conectado) {
+	while (!stop && cliente1_conectado) {
 		if (!sender1_queue.empty()) {
 			//Lo que venga del timer y validator, se replica a ambos jugadores.
 			string message;
 			message = Helper::desencolar(&sender1_queue, &mutex_sender1);
-			if (cliente1_conectado) {
+			if (cliente1_conectado && cSocket1 != NULL) {
 				cSocket1->SendBloq(message.c_str(), message.length());
 			}
 		}
@@ -124,11 +133,11 @@ sender1_thread(void * arguments) {
  */
 void*
 sender2_thread(void * arguments) {
-	while (stop == false && cliente2_conectado) {
+	while (!stop && cliente2_conectado) {
 		if (!sender2_queue.empty()) {
 			string message;
 			message = Helper::desencolar(&sender2_queue, &mutex_sender2);
-			if (cliente2_conectado) {
+			if (cliente2_conectado && cSocket2 != NULL) {
 				cSocket2->SendBloq(message.c_str(), message.length());
 			}
 		}
@@ -142,13 +151,15 @@ sender2_thread(void * arguments) {
  * Thread encargado de la recepcion de mensajes del jugador1 y detectar la
  * desconexion del jugador 1.
  */
+
+//TODO si se desconecto y nunca estuvo listo, entonces decirle al otro cliente que se desconecte.
 void*
 receiver1_thread(void * fd) {
 	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	int readDataCode;
 	bzero(buffer, sizeof(buffer));
 
-	while (stop == false && cliente1_conectado) {
+	while (!stop && cliente1_conectado && cSocket1 != NULL) {
 		readDataCode = cSocket1->ReceiveBloq(buffer, sizeof(buffer));
 		if (readDataCode > 0) {
 			string aux(buffer);
@@ -161,6 +172,7 @@ receiver1_thread(void * fd) {
 			cliente1_conectado = false;
 			cliente1_jugando = false;
 			delete (cSocket1);
+			cSocket1 = NULL;
 		}
 		usleep(POOLING_DEADTIME);
 	}
@@ -178,7 +190,7 @@ receiver2_thread(void * fd) {
 	int readDataCode;
 	bzero(buffer, sizeof(buffer));
 
-	while (stop == false && cliente2_conectado) {
+	while (!stop && cliente2_conectado && cSocket2 != NULL) {
 		readDataCode = cSocket2->ReceiveNoBloq(buffer, sizeof(buffer));
 		if (readDataCode > 0) {
 			string mensaje(buffer);
@@ -190,6 +202,7 @@ receiver2_thread(void * fd) {
 			cliente2_conectado = false;
 			cliente2_jugando = false;
 			delete (cSocket2);
+			cSocket2 = NULL;
 		}
 
 		usleep(POOLING_DEADTIME);
@@ -202,53 +215,74 @@ receiver2_thread(void * fd) {
  * Thread encargado de validar las acciones de los clientes y devolver mensajes
  * de confirmacion.
  */
-void *validator_thread(void * argument) {
 
-	while (stop == false && (cliente1_conectado || cliente2_conectado)) {
-		if (!receiver1_queue.empty()) {
-			string message = receiver1_queue.front();
-			receiver1_queue.pop();
-			string scodigo = message.substr(0, LONGITUD_CODIGO);
-			int codigo = atoi(scodigo.c_str());
-			switch (codigo) {
-			case CD_MOVIMIENTO_FELIX_I:
-				caseMovimientoFelix(1, &message);
-				break;
-			case CD_PERDIDA_VIDA_I:
-				casePerdidaVida(1);
-				break;
-			case CD_VENTANA_ARREGLADA_I:
-				caseVentanaArreglada(1);
-				break;
-			case CD_VENTANA_ARREGLANDO_I:
-				caseVentanaArreglando(1);
-				break;
-			}
-
-		}
-
+void *validator2_thread(void* arguments) {
+	while (!stop && cliente2_conectado) {
 		if (!receiver2_queue.empty()) {
-			string message = receiver2_queue.front();
-			receiver2_queue.pop();
+			string message = Helper::desencolar(&receiver2_queue, &mutex_receiver2);
+			if (message.length() == (LONGITUD_CODIGO + LONGITUD_CONTENIDO)) {
+
+			}
 			string scodigo = message.substr(0, LONGITUD_CODIGO);
 			int codigo = atoi(scodigo.c_str());
 			switch (codigo) {
 			case CD_MOVIMIENTO_FELIX_I:
-				caseMovimientoFelix(2, &message);
+				caseMovimientoFelix(JUGADOR_2, &message);
 				break;
 			case CD_PERDIDA_VIDA_I:
-				casePerdidaVida(2);
+				casePerdidaVida(JUGADOR_2);
 				break;
-
 			case CD_VENTANA_ARREGLADA_I:
-				caseVentanaArreglada(2);
+				caseVentanaArreglada(JUGADOR_2);
 				break;
 			case CD_VENTANA_ARREGLANDO_I:
-				caseVentanaArreglando(2);
+				caseVentanaArreglando(JUGADOR_2);
+				break;
+			case CD_ID_JUGADOR_I:
+				caseIdJugador(JUGADOR_2);
+				break;
+			case CD_JUGADOR_LISTO_I:
+				caseJugadorListo(JUGADOR_2);
 				break;
 			}
 		}
+		usleep(POOLING_DEADTIME);
+	}
+}
 
+void *validator1_thread(void * argument) {
+
+	while (!stop && cliente1_conectado) {
+		pthread_mutex_lock(&mutex_receiver1);
+		if (!receiver1_queue.empty()) {
+			string message = Helper::desencolar(&receiver1_queue, &mutex_receiver1);
+			if (message.length() == (LONGITUD_CODIGO + LONGITUD_CONTENIDO)) {
+
+			}
+			string scodigo = message.substr(0, LONGITUD_CODIGO);
+			int codigo = atoi(scodigo.c_str());
+			switch (codigo) {
+			case CD_MOVIMIENTO_FELIX_I:
+				caseMovimientoFelix(JUGADOR_1, &message);
+				break;
+			case CD_PERDIDA_VIDA_I:
+				casePerdidaVida(JUGADOR_1);
+				break;
+			case CD_VENTANA_ARREGLADA_I:
+				caseVentanaArreglada(JUGADOR_1);
+				break;
+			case CD_VENTANA_ARREGLANDO_I:
+				caseVentanaArreglando(JUGADOR_1);
+				break;
+			case CD_ID_JUGADOR_I:
+				caseIdJugador(JUGADOR_1);
+				break;
+			case CD_JUGADOR_LISTO_I:
+				caseJugadorListo(JUGADOR_1);
+				break;
+			}
+		}
+		pthread_mutex_unlock(&mutex_receiver1);
 		usleep(POOLING_DEADTIME);
 	}
 
@@ -262,11 +296,11 @@ void *validator_thread(void * argument) {
 void*
 sharedMemory_thread(void * arguments) {
 	try {
-		int shmId = shmget(shmIds.shmId, sizeof(struct puntajes), PERMISOS_SHM);
-		if (shmId < 0) {
+		int shm = shmget(shmId, sizeof(struct puntajes), PERMISOS_SHM);
+		if (shm < 0) {
 			throw "Error al obtener memoria compartida";
 		}
-		puntaje = (struct puntajes *) shmat(shmId, (void *) 0, 0);
+		puntaje = (struct puntajes *) shmat(shm, (void *) 0, 0);
 		if (puntaje == (void *) -1) {
 			throw "Error al mapear la memoria compartida";
 		}
@@ -290,12 +324,13 @@ sharedMemory_thread(void * arguments) {
 				cout << "SRV PARTIDA: Puntajes escritos" << endl;
 
 				stop = true;
+				sleep(1);
 			}
 
 			usleep(POOLING_DEADTIME);
 		}
 	} catch (const char * err) {
-		cout << "Error inesperado: " << err <<" los puntos de esta partida no se veran reflejados en el torneo."<< endl;
+		cout << "Error inesperado: " << err << " los puntos de esta partida no se veran reflejados en el torneo." << endl;
 		/*exit(1);*/
 	}
 	pthread_exit(0);
@@ -306,51 +341,47 @@ sharedMemory_thread(void * arguments) {
  */
 
 void caseMovimientoFelix(int jugador, string *message) {
-	int fila;
-	int columna;
-	columna = atoi(message->substr(5, 1).c_str());
-	fila = atoi(message->substr(6, 1).c_str());
+	int columna = atoi(message->substr(3, 2).c_str());
+	int fila = atoi(message->substr(5, 2).c_str());
 
-	if (jugador == 1) {
-		if (felix1->mover(columna, fila, edificio)) {
-			char auxFila[2];
-			char auxColumna[2];
-			char aux1[5] = { "1" };
-			char aux2[5] = { "2" };
+	Felix * felixJugador = 0;
 
-			sprintf(auxFila, "%d", fila);
-			sprintf(auxColumna, "%d", columna);
+	if (jugador == JUGADOR_1)
+		felixJugador = felix1;
+	else if (jugador == JUGADOR_2)
+		felixJugador = felix2;
 
-			strcat(aux1, auxColumna);
-			strcat(aux1, auxFila);
-			strcat(aux2, auxColumna);
-			strcat(aux2, auxFila);
+	int nuevaFila = felixJugador->fila + fila;
+	int nuevaColumna = felixJugador->columna + columna;
 
-			string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO) + Helper::fillMessage(aux1);
-			string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO) + Helper::fillMessage(aux2);
+	if (felixJugador->mover(nuevaColumna, nuevaFila, edificio)) {
 
-			Helper::encolar(&mensaje_movimiento1, &sender1_queue, &mutex_sender1);
-			Helper::encolar(&mensaje_movimiento2, &sender2_queue, &mutex_sender2);
-		}
-	} else {
-		if (felix2->mover(columna, fila, edificio)) {
-			char auxFila[2];
-			char auxColumna[2];
-			char aux1[5] = { "2" };
-			char aux2[5] = { "1" };
+//Construyo nuevo mensaje a enviar.
+		char auxFila[2];
+		char auxColumna[2];
+		char aux1[5] = { "1" };
+		char aux2[5] = { "2" };
 
-			sprintf(auxFila, "%d", fila);
-			sprintf(auxColumna, "%d", columna);
+		sprintf(auxFila, "%d", felixJugador->fila);
+		sprintf(auxColumna, "%d", felixJugador->columna);
 
-			strcat(aux1, auxColumna);
-			strcat(aux1, auxFila);
-			strcat(aux2, auxColumna);
-			strcat(aux2, auxFila);
-
-			string mensaje_movimiento1 = message->substr(0, LONGITUD_CODIGO) + Helper::fillMessage(aux1);
-			string mensaje_movimiento2 = message->substr(0, LONGITUD_CODIGO) + Helper::fillMessage(aux2);
-			Helper::encolar(&mensaje_movimiento1, &sender1_queue, &mutex_sender1);
-			Helper::encolar(&mensaje_movimiento2, &sender2_queue, &mutex_sender2);
+		strcat(aux1, auxColumna);
+		strcat(aux1, auxFila);
+		strcat(aux2, auxColumna);
+		strcat(aux2, auxFila);
+//Envio mensaje al jugador1.
+		string message1(CD_MOVIMIENTO_FELIX);
+		string message2(CD_MOVIMIENTO_FELIX);
+		if (felixJugador == felix1) {
+			message1.append(Helper::fillMessage(aux1));
+			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
+			message2.append(Helper::fillMessage(aux2));
+			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
+		} else if (felixJugador == felix2) {
+			message1.append(Helper::fillMessage(aux2));
+			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
+			message2.append(Helper::fillMessage(aux1));
+			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
 		}
 
 	}
@@ -454,6 +485,37 @@ void caseVentanaArreglando(int jugador) {
 	}
 }
 
+void caseIdJugador(int jugador) {
+	string message(CD_CANTIDAD_VIDAS);
+	char aux[5];
+	sprintf(aux, "%d", cantVidas);
+	message.append(Helper::fillMessage(aux));
+
+	if (jugador == JUGADOR_1) {
+		cSocket1->SendBloq(posicionInicial1().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+		cSocket1->SendBloq(CD_CANTIDAD_VIDAS, LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+	} else if (jugador == JUGADOR_2) {
+
+		cSocket2->SendBloq(posicionInicial2().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+		cSocket2->SendBloq(CD_CANTIDAD_VIDAS, LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+	}
+}
+
+void caseJugadorListo(int jugador) {
+	if (jugador == JUGADOR_1) {
+		cliente1_listo = true;
+	} else if (jugador == JUGADOR_2) {
+		cliente2_listo = true;
+	}
+
+	if (cliente1_listo == true && cliente2_listo == true) {
+		string message(CD_EMPEZAR_PARTIDA);
+		message.append(Helper::fillMessage("0"));
+		Helper::encolar(&message, &sender1_queue, &mutex_sender1);
+		Helper::encolar(&message, &sender2_queue, &mutex_sender2);
+	}
+}
+
 void SIGINT_Handler(int inum) {
 	stop = true;
 }
@@ -461,9 +523,17 @@ void SIGINT_Handler(int inum) {
 void liberarRecursos() {
 	if (puntaje != NULL)
 		shmdt(puntaje);
-	shmctl(shmIds.shmId, IPC_RMID, 0);
+	shmctl(shmId, IPC_RMID, 0);
 	delete (cSocket1);
+	cSocket1 = NULL;
 	delete (cSocket2);
+	cSocket2 = NULL;
+	delete (felix1);
+	felix1 = NULL;
+	delete (felix2);
+	felix2 = NULL;
+	delete (semaforo);
+	semaforo = NULL;
 }
 
 string posicionInicial1() {

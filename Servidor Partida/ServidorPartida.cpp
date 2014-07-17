@@ -37,8 +37,7 @@ struct args_struct {
 int main(int argc, char * argv[]) {
 	atexit(liberarRecursos);
 
-	unsigned int puerto;
-	int cantVidas;
+	unsigned int puerto=0;
 	int cantClientes = 0;
 
 	struct timeval timeout;
@@ -47,9 +46,10 @@ int main(int argc, char * argv[]) {
 
 	cSocket1 = NULL;
 	cSocket2 = NULL;
-
 	felix1 = NULL;
 	felix2 = NULL;
+	edificio = NULL;
+	semaforo = NULL;
 
 	pthread_t thread_timer;
 	pthread_t thread_receiver1;
@@ -64,9 +64,7 @@ int main(int argc, char * argv[]) {
 
 	srand(time(NULL));
 
-	pid = getpid();
-	cout << "PARTIDA -> getppid() = " << getppid << endl;
-	cout << "PARTIDA -> getpid() = " << getpid() << endl;
+	pid = getppid();
 
 	/*
 	 * Obtengo puertos y cantidad de vidas de felix por parametros.
@@ -74,8 +72,8 @@ int main(int argc, char * argv[]) {
 	if (argc == 2) {
 		puerto = atoi(argv[0]);
 		cantVidas = atoi(argv[1]);
-		shmIds.shmId = ftok("/bin/ls", puerto);
-		if (shmIds.shmId == -1) {
+		shmId = ftok("/bin/ls", puerto);
+		if (shmId == -1) {
 			cout << "Error al generar el shmId. " << endl;
 			exit(1);
 		}
@@ -134,9 +132,17 @@ int main(int argc, char * argv[]) {
 	cSocket1->SendBloq(posicionInicial1().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
 	cSocket2->SendBloq(posicionInicial2().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
 
+	//Envio la cantidad de vida a cada jugador.
+	string message(CD_CANTIDAD_VIDAS);
+	char aux[3];
+	sprintf(aux,"%d",cantVidas);
+	message.append(Helper::fillMessage(aux));
+	cSocket1->SendBloq(message.c_str(),LONGITUD_CODIGO+LONGITUD_CONTENIDO);
+	cSocket2->SendBloq(message.c_str(),LONGITUD_CODIGO+LONGITUD_CONTENIDO);
+
 	edificio = new Edificio(EDIFICIO_FILAS_1, EDIFICIO_COLUMNAS, 0);
 
-//Creo los 4 thread.
+//Creo los threads.
 	pthread_create(&thread_timer, NULL, timer_thread, NULL);
 	pthread_create(&thread_receiver1, NULL, receiver1_thread, NULL);
 	pthread_create(&thread_receiver2, NULL, receiver2_thread, NULL);

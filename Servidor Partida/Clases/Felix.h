@@ -20,12 +20,13 @@ public:
 	short int columna;
 	short int cantidad_vidas;
 	unsigned int puntaje_parcial;
+	time_t ultimoChoque;
 
 	Felix(int cantVidas);
 	Felix(int cantVidas,int id);
 	bool mover(int fila, int columna, Edificio * edificio);
 	bool reparar(Edificio * edificio);
-	bool perderVida();
+	int perderVida();
 	virtual ~Felix();
 };
 

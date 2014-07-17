@@ -18,7 +18,11 @@
 
 using namespace std;
 
+extern int cantVidas;
+
 extern pid_t pid;
+
+extern key_t shmId;
 
 extern CommunicationSocket * cSocket1;
 extern CommunicationSocket * cSocket2;
@@ -28,13 +32,13 @@ extern Felix * felix2;
 
 extern Edificio *edificio;
 
+extern Semaforo * semaforo;
+
 extern pthread_mutex_t mutex_receiver1;
 extern pthread_mutex_t mutex_receiver2;
 extern pthread_mutex_t mutex_sender1;
 extern pthread_mutex_t mutex_sender2;
 extern pthread_mutex_t mutex_edificio;
-
-extern struct idsSharedResources shmIds;
 
 void* timer_thread(void* argument);
 void* receiver1_thread(void * argument);
@@ -47,6 +51,8 @@ void caseMovimientoFelix (int jugador, string *message);
 void casePerdidaVida(int nroJugador);
 void caseVentanaArreglada(int nroJugador);
 void caseVentanaArreglando(int jugador);
+void caseJugadorListo(int jugador);
+void caseIdJugador(int jugador);
 void SIGINT_Handler(int inum);
 void liberarRecursos();
 bool tramoFinalizado(Edificio * edificio);

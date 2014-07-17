@@ -12,7 +12,7 @@ Semaforo::Semaforo(const char* nombre, int valor) {
 
     this->sem = sem_open(nombre, O_CREAT, PERMISOS, valor);
     if (this->sem == (sem_t*) - 1) {
-        cout << "Error creando el semaforo: " << nombre << endl;
+        throw "Error creando el semaforo";
     }
     this->nombre = nombre;
     this->pid = getpid();
@@ -21,7 +21,7 @@ Semaforo::Semaforo(const char* nombre, int valor) {
 Semaforo::Semaforo(const char* nombre) {
     this->sem = sem_open(nombre, O_CREAT, PERMISOS);
     if (this->sem == (sem_t*) - 1) {
-        cout << "Error creando el semaforo: " << nombre << endl;
+        throw "Error creando el semaforo";
     }
     this->nombre = nombre;
     this->pid = getpid();
@@ -53,7 +53,7 @@ void Semaforo::setSem_t(sem_t* dirSem){
 
 int Semaforo::P() {
     if (sem_wait(this->sem) == -1) {
-        cout << "Error - " << this->nombre << ".P()" << endl;
+        throw "Error al realizar P de semaforo";
         return -1;
     }
     return 1;
@@ -61,21 +61,15 @@ int Semaforo::P() {
 
 int Semaforo::V() {
     if (sem_post(this->sem) == -1) {
-        cout << "Error - " << this->nombre << ".V()" << endl;
+        throw "Error al realizar V del semaforo";
         return -1;
     }
     return 1;
 }
 
 void Semaforo::close() {
-    if (this->pid == getpid()) {
-        if (sem_close(this->sem) == -1) {
-            cout << "Error en sem_close(" << this->nombre << ")" << endl;
-        }
-        if (sem_unlink(this->nombre) == -1) {
-            cout << "Error en sem_unlink(" << this->nombre << ")" << endl;
-        }
-    }
+	sem_close(this->sem);       
+	//sem_unlink(this->nombre);
 }
 
 Semaforo::~Semaforo() {

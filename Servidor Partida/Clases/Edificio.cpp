@@ -24,8 +24,8 @@ Edificio::Edificio(int filas, int columnas) {
 
 Edificio::~Edificio() {
 	for (int i = 0; i < this->filas; i++) {
-		delete (this->ventanas[i]);
+		delete[] this->ventanas[i];
 	}
-	delete (this->ventanas);
+	delete[] this->ventanas;
 }
 
