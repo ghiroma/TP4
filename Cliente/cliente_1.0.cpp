@@ -101,7 +101,7 @@ bool torneoFinalizo();
 bool nuevaPartidaSolicitada();
 void esperarPuertoPartida();
 bool esperarNombreOponente();
-bool esperarIdPartida();
+//bool esperarIdPartida();
 void esperarSTART();
 void esperarPosicionInicial();
 void inicializarVariablesDeLaPartida();
@@ -164,7 +164,7 @@ SDL_Rect pantalla_juego, pantalla_texto, pantalla_puntos, pantalla_vidas, posBac
 SDL_Color color_texto;
 TTF_Font *fuente;
 
-unsigned int idPartida = 0;
+//unsigned int idPartida = 0;
 unsigned int puertoServidorPartida = 0;
 //configuracion archivo configFile
 unsigned short int puertoTorneo;
@@ -186,7 +186,7 @@ bool solicitudDeNuevaParitda = false;
 bool start = false;
 bool recibioPosicionInicial = false;
 int partidasJugadas = 0;
-bool recibioIdPartida = false;
+//bool recibioIdPartida = false;
 
 CommunicationSocket * socketTorneo;
 CommunicationSocket * socketPartida;
@@ -892,10 +892,10 @@ void* EscuchaTorneo(void *arg) {
 				//salgo del thread porque este el ultimo mensaje que me interesa
 				pthread_exit(NULL);
 				break;
-			case CD_ID_PARTIDA_I:
+			/*case CD_ID_PARTIDA_I:
 				idPartida = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
 				recibioIdPartida = true;
-				break;
+				break;*/
 			case CD_NOMBRE_I:
 				//recibo y limpio el nombre de ceros
 				mensajeNombre = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str();
@@ -1211,13 +1211,13 @@ bool inicializarNuevaPartida() {
 
 	//Espero id de partida (del torneo)
 	//cout << "Esperando ID Partida" << endl;
-	if (esperarIdPartida()) {
+	/*if (esperarIdPartida()) {
 		//Le llega el Id de Partida
 		recibioIdPartida = false;
 	} else {
 		salir = 'S';
 		return false;
-	}
+	}*/
 
 	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
 	//cout << "Esperando nombre de oponente" << endl;
@@ -1252,12 +1252,12 @@ bool inicializarNuevaPartida() {
 	inicializarVariablesDeLaPartida();
 
 	//Mando mi IdDePartida
-	string messageIDPartida(CD_ID_PARTIDA);
+	/*string messageIDPartida(CD_ID_PARTIDA);
 	char aux[5];
 	sprintf(aux, "%d", idPartida);
 	//cout << "El nuevo idPartida es: " << aux << endl;
 	messageIDPartida.append(fillMessage(aux));
-	cola_grafico.push(messageIDPartida);
+	cola_grafico.push(messageIDPartida);*/
 
 	//Espero mi posicion inicial;
 	//cout << "Esperando mi posicion inicial" << endl;
@@ -1302,7 +1302,7 @@ bool esperarCantVidas() {
 	return false;
 }
 
-bool esperarIdPartida() {
+/*bool esperarIdPartida() {
 	//cout << "esperando id Partida" << endl;
 	while (!torneoFinalizo() && !murioServidorDelTorneo()) {
 		if (recibioIdPartida) {
@@ -1311,7 +1311,7 @@ bool esperarIdPartida() {
 		usleep(10000);
 	}
 	return false;
-}
+}*/
 
 bool esperarNombreOponente() {
 	//cout << "comienza while de espera de nombre de oponente" << endl;
