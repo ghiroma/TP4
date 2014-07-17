@@ -74,7 +74,8 @@ int main(int argc, char * argv[]) {
 	cout << "puertoServidorTorneo: " << puertoServidorTorneo << endl;
 
 	//Creo el bloque de memoria compartida
-	key_t key = ftok("/bin/ls", puertoServidorTorneo);           /////////////////////////cambiar a una constante
+	//key_t key = ftok("/bin/ls", puertoServidorTorneo);           /////////////////////////cambiar a una constante
+	key_t key = ftok("/bin/ls", 666);
 	if (key == -1) {
 		cout << "Error al generar clave de memoria compartida" << endl;
 		exit(1);

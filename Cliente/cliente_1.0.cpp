@@ -102,19 +102,20 @@ bool nuevaPartidaSolicitada();
 void esperarPuertoPartida();
 bool esperarNombreOponente();
 //bool esperarIdPartida();
-void esperarSTART();
-void esperarPosicionInicial();
-void inicializarVariablesDeLaPartida();
+		bool esperarCantVidas();
+		void esperarSTART();
+		void esperarPosicionInicial();
+		void inicializarVariablesDeLaPartida();
 
-/* 
+		/*
 
- 0 - Pantalla intermedia para ingresar el nombre.
- 1 - Pantalla intermedia de cambio de tramo.
- 2 - Pantalla intermedia a la espera de partidas.
+		 0 - Pantalla intermedia para ingresar el nombre.
+		 1 - Pantalla intermedia de cambio de tramo.
+		 2 - Pantalla intermedia a la espera de partidas.
 
- */
+		 */
 
-SDL_Surface *superficie,
+		SDL_Surface *superficie,
 *backgroundImg, *pared_tramo1n1, *pared_tramo2n1, *pared_tramo3n1, *pared, *ventana_sana, *ventana_rota1, *ventana_rota2, *ventana_rota3, *ventana_rota4, *ventana, *puerta, *felix_d1, *felix_i1, *felix_r11, *felix_r21, *felix_r31, *felix_r41, *felix_r51, *felix_d2, *felix_i2, *felix_r12, *felix_r22,
 		*felix_r32, *felix_r42, *felix_r52, *felix1, *felix2, *ralph_1, *ralph_2, *ralph_3, *ralph_4, *ralph_5, *ralph_6, *ralph, *roca1, *roca2, *roca, *pajaro_1, *pajaro_2, *pajaro, *texto, *puntos, *vidas, *torta;
 
@@ -797,6 +798,7 @@ void* EscuchaServidor(void *arg) {
 				break;
 			case CD_CANTIDAD_VIDAS_I:
 				pthread_mutex_lock(&mutex_cantVidas);
+				cout<<"Recibi mi cantidad de vidas"<<endl;
 				felix1_vidas = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
 				felix2_vidas = felix1_vidas;
 				pthread_mutex_unlock(&mutex_cantVidas);
@@ -892,10 +894,10 @@ void* EscuchaTorneo(void *arg) {
 				//salgo del thread porque este el ultimo mensaje que me interesa
 				pthread_exit(NULL);
 				break;
-			/*case CD_ID_PARTIDA_I:
-				idPartida = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
-				recibioIdPartida = true;
-				break;*/
+				/*case CD_ID_PARTIDA_I:
+				 idPartida = atoi(aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
+				 recibioIdPartida = true;
+				 break;*/
 			case CD_NOMBRE_I:
 				//recibo y limpio el nombre de ceros
 				mensajeNombre = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str();
@@ -1212,16 +1214,17 @@ bool inicializarNuevaPartida() {
 	//Espero id de partida (del torneo)
 	//cout << "Esperando ID Partida" << endl;
 	/*if (esperarIdPartida()) {
-		//Le llega el Id de Partida
-		recibioIdPartida = false;
-	} else {
-		salir = 'S';
-		return false;
-	}*/
+	 //Le llega el Id de Partida
+	 recibioIdPartida = false;
+	 } else {
+	 salir = 'S';
+	 return false;
+	 }*/
 
 	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
 	//cout << "Esperando nombre de oponente" << endl;
 	if (esperarNombreOponente()) {
+		cout << "Recibi nombre de mi oponente: " << felix2_nombre << endl;
 		//recibio nombre del oponente
 	} else {
 		salir = 'S';
@@ -1253,24 +1256,42 @@ bool inicializarNuevaPartida() {
 
 	//Mando mi IdDePartida
 	/*string messageIDPartida(CD_ID_PARTIDA);
-	char aux[5];
-	sprintf(aux, "%d", idPartida);
-	//cout << "El nuevo idPartida es: " << aux << endl;
-	messageIDPartida.append(fillMessage(aux));
-	cola_grafico.push(messageIDPartida);*/
-
-	//Espero mi posicion inicial;
-	//cout << "Esperando mi posicion inicial" << endl;
-	esperarPosicionInicial();
+	 char aux[5];
+	 sprintf(aux, "%d", idPartida);
+	 //cout << "El nuevo idPartida es: " << aux << endl;
+	 messageIDPartida.append(fillMessage(aux));
+	 cola_grafico.push(messageIDPartida);*/
 
 	//Mando mi ID de Jugador
 	string messageIDJugador(CD_ID_JUGADOR);
 	messageIDJugador.append(fillMessage(mi_id.c_str()));
 	cola_grafico.push(messageIDJugador);
 
+	cout<<"Mande mi id"<<endl;
+
+	//Espero mi posicion inicial;
+	//cout << "Esperando mi posicion inicial" << endl;
+	esperarPosicionInicial();
+
+	cout<<"Recibi mi posicion inicial"<<endl;
+
+	//Espero la cantidad de vidas
+	esperarCantVidas();
+
+	cout<<"Recibi la cantidad de vidas"<<endl;
+
+	//Mando que estoy listo.
+	string messageListo(CD_JUGADOR_LISTO);
+	messageListo.append(fillMessage("0"));
+	cola_grafico.push(messageListo);
+
+	cout<<"Envie mensaje de listo"<<endl;
+
 	//Espero que el Servidor de Partida me mande el mensaje de START
 	//cout << "Esperar signal de START" << endl;
 	esperarSTART();
+
+	cout<<"Recibo mensaje de empezar"<<endl;
 
 	return true;
 }
@@ -1303,15 +1324,15 @@ bool esperarCantVidas() {
 }
 
 /*bool esperarIdPartida() {
-	//cout << "esperando id Partida" << endl;
-	while (!torneoFinalizo() && !murioServidorDelTorneo()) {
-		if (recibioIdPartida) {
-			return true;
-		}
-		usleep(10000);
-	}
-	return false;
-}*/
+ //cout << "esperando id Partida" << endl;
+ while (!torneoFinalizo() && !murioServidorDelTorneo()) {
+ if (recibioIdPartida) {
+ return true;
+ }
+ usleep(10000);
+ }
+ return false;
+ }*/
 
 bool esperarNombreOponente() {
 	//cout << "comienza while de espera de nombre de oponente" << endl;

@@ -29,11 +29,6 @@
 
 using namespace std;
 
-struct args_struct {
-	int fd1;
-	int fd2;
-};
-
 int main(int argc, char * argv[]) {
 	atexit(liberarRecursos);
 
@@ -73,7 +68,8 @@ int main(int argc, char * argv[]) {
 	if (argc == 3) {
 		puerto = atoi(argv[1]);
 		cantVidas = atoi(argv[2]);
-		shmId = ftok("/bin/ls", puerto);
+		//shmId = ftok("/bin/ls", puerto);
+		shmId = ftok("/bin/ls", 666);
 		if (shmId == -1) {
 			cout << "Error al generar el shmId. " << endl;
 			exit(1);
@@ -112,8 +108,6 @@ int main(int argc, char * argv[]) {
 		}
 	} while (cantClientes < 2);
 
-	char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
-
 	/*
 	 * Estoy a la espera de que los clientes me envien sus ids.
 	 */
@@ -146,6 +140,11 @@ int main(int argc, char * argv[]) {
 */
 
 	edificio = new Edificio(EDIFICIO_FILAS_1, EDIFICIO_COLUMNAS, 0);
+
+	if(cSocket1!=NULL && cSocket2!=NULL)
+		cout<<"Se conectaron ambos clientes"<<endl;
+	else
+		cout<<"no se conectaron todos"<<endl;
 
 //Creo los threads.
 	pthread_create(&thread_timer, NULL, timer_thread, NULL);

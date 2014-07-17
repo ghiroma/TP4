@@ -44,6 +44,7 @@ bool cliente1_jugando = true;
 bool cliente2_jugando = true;
 bool cliente1_listo = false;
 bool cliente2_listo = false;
+bool torneoMuerto = false;
 
 queue<string> receiver1_queue;
 queue<string> receiver2_queue;
@@ -163,6 +164,7 @@ receiver1_thread(void * fd) {
 		readDataCode = cSocket1->ReceiveBloq(buffer, sizeof(buffer));
 		if (readDataCode > 0) {
 			string aux(buffer);
+			//cout<<"Mensaje leido de cliete 1: "<<buffer<<endl;
 			Helper::encolar(&aux, &receiver1_queue, &mutex_receiver1);
 		} else if (readDataCode == 0) {
 			//TODO decirle al jugador nro2 que el cliente 1 se desconecto.
@@ -221,32 +223,31 @@ void *validator2_thread(void* arguments) {
 		if (!receiver2_queue.empty()) {
 			string message = Helper::desencolar(&receiver2_queue, &mutex_receiver2);
 			if (message.length() == (LONGITUD_CODIGO + LONGITUD_CONTENIDO)) {
-
-			}
-			string scodigo = message.substr(0, LONGITUD_CODIGO);
-			int codigo = atoi(scodigo.c_str());
-			switch (codigo) {
-			case CD_MOVIMIENTO_FELIX_I:
-				caseMovimientoFelix(JUGADOR_2, &message);
-				break;
-			case CD_PERDIDA_VIDA_I:
-				casePerdidaVida(JUGADOR_2);
-				break;
-			case CD_VENTANA_ARREGLADA_I:
-				caseVentanaArreglada(JUGADOR_2);
-				break;
-			case CD_VENTANA_ARREGLANDO_I:
-				caseVentanaArreglando(JUGADOR_2);
-				break;
-			case CD_ID_JUGADOR_I:
-			{
-				int id = atoi(message.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str());
-				caseIdJugador(JUGADOR_2,id);
-				break;
-			}
-			case CD_JUGADOR_LISTO_I:
-				caseJugadorListo(JUGADOR_2);
-				break;
+				string scodigo = message.substr(0, LONGITUD_CODIGO);
+				int codigo = atoi(scodigo.c_str());
+				switch (codigo) {
+				case CD_MOVIMIENTO_FELIX_I:
+					caseMovimientoFelix(JUGADOR_2, &message);
+					break;
+				case CD_PERDIDA_VIDA_I:
+					casePerdidaVida(JUGADOR_2);
+					break;
+				case CD_VENTANA_ARREGLADA_I:
+					caseVentanaArreglada(JUGADOR_2);
+					break;
+				case CD_VENTANA_ARREGLANDO_I:
+					caseVentanaArreglando(JUGADOR_2);
+					break;
+				case CD_ID_JUGADOR_I: {
+					int id = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
+					cout << "Recibo id jugador2: " << id << endl;
+					caseIdJugador(JUGADOR_2, id);
+					break;
+				}
+				case CD_JUGADOR_LISTO_I:
+					caseJugadorListo(JUGADOR_2);
+					break;
+				}
 			}
 		}
 		usleep(POOLING_DEADTIME);
@@ -256,39 +257,37 @@ void *validator2_thread(void* arguments) {
 void *validator1_thread(void * argument) {
 
 	while (!stop && cliente1_conectado) {
-		pthread_mutex_lock(&mutex_receiver1);
 		if (!receiver1_queue.empty()) {
 			string message = Helper::desencolar(&receiver1_queue, &mutex_receiver1);
 			if (message.length() == (LONGITUD_CODIGO + LONGITUD_CONTENIDO)) {
-
-			}
-			string scodigo = message.substr(0, LONGITUD_CODIGO);
-			int codigo = atoi(scodigo.c_str());
-			switch (codigo) {
-			case CD_MOVIMIENTO_FELIX_I:
-				caseMovimientoFelix(JUGADOR_1, &message);
-				break;
-			case CD_PERDIDA_VIDA_I:
-				casePerdidaVida(JUGADOR_1);
-				break;
-			case CD_VENTANA_ARREGLADA_I:
-				caseVentanaArreglada(JUGADOR_1);
-				break;
-			case CD_VENTANA_ARREGLANDO_I:
-				caseVentanaArreglando(JUGADOR_1);
-				break;
-			case CD_ID_JUGADOR_I:
-			{
-				int id = atoi(message.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str());
-				caseIdJugador(JUGADOR_1,id);
-				break;
-			}
-			case CD_JUGADOR_LISTO_I:
-				caseJugadorListo(JUGADOR_1);
-				break;
+				string scodigo = message.substr(0, LONGITUD_CODIGO);
+				cout << "Codigo leido jugador1: " << scodigo << endl;
+				int codigo = atoi(scodigo.c_str());
+				switch (codigo) {
+				case CD_MOVIMIENTO_FELIX_I:
+					caseMovimientoFelix(JUGADOR_1, &message);
+					break;
+				case CD_PERDIDA_VIDA_I:
+					casePerdidaVida(JUGADOR_1);
+					break;
+				case CD_VENTANA_ARREGLADA_I:
+					caseVentanaArreglada(JUGADOR_1);
+					break;
+				case CD_VENTANA_ARREGLANDO_I:
+					caseVentanaArreglando(JUGADOR_1);
+					break;
+				case CD_ID_JUGADOR_I: {
+					int id = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
+					cout << "Recibo id jugador1 id: " << id << endl;
+					caseIdJugador(JUGADOR_1, id);
+					break;
+				}
+				case CD_JUGADOR_LISTO_I:
+					caseJugadorListo(JUGADOR_1);
+					break;
+				}
 			}
 		}
-		pthread_mutex_unlock(&mutex_receiver1);
 		usleep(POOLING_DEADTIME);
 	}
 
@@ -316,6 +315,7 @@ sharedMemory_thread(void * arguments) {
 			//Verifico si el padre esta vivo
 			if (kill(pid, 0) == -1) {
 				stop = true;
+				torneoMuerto = true;
 			}
 
 			//Perdieron ambos, asi que finalmente cierro.
@@ -495,20 +495,25 @@ void caseVentanaArreglando(int jugador) {
 	}
 }
 
-void caseIdJugador(int jugador,int id) {
+void caseIdJugador(int jugador, int id) {
 	string message(CD_CANTIDAD_VIDAS);
 	char aux[5];
 	sprintf(aux, "%d", cantVidas);
 	message.append(Helper::fillMessage(aux));
 
 	if (jugador == JUGADOR_1) {
-		felix1 = new Felix(cantVidas,id);
-		cSocket1->SendBloq(posicionInicial1().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
-		cSocket1->SendBloq(CD_CANTIDAD_VIDAS, LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+		felix1 = new Felix(cantVidas, id);
+		string posicion = posicionInicial1();
+		Helper::encolar(&posicion, &sender1_queue, &mutex_sender1);
+		Helper::encolar(&message, &sender1_queue, &mutex_sender1);
+		cout << "Mande posicion inicial y cant vidas jugador 1" << endl;
 	} else if (jugador == JUGADOR_2) {
-		felix2 = new Felix(cantVidas,id);
-		cSocket2->SendBloq(posicionInicial2().c_str(), LONGITUD_CODIGO + LONGITUD_CONTENIDO);
-		cSocket2->SendBloq(CD_CANTIDAD_VIDAS, LONGITUD_CODIGO + LONGITUD_CONTENIDO);
+		felix2 = new Felix(cantVidas, id);
+		string posicion = posicionInicial2();
+		Helper::encolar(&posicion, &sender2_queue, &mutex_sender1);
+		Helper::encolar(&message, &sender2_queue, &mutex_sender1);
+
+		cout << "Mande posicion inicial y canti vidas jugador 2" << endl;
 	}
 }
 
@@ -534,7 +539,8 @@ void SIGINT_Handler(int inum) {
 void liberarRecursos() {
 	if (puntaje != NULL)
 		shmdt(puntaje);
-	//shmctl(shmId, IPC_RMID, 0);
+	if (torneoMuerto)
+		shmctl(shmId, IPC_RMID, 0);
 	delete (cSocket1);
 	cSocket1 = NULL;
 	delete (cSocket2);
