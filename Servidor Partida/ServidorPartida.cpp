@@ -41,10 +41,12 @@ int main(int argc, char * argv[]) {
 
 	cSocket1 = NULL;
 	cSocket2 = NULL;
+	sSocket = NULL;
 	felix1 = NULL;
 	felix2 = NULL;
 	edificio = NULL;
-	semaforo = NULL;
+	semaforoPartida = NULL;
+	semaforoTorneo = NULL;
 
 	pthread_t thread_timer;
 	pthread_t thread_receiver1;
@@ -78,12 +80,12 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
-	ServerSocket sSocket(puerto);
+	sSocket = new ServerSocket(puerto);
 
 	timeout.tv_sec = SERVERSOCKET_TIMEOUT;
 	timeout.tv_usec = 0;
 	FD_ZERO(&fds);
-	FD_SET(sSocket.ID, &fds);
+	FD_SET(sSocket->ID, &fds);
 
 	/*
 	 * Espero la conexion de los clientes, dado tiempo SERVERSOCKET_TIMEDOUT
@@ -91,11 +93,11 @@ int main(int argc, char * argv[]) {
 	 */
 
 	do {
-		if (int response = select(sSocket.ID + 1, &fds, NULL, NULL, &timeout) > 0) {
+		if (int response = select(sSocket->ID + 1, &fds, NULL, NULL, &timeout) > 0) {
 			if (cSocket1 == NULL) {
-				cSocket1 = sSocket.Accept();
+				cSocket1 = sSocket->Accept();
 			} else {
-				cSocket2 = sSocket.Accept();
+				cSocket2 = sSocket->Accept();
 			}
 			cantClientes++;
 		} else if (response == 0) {
