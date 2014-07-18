@@ -43,7 +43,7 @@ void liberarRecursos();
 void mostrarPantalla(const char*);
 bool seguirAceptandoNuevosJugadores();
 bool murioServidorDeLaPartida();
-void inicilizarMapPartidasActivas();
+//void inicilizarMapPartidasActivas();
 
 //THREADS
 void* temporizadorTorneo(void* data);
