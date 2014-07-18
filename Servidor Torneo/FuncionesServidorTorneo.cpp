@@ -527,19 +527,29 @@ void* modoGrafico(void* data) {
 	//}
 
 	//esperar que todas las partidas finalicen
-	int cantPartidasActivas;
-	while (true) {
-		//cout << "mutex modoGrafico partidasActivas" << endl;
+	//int cantPartidasActivas;
+	bool partidasFinalizadas = false;
+	int cantPartidasFinalizadas = 0;
+	while (!partidasFinalizadas) {
 		pthread_mutex_lock(&mutex_partidasActivas);
-		cantPartidasActivas = partidasActivas.size();
-		cout<<"cantidad de partidas activas: "<<cantPartidasActivas<<endl;
-		pthread_mutex_unlock(&mutex_partidasActivas);
-		//cout << "unmutex modoGrafico partidasActivas" << endl;
-
-		if (cantPartidasActivas == 0) {
-			break;
+		for(map<unsigned int, datosPartida>::iterator it=partidasActivas.begin();it!=partidasActivas.end();it++)
+		{
+			if(it->second.libre)
+			{
+				cantPartidasFinalizadas++;
+			}
 		}
-		sleep(4);
+
+		cout<<"Cantidad de partidas finalizadas: "<<cantPartidasFinalizadas<<endl;
+		cout<<"Cantidad de partidas activas: "<<partidasActivas.size()<<endl;
+
+		if(cantPartidasFinalizadas==partidasActivas.size())
+		{
+			partidasFinalizadas = true;
+		}
+		pthread_mutex_unlock(&mutex_partidasActivas);
+		cantPartidasFinalizadas = 0;
+		sleep(2);
 	}
 	pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
 	//cout << "mutex  modoGrafico todasLasPartidasFinalizadas" << endl;
