@@ -330,7 +330,7 @@ void* temporizadorTorneo(void* data) {
 void* lecturaDeResultados(void* data) {
 	resumenPartida = (struct puntajesPartida *) shmat(idSHM, (char *) 0, 0);
 
-	while (hayPartidasActivas() && !torneoFinalizado()) {
+	while (hayPartidasActivas() || !torneoFinalizado()) {
 		//if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
 		//	break;
 		//}
