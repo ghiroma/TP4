@@ -34,7 +34,7 @@ pthread_mutex_t mutex_seguirAceptandoJugadores = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_murioServidorPartida = PTHREAD_MUTEX_INITIALIZER;
 
 //extern pthread_mutex_t mutex_listJugadores;
-extern map<int,
+		extern map<int,
 Jugador*> listJugadores;
 //extern unsigned int puertoServidorPartida;
 extern unsigned int puertoServidorTorneo;
@@ -93,6 +93,7 @@ void SIG_Handler(int inum) {
 	exit(1);
 }
 
+/*
 void inicilizarMapPartidasActivas() {
 	int puertoPartida = puertoServidorTorneo + 1;
 	datosPartida datosNuevaPartida;
@@ -100,20 +101,25 @@ void inicilizarMapPartidasActivas() {
 	datosNuevaPartida.libre = true;
 
 	pthread_mutex_lock(&mutex_partidasActivas);
-	for (int i = 0; i < MAX_PUERTOS_UTILIZABLES; ++i) {
-		partidasActivas[puertoPartida++] = datosNuevaPartida;
-	}
+	//for (int i = 0; i < MAX_PUERTOS_UTILIZABLES; ++i) {
+	//	partidasActivas[puertoPartida++] = datosNuevaPartida;
+	//}
+
+	partidasActivas[puertoPartida] = datosNuevaPartida;
 	pthread_mutex_unlock(&mutex_partidasActivas);
 }
+*/
 
 /**
  * Devuelve un puerto que no este siendo utilizado para crear la partida
  */
 unsigned int encontrarPuertoLibreParaPartida() {
-	unsigned int puertoDePartidaLibre = 0;
+	unsigned int puertoDePartidaLibre;
 	bool encontroPuertoDisponible = false;
+	unsigned int ultimoPuertoUtilizado;
 
 	pthread_mutex_lock(&mutex_partidasActivas);
+	/*
 	//limpiar lista de puertos fuera del maximo aceptado
 	if (partidasActivas.size() > MAX_PUERTOS_UTILIZABLES) {
 		map<unsigned int, datosPartida>::iterator it1;
@@ -127,22 +133,27 @@ unsigned int encontrarPuertoLibreParaPartida() {
 			}
 		} while (it1 != partidasActivas.end());
 
-	}
+	}*/
 
-	//busco en la lista algun puerto que no este siendo usado
-	for (map<unsigned int, datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
-		if (it->second.libre) {
-			puertoDePartidaLibre = it->first;
-			it->second.libre = false;
-			it->second.pidPartida = 0;
-			encontroPuertoDisponible = true;
-			break;
+	if (partidasActivas.size() > 0) {
+		//busco en la lista algun puerto que no este siendo usado
+		for (map<unsigned int, datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
+			if (it->second.libre) {
+				puertoDePartidaLibre = it->first;
+				it->second.libre = false;
+				it->second.pidPartida = 0;
+				encontroPuertoDisponible = true;
+				break;
+			}
 		}
+		 ultimoPuertoUtilizado = partidasActivas.rbegin()->first;
+	}else{
+		ultimoPuertoUtilizado = puertoServidorTorneo;
 	}
 
 	//si no encontro ninguno agrego uno mas
 	if (!encontroPuertoDisponible) {
-		unsigned int ultimoPuertoUtilizado = partidasActivas.rbegin()->first;
+		//unsigned int ultimoPuertoUtilizado = partidasActivas.rbegin()->first;
 		unsigned int nuevoPuerto = (ultimoPuertoUtilizado + 1);
 		datosPartida datosNuevaPartida;
 		datosNuevaPartida.pidPartida = 0;
@@ -532,7 +543,7 @@ void* modoGrafico(void* data) {
 		//cout << "mutex modoGrafico partidasActivas" << endl;
 		pthread_mutex_lock(&mutex_partidasActivas);
 		cantPartidasActivas = partidasActivas.size();
-		cout<<"cantidad de partidas activas: "<<cantPartidasActivas<<endl;
+		cout << "cantidad de partidas activas: " << cantPartidasActivas << endl;
 		pthread_mutex_unlock(&mutex_partidasActivas);
 		//cout << "unmutex modoGrafico partidasActivas" << endl;
 
@@ -657,9 +668,9 @@ void* aceptarJugadores(void* data) {
 
 			//Madarle puerto partida
 			/*string messagePuertoPartida(CD_PUERTO_PARTIDA);
-			sprintf(aux, "%d", puertoServidorPartida);
-			messagePuertoPartida.append(fillMessage(aux));
-			cSocket->SendNoBloq(messagePuertoPartida.c_str(), messagePuertoPartida.length());*/
+			 sprintf(aux, "%d", puertoServidorPartida);
+			 messagePuertoPartida.append(fillMessage(aux));
+			 cSocket->SendNoBloq(messagePuertoPartida.c_str(), messagePuertoPartida.length());*/
 
 			agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
 			cout << "Se agrega el jugador NRO:" << clientId << " NOMBRE: " << nombreJugador << endl;
@@ -890,10 +901,10 @@ void liberarRecursos() {
 
 	//mato las partidas que quedaron activas
 	/*pthread_mutex_lock(&mutex_partidasActivas);
-	for (map<unsigned int, datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
-		kill(pid, SIGINT);
-	}
-	pthread_mutex_unlock(&mutex_partidasActivas);*/
+	 for (map<unsigned int, datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
+	 kill(pid, SIGINT);
+	 }
+	 pthread_mutex_unlock(&mutex_partidasActivas);*/
 
 //SDL
 	TTF_Quit();

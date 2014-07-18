@@ -71,7 +71,7 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
-	inicilizarMapPartidasActivas();
+	//inicilizarMapPartidasActivas();
 
 	//Creo el bloque de memoria compartida
 	key_t key = ftok("/bin/ls", 666);
