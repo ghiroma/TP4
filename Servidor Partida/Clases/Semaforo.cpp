@@ -69,7 +69,7 @@ int Semaforo::V() {
 
 void Semaforo::close() {
 	sem_close(this->sem);       
-	//sem_unlink(this->nombre);
+	sem_unlink(this->nombre);
 }
 
 Semaforo::~Semaforo() {
