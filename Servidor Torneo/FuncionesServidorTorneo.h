@@ -28,6 +28,8 @@ struct puntajesPartida {
 
 struct datosPartida {
 	pid_t pidPartida;
+	int idJugador1;
+	int idJugador2;
 	bool libre;
 };
 
