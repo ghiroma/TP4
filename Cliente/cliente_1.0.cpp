@@ -276,6 +276,11 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
+
+	mi_id = buffer;
+	mi_id = mi_id.substr(LONGITUD_CODIGO,LONGITUD_CONTENIDO).c_str();
+	cout<<"Mi id es: "<<buffer<<endl;
+
 	//Thread para escuchar al servidor de Torneo.
 	resultThEscuchaTorneo = pthread_create(&thEscuchaTorneo, NULL, EscuchaTorneo, &socketTorneo->ID);
 	if (resultThEscuchaTorneo) {
@@ -1249,7 +1254,7 @@ bool inicializarNuevaPartida() {
 	messageIDJugador.append(fillMessage(mi_id.c_str()));
 	cola_grafico.push(messageIDJugador);
 
-	cout << "Mande mi id" << endl;
+	cout << "Mande mi id" <<mi_id<< endl;
 
 	//Espero mi posicion inicial;
 	//cout << "Esperando mi posicion inicial" << endl;

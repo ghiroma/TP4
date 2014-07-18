@@ -177,7 +177,7 @@ receiver1_thread(void * fd) {
 			cliente1_jugando = false;
 			delete (cSocket1);
 			cSocket1 = NULL;
-			cout<<"Se desconecto el cliente 1"<<endl;
+			cout << "Se desconecto el cliente 1" << endl;
 		}
 		usleep(POOLING_DEADTIME);
 	}
@@ -208,7 +208,7 @@ receiver2_thread(void * fd) {
 			cliente2_jugando = false;
 			delete (cSocket2);
 			cSocket2 = NULL;
-			cout<<"Se desconecto el cliente 2"<<endl;
+			cout << "Se desconecto el cliente 2" << endl;
 		}
 
 		usleep(POOLING_DEADTIME);
@@ -244,6 +244,7 @@ void *validator2_thread(void* arguments) {
 					break;
 				case CD_ID_JUGADOR_I: {
 					int id = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
+					cout<<"Servidor Partida: recibi id: "<<id<<endl;
 					caseIdJugador(JUGADOR_2, id);
 					break;
 				}
@@ -280,6 +281,7 @@ void *validator1_thread(void * argument) {
 					break;
 				case CD_ID_JUGADOR_I: {
 					int id = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
+					cout<<"Servidor Partida: recibi id: "<<id<<endl;
 					caseIdJugador(JUGADOR_1, id);
 					break;
 				}
@@ -328,12 +330,12 @@ sharedMemory_thread(void * arguments) {
 				//Termino la partida asi que envio mensaje a clientes de terminar.
 				string message(CD_FIN_PARTIDA);
 				message.append(Helper::fillMessage("0"));
-				if(cSocket1!=NULL)
-					cSocket1->SendBloq(message.c_str(),message.length());
-				if(cSocket2!=NULL)
-						cSocket2->SendBloq(message.c_str(),message.length());
+				if (cSocket1 != NULL)
+					cSocket1->SendBloq(message.c_str(), message.length());
+				if (cSocket2 != NULL)
+					cSocket2->SendBloq(message.c_str(), message.length());
 
-				cout<<"Menasje fin de partida enviado"<<endl;
+				cout << "Menasje fin de partida enviado" << endl;
 
 				semaforoPartida->P();
 				puntaje->idJugador1 = felix1->id;
@@ -417,7 +419,7 @@ void casePerdidaVida(int jugador) {
 	int perderVida = 0;
 	if (jugador == 1) {
 		perderVida = felix1->perderVida();
-		if (perderVida==1) {
+		if (perderVida == 1) {
 			string message1(CD_PERDIDA_VIDA);
 			string message2(CD_PERDIDA_VIDA);
 			//TODO Corregir hardcodeo.
@@ -428,7 +430,7 @@ void casePerdidaVida(int jugador) {
 			pthread_mutex_lock(&mutex_edificio);
 			felix1->mover(0, 0, edificio);
 			pthread_mutex_unlock(&mutex_edificio);
-		} else if(perderVida==-1){
+		} else if (perderVida == -1) {
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
 			message1.append(Helper::fillMessage("1"));
@@ -443,7 +445,7 @@ void casePerdidaVida(int jugador) {
 		}
 	} else {
 		perderVida = felix2->perderVida();
-		if (perderVida==1) {
+		if (perderVida == 1) {
 			//TODO Sacar harcodeo.
 			string message1(CD_PERDIDA_VIDA);
 			string message2(CD_PERDIDA_VIDA);
@@ -454,7 +456,7 @@ void casePerdidaVida(int jugador) {
 			pthread_mutex_lock(&mutex_edificio);
 			felix2->mover(0, EDIFICIO_COLUMNAS - 1, edificio);
 			pthread_mutex_unlock(&mutex_edificio);
-		} else if(perderVida==-1){
+		} else if (perderVida == -1) {
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
 			message1.append(Helper::fillMessage("2"));
@@ -566,12 +568,12 @@ void liberarRecursos() {
 	felix2 = NULL;
 	delete (semaforoPartida);
 	semaforoPartida = NULL;
-	delete(semaforoTorneo);
-	semaforoTorneo=NULL;
-	delete(sSocket);
-	sSocket=NULL;
+	delete (semaforoTorneo);
+	semaforoTorneo = NULL;
+	delete (sSocket);
+	sSocket = NULL;
 
-	cout<<"Recursos liberados"<<endl;
+	cout << "Recursos liberados" << endl;
 }
 
 string posicionInicial1() {
