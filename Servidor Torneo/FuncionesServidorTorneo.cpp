@@ -767,7 +767,6 @@ void* establecerPartidas(void* data) {
 		//cout << "pasada de busqueda nro: " << i++ << " PID:" << getpid() << endl;
 
 		//recorro la lista de jugadores viendo a quien le puedo asignar un oponente y que comienze la partida
-		//cout << "mutex establecerPartidas" << endl;
 		pthread_mutex_lock(&mutex_listJugadores);
 		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 			idJugador = it->first;
