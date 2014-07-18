@@ -181,7 +181,9 @@ void SIG_CHLD(int inum) {
 	for (map<unsigned int, datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
 		if (it->second.pidPartida == childpid) {
 			idJugador1=it->second.idJugador1;
+			it->second.idJugador1=0;
 			idJugador2=it->second.idJugador2;
+			it->second.idJugador2=0;
 			it->second.pidPartida = 0;
 			it->second.libre = true;
 			//partidasActivas.erase(it);
@@ -546,6 +548,7 @@ void* modoGrafico(void* data) {
 
 	while (hayPartidasActivas()) {
 		sleep(4);
+		cout<<"Modo grafico: hay partidas activas"<<endl;
 	}
 
 	/*bool partidasFinalizadas = false;
