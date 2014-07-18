@@ -167,7 +167,6 @@ receiver1_thread(void * fd) {
 		readDataCode = cSocket1->ReceiveBloq(buffer, sizeof(buffer));
 		if (readDataCode > 0) {
 			string aux(buffer);
-			//cout<<"Mensaje leido de cliete 1: "<<buffer<<endl;
 			Helper::encolar(&aux, &receiver1_queue, &mutex_receiver1);
 		} else if (readDataCode == 0) {
 			//TODO decirle al jugador nro2 que el cliente 1 se desconecto.
@@ -245,7 +244,6 @@ void *validator2_thread(void* arguments) {
 					break;
 				case CD_ID_JUGADOR_I: {
 					int id = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
-					cout << "Recibo id jugador2: " << id << endl;
 					caseIdJugador(JUGADOR_2, id);
 					break;
 				}
@@ -266,7 +264,6 @@ void *validator1_thread(void * argument) {
 			string message = Helper::desencolar(&receiver1_queue, &mutex_receiver1);
 			if (message.length() == (LONGITUD_CODIGO + LONGITUD_CONTENIDO)) {
 				string scodigo = message.substr(0, LONGITUD_CODIGO);
-				cout << "Codigo leido jugador1: " << scodigo << endl;
 				int codigo = atoi(scodigo.c_str());
 				switch (codigo) {
 				case CD_MOVIMIENTO_FELIX_I:
@@ -283,7 +280,6 @@ void *validator1_thread(void * argument) {
 					break;
 				case CD_ID_JUGADOR_I: {
 					int id = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
-					cout << "Recibo id jugador1 id: " << id << endl;
 					caseIdJugador(JUGADOR_1, id);
 					break;
 				}
@@ -336,8 +332,6 @@ sharedMemory_thread(void * arguments) {
 					cSocket1->SendBloq(message.c_str(),message.length());
 				if(cSocket2!=NULL)
 						cSocket2->SendBloq(message.c_str(),message.length());
-				//Helper::encolar(&message,&sender1_queue,&mutex_sender1);
-				//Helper::encolar(&message,&sender2_queue,&mutex_sender2);
 
 				cout<<"Menasje fin de partida enviado"<<endl;
 
@@ -450,7 +444,6 @@ void casePerdidaVida(int jugador) {
 	} else {
 		perderVida = felix2->perderVida();
 		if (perderVida==1) {
-			cout << "Felix2 perdio vida, vidas actuales" << felix2->cantidad_vidas << endl;
 			//TODO Sacar harcodeo.
 			string message1(CD_PERDIDA_VIDA);
 			string message2(CD_PERDIDA_VIDA);
@@ -531,14 +524,11 @@ void caseIdJugador(int jugador, int id) {
 		string posicion = posicionInicial1();
 		Helper::encolar(&posicion, &sender1_queue, &mutex_sender1);
 		Helper::encolar(&message, &sender1_queue, &mutex_sender1);
-		cout << "Mande posicion inicial y cant vidas jugador 1" << endl;
 	} else if (jugador == JUGADOR_2) {
 		felix2 = new Felix(cantVidas, id);
 		string posicion = posicionInicial2();
 		Helper::encolar(&posicion, &sender2_queue, &mutex_sender1);
 		Helper::encolar(&message, &sender2_queue, &mutex_sender1);
-
-		cout << "Mande posicion inicial y canti vidas jugador 2" << endl;
 	}
 }
 
@@ -580,6 +570,8 @@ void liberarRecursos() {
 	semaforoTorneo=NULL;
 	delete(sSocket);
 	sSocket=NULL;
+
+	cout<<"Recursos liberados"<<endl;
 }
 
 string posicionInicial1() {

@@ -275,25 +275,6 @@ int main(int argc, char *argv[]) {
 		sleep(10);
 		exit(1);
 	}
-	string aux_buffer(buffer);
-	mi_id = aux_buffer.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO);
-
-	//Recibo el puerto del servidor de partida
-	/*if (!torneoFinalizo()) {
-	 readData = socketTorneo->ReceiveBloq(buffer, sizeof(buffer));
-	 } else {
-	 mostrarPantalla("servernotfound");
-	 sleep(10);
-	 exit(1);
-	 }*/
-	/*	if (readData <= 0) {
-	 cout << "Se ha cerrado la conexion con el servidor de torneo" << endl;
-	 mostrarPantalla("servertorneodown");
-	 sleep(10);
-	 exit(1);
-	 }
-	 string aux_puerto(buffer);
-	 puertoServidorPartida = atoi(aux_puerto.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());*/
 
 	//Thread para escuchar al servidor de Torneo.
 	resultThEscuchaTorneo = pthread_create(&thEscuchaTorneo, NULL, EscuchaTorneo, &socketTorneo->ID);
@@ -314,7 +295,9 @@ int main(int argc, char *argv[]) {
 	inicializarNuevaPartida();
 
 	while (salir == 'N' && !murioServidorDelTorneo()) {
+	//while (salir == 'N') {
 		if (nuevaPartidaSolicitada() && torneoFinalizo()) {
+			cout<<"Entro por nuevapartidasolicitada && torneofinalizo"<<endl;
 			break;
 		}
 		if (nuevaPartidaSolicitada() && !torneoFinalizo() && !murioServidorDelTorneo()) {
@@ -322,6 +305,7 @@ int main(int argc, char *argv[]) {
 			mostrarPantalla("waitmatch");
 			sleep(3);
 			if (!inicializarNuevaPartida()) {
+				cout<<"No pudo inicializar nueva partida"<<endl;
 				//si no pudo inicializar una nueva partida salgo
 				break;
 			}
@@ -554,10 +538,6 @@ int main(int argc, char *argv[]) {
 				else if (felix2 == felix_r52) {
 					felix2 = felix_d2;
 
-					//string message(CD_VENTANA_ARREGLADA);
-					//message.append(fillMessage("0"));
-					//cola_grafico.push(message);
-					//ventana_reparada(&felix2_posicion);
 					felix2_reparar = 'N';
 				}
 
@@ -827,6 +807,7 @@ void* EscuchaServidor(void *arg) {
 				break;
 			}
 		} else if (readData == 0) {
+			cout<<"Se cayo la partida"<<endl;
 			//reseteo el nombre del oponente para que espero que se lo envien
 			pthread_mutex_lock(&mutex_nombreOponente);
 			nombreOponente = "";
@@ -836,6 +817,9 @@ void* EscuchaServidor(void *arg) {
 
 			delete (socketPartida);
 			socketPartida = NULL;
+
+			//TODO si no termino el torneo
+			solicitudDeNuevaParitda = true;
 		}
 
 		usleep(2000);
@@ -890,6 +874,7 @@ void* EscuchaTorneo(void *arg) {
 				pthread_mutex_unlock(&mutex_msjPuertoRecibido);
 				break;
 			case CD_RANKING_I:
+				cout<<"Recibo ranking"<<endl;
 				ranking = aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str();
 				salir = 'S';
 				showWindowRanking = true;
@@ -917,6 +902,7 @@ void* EscuchaTorneo(void *arg) {
 				pthread_mutex_unlock(&mutex_nombreOponente);
 				break;
 			case CD_FIN_TORNEO_I:
+				cout<<"Recibi menasje de fin de torneo"<<endl;
 				//que no busque mas establecer partidas
 				torneoFinalizado = true;
 				break;
@@ -929,6 +915,7 @@ void* EscuchaTorneo(void *arg) {
 			}
 		} else if (readData == 0) {
 			pthread_mutex_lock(&mutex_murioServidorTorneo);
+			cout<<"Murio servidor torneo"<<endl;
 			murioServidorTorneo = true;
 			pthread_mutex_unlock(&mutex_murioServidorTorneo);
 
@@ -1213,18 +1200,8 @@ bool inicializarNuevaPartida() {
 	}
 	partidasJugadas++;
 
-	//Espero id de partida (del torneo)
-	//cout << "Esperando ID Partida" << endl;
-	/*if (esperarIdPartida()) {
-	 //Le llega el Id de Partida
-	 recibioIdPartida = false;
-	 } else {
-	 salir = 'S';
-	 return false;
-	 }*/
-
 	//Espero que el servidor de Torneo me envie  el nombre de mi oponente
-	//cout << "Esperando nombre de oponente" << endl;
+	cout << "Esperando nombre de oponente" << endl;
 	if (esperarNombreOponente()) {
 		cout << "Recibi nombre de mi oponente: " << felix2_nombre << endl;
 		//recibio nombre del oponente

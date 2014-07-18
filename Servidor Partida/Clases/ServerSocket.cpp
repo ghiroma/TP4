@@ -24,7 +24,7 @@ ServerSocket::ServerSocket(unsigned int port, bool blocking) {
 		this->ID = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 
 	int iSetOption = 1;
-	setsockopt(this->ID, SOL_SOCKET, SO_REUSEADDR, (char*)&iSetOption,sizeof(iSetOption));
+	setsockopt(this->ID, SOL_SOCKET, SO_REUSEADDR, (char*) &iSetOption, sizeof(iSetOption));
 
 	if (this->ID >= 0) {
 		struct sockaddr_in laddress;
@@ -50,6 +50,10 @@ ServerSocket::ServerSocket(unsigned int port, bool blocking) {
 
 ServerSocket::ServerSocket(unsigned int port) {
 	this->ID = socket(AF_INET, SOCK_STREAM, 0);
+
+	int iSetOption = 1;
+	setsockopt(this->ID, SOL_SOCKET, SO_REUSEADDR, (char*) &iSetOption, sizeof(iSetOption));
+
 	if (this->ID >= 0) {
 		struct sockaddr_in laddress;
 		laddress.sin_addr.s_addr = INADDR_ANY;
@@ -79,9 +83,7 @@ CommunicationSocket* ServerSocket::Accept() {
 	if (csSocket <= 0) {
 		if (errno == EAGAIN) {
 			return NULL;
-		}
-		else
-		{
+		} else {
 			throw "Error en accept";
 		}
 	}
@@ -99,5 +101,5 @@ char * ServerSocket::ShowHostName() {
 ServerSocket::~ServerSocket() {
 	// TODO Auto-generated destructor stub
 	close(this->ID);
-	std::cout<<"Destructor ssocket ejecutado"<<std::endl;
+	std::cout << "Destructor ssocket ejecutado" << std::endl;
 }

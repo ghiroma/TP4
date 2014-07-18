@@ -216,6 +216,7 @@ int main(int argc, char * argv[]) {
 	pthread_join(thModoGrafico, NULL);
 
 	//mandar a cada cliente su puntaje y ranking
+	cout<<"Mandando rankings"<<endl;
 	mandarPuntajes();
 
 
