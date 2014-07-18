@@ -24,9 +24,10 @@ using namespace std;
 
 map<int, Jugador*> listJugadores;
 unsigned int puertoServidorTorneo;
-unsigned int puertoServidorPartida;
+//unsigned int puertoServidorPartida;
 int cantVidas = 0;
 ServerSocket* sSocket;
+//int cantidadDePuertosAbiertos = 0;
 int idSHM;
 pid_t pidServidorPartida;
 SDL_Surface *screen, *background;
@@ -70,11 +71,9 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
-	puertoServidorPartida = puertoServidorTorneo;
-	cout << "puertoServidorTorneo: " << puertoServidorTorneo << endl;
+	inicilizarMapPartidasActivas();
 
 	//Creo el bloque de memoria compartida
-	//key_t key = ftok("/bin/ls", puertoServidorTorneo);           /////////////////////////cambiar a una constante
 	key_t key = ftok("/bin/ls", 666);
 	if (key == -1) {
 		cout << "Error al generar clave de memoria compartida" << endl;

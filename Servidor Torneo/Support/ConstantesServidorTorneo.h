@@ -50,6 +50,7 @@ static const int INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES = 5000000;
 static const int MAX_NRO_PUERTOS = 65535;
 static const int MIN_PUERTO_REGISTRADO = 1024;
 static const int MAX_PUERTO_REGISTRADO = 49151;
+static const int MAX_PUERTOS_UTILIZABLES = 10;
 
 //SDL
 static const int ANCHO_PANTALLA_SERVIDOR = 700;
