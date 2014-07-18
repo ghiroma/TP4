@@ -330,11 +330,8 @@ void* temporizadorTorneo(void* data) {
 void* lecturaDeResultados(void* data) {
 	resumenPartida = (struct puntajesPartida *) shmat(idSHM, (char *) 0, 0);
 
-	while (hayPartidasActivas() || !torneoFinalizado()) {
-		//if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
-		//	break;
-		//}
-		if (/*!murioServidorDeLaPartida() &&*/ sem_trywait(sem_ServidorTorneoSHM.getSem_t()) != -1) {
+	while (hayPartidasActivas() || !torneoFinalizado() || sem_ServidorTorneoSHM.getValue()!=0) {
+		if ( sem_trywait(sem_ServidorTorneoSHM.getSem_t()) != -1) {
 			pthread_mutex_lock(&mutex_listJugadores);
 			//si el torneo termino ok Grabo los puntajes
 			if (resumenPartida->partidaFinalizadaOK == true) {
@@ -399,8 +396,7 @@ void* lecturaDeResultados(void* data) {
 			 }*/
 			sem_ServidorPartidaSHM.V();
 		}
-		//sem_ServidorTorneoSHM.P();
-		usleep(500000);
+		usleep(50000);
 	}
 
 	/*//en este punto ya se que todas las partidas finalizaron y el tiempo de torneo tambien
@@ -412,6 +408,8 @@ void* lecturaDeResultados(void* data) {
 	 todasLasPartidasFinalizadas = true;
 	 pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);*/
 
+
+	cout<<"Termina thread lectura de resultados"<<endl;
 	pthread_exit(NULL);
 }
 
