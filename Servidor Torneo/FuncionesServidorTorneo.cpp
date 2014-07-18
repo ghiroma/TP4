@@ -94,21 +94,21 @@ void SIG_Handler(int inum) {
 }
 
 /*
-void inicilizarMapPartidasActivas() {
-	int puertoPartida = puertoServidorTorneo + 1;
-	datosPartida datosNuevaPartida;
-	datosNuevaPartida.pidPartida = 0;
-	datosNuevaPartida.libre = true;
+ void inicilizarMapPartidasActivas() {
+ int puertoPartida = puertoServidorTorneo + 1;
+ datosPartida datosNuevaPartida;
+ datosNuevaPartida.pidPartida = 0;
+ datosNuevaPartida.libre = true;
 
-	pthread_mutex_lock(&mutex_partidasActivas);
-	//for (int i = 0; i < MAX_PUERTOS_UTILIZABLES; ++i) {
-	//	partidasActivas[puertoPartida++] = datosNuevaPartida;
-	//}
+ pthread_mutex_lock(&mutex_partidasActivas);
+ //for (int i = 0; i < MAX_PUERTOS_UTILIZABLES; ++i) {
+ //	partidasActivas[puertoPartida++] = datosNuevaPartida;
+ //}
 
-	partidasActivas[puertoPartida] = datosNuevaPartida;
-	pthread_mutex_unlock(&mutex_partidasActivas);
-}
-*/
+ partidasActivas[puertoPartida] = datosNuevaPartida;
+ pthread_mutex_unlock(&mutex_partidasActivas);
+ }
+ */
 
 /**
  * Devuelve un puerto que no este siendo utilizado para crear la partida
@@ -120,20 +120,20 @@ unsigned int encontrarPuertoLibreParaPartida() {
 
 	pthread_mutex_lock(&mutex_partidasActivas);
 	/*
-	//limpiar lista de puertos fuera del maximo aceptado
-	if (partidasActivas.size() > MAX_PUERTOS_UTILIZABLES) {
-		map<unsigned int, datosPartida>::iterator it1;
-		it1 = partidasActivas.begin();
-		advance(it1, (MAX_PUERTOS_UTILIZABLES));
-		do {
-			if (it1->second.libre) {
-				partidasActivas.erase(it1++);
-			} else {
-				++it1;
-			}
-		} while (it1 != partidasActivas.end());
+	 //limpiar lista de puertos fuera del maximo aceptado
+	 if (partidasActivas.size() > MAX_PUERTOS_UTILIZABLES) {
+	 map<unsigned int, datosPartida>::iterator it1;
+	 it1 = partidasActivas.begin();
+	 advance(it1, (MAX_PUERTOS_UTILIZABLES));
+	 do {
+	 if (it1->second.libre) {
+	 partidasActivas.erase(it1++);
+	 } else {
+	 ++it1;
+	 }
+	 } while (it1 != partidasActivas.end());
 
-	}*/
+	 }*/
 
 	if (partidasActivas.size() > 0) {
 		//busco en la lista algun puerto que no este siendo usado
@@ -146,8 +146,8 @@ unsigned int encontrarPuertoLibreParaPartida() {
 				break;
 			}
 		}
-		 ultimoPuertoUtilizado = partidasActivas.rbegin()->first;
-	}else{
+		ultimoPuertoUtilizado = partidasActivas.rbegin()->first;
+	} else {
 		ultimoPuertoUtilizado = puertoServidorTorneo;
 	}
 
@@ -330,12 +330,11 @@ void* temporizadorTorneo(void* data) {
 void* lecturaDeResultados(void* data) {
 	resumenPartida = (struct puntajesPartida *) shmat(idSHM, (char *) 0, 0);
 
-	while (!partidasFinalizadas()) {
-
-		if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
-			break;
-		}
-		if (!murioServidorDeLaPartida() && sem_trywait(sem_ServidorTorneoSHM.getSem_t()) != -1) {
+	while (hayPartidasActivas()) {
+		//if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
+		//	break;
+		//}
+		if (/*!murioServidorDeLaPartida() &&*/ sem_trywait(sem_ServidorTorneoSHM.getSem_t()) != -1) {
 			pthread_mutex_lock(&mutex_listJugadores);
 			//si el torneo termino ok Grabo los puntajes
 			if (resumenPartida->partidaFinalizadaOK == true) {
@@ -394,7 +393,7 @@ void* lecturaDeResultados(void* data) {
 			cout << "puntajeJugador1:" << resumenPartida->puntajeJugador1 << endl;
 			cout << "puntajeJugador2:" << resumenPartida->puntajeJugador2 << endl;
 			///////////////////////////////////////////////////////////////////////////////////
-			cantPartidasFinalizadas++;
+			//cantPartidasFinalizadas++;
 			/*if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
 			 break;
 			 }*/
@@ -539,29 +538,35 @@ void* modoGrafico(void* data) {
 
 	//esperar que todas las partidas finalicen
 	//int cantPartidasActivas;
-	bool partidasFinalizadas = false;
-	int cantPartidasFinalizadas = 0;
-	while (!partidasFinalizadas) {
-		pthread_mutex_lock(&mutex_partidasActivas);
-		for(map<unsigned int, datosPartida>::iterator it=partidasActivas.begin();it!=partidasActivas.end();it++)
-		{
-			if(it->second.libre)
-			{
-				cantPartidasFinalizadas++;
-			}
-		}
 
-		cout<<"Cantidad de partidas finalizadas: "<<cantPartidasFinalizadas<<endl;
-		cout<<"Cantidad de partidas activas: "<<partidasActivas.size()<<endl;
-
-		if(cantPartidasFinalizadas==partidasActivas.size())
-		{
-			partidasFinalizadas = true;
-		}
-		pthread_mutex_unlock(&mutex_partidasActivas);
-		cantPartidasFinalizadas = 0;
-		sleep(2);
+	while (hayPartidasActivas()) {
+		sleep(4);
 	}
+
+	/*bool partidasFinalizadas = false;
+	 int cantPartidasFinalizadas = 0;
+	 while (!partidasFinalizadas) {
+	 pthread_mutex_lock(&mutex_partidasActivas);
+	 for(map<unsigned int, datosPartida>::iterator it=partidasActivas.begin();it!=partidasActivas.end();it++)
+	 {
+	 if(it->second.libre)
+	 {
+	 cantPartidasFinalizadas++;
+	 }
+	 }
+
+	 cout<<"Cantidad de partidas finalizadas: "<<cantPartidasFinalizadas<<endl;
+	 cout<<"Cantidad de partidas activas: "<<partidasActivas.size()<<endl;
+
+	 if(cantPartidasFinalizadas==partidasActivas.size())
+	 {
+	 partidasFinalizadas = true;
+	 }
+	 pthread_mutex_unlock(&mutex_partidasActivas);
+	 cantPartidasFinalizadas = 0;
+	 sleep(2);
+	 }*/
+
 	pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
 	//cout << "mutex  modoGrafico todasLasPartidasFinalizadas" << endl;
 	todasLasPartidasFinalizadas = true;
@@ -866,6 +871,21 @@ void* establecerPartidas(void* data) {
 
 	//cout << "Thread EstablecerPartidas va a hacer un Exit" << endl;
 	pthread_exit(NULL);
+}
+
+bool hayPartidasActivas() {
+	bool quedanPartidasActivas = false;
+
+	pthread_mutex_lock(&mutex_partidasActivas);
+	for (map<unsigned int, datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
+		if (!it->second.libre) {
+			quedanPartidasActivas = true;
+			break;
+		}
+	}
+	pthread_mutex_unlock(&mutex_partidasActivas);
+
+	return quedanPartidasActivas;
 }
 
 void mandarPuntajes() {

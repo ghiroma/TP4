@@ -44,6 +44,7 @@ void mostrarPantalla(const char*);
 bool seguirAceptandoNuevosJugadores();
 bool murioServidorDeLaPartida();
 //void inicilizarMapPartidasActivas();
+bool hayPartidasActivas();
 
 //THREADS
 void* temporizadorTorneo(void* data);
