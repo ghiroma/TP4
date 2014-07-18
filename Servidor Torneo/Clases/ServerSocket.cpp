@@ -45,7 +45,7 @@ ServerSocket::ServerSocket (unsigned int port, char * ip)
 
 ServerSocket::ServerSocket (unsigned int port)
 {
-  this->ID = socket(AF_INET,SOCK_STREAM,0);
+  this->ID = socket(AF_INET,SOCK_CLOEXEC | SOCK_STREAM,0);
    if(this->ID>=0)
      {
        struct sockaddr_in laddress;

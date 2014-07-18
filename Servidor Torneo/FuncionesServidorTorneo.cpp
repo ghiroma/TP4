@@ -467,6 +467,7 @@ void* modoGrafico(void* data) {
 		//cout << "mutex modoGrafico partidasActivas" << endl;
 		pthread_mutex_lock(&mutex_partidasActivas);
 		cantPartidasActivas = partidasActivas.size();
+		cout<<"cantidad de partidas activas: "<<cantPartidasActivas<<endl;
 		pthread_mutex_unlock(&mutex_partidasActivas);
 		//cout << "unmutex modoGrafico partidasActivas" << endl;
 
