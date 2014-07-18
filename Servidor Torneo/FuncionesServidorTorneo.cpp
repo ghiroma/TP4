@@ -14,7 +14,6 @@
 #include <sstream>
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
-#include <list>
 #include <signal.h>
 #include <wait.h>
 #include <sys/socket.h>
@@ -34,13 +33,14 @@ pthread_mutex_t mutex_partidasActivas = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_seguirAceptandoJugadores = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_murioServidorPartida = PTHREAD_MUTEX_INITIALIZER;
 
-extern pthread_mutex_t mutex_listJugadores;
+//extern pthread_mutex_t mutex_listJugadores;
 extern map<int,
 Jugador*> listJugadores;
-extern int puertoServidorPartida;
+//extern unsigned int puertoServidorPartida;
+extern unsigned int puertoServidorTorneo;
 extern int cantVidas;
 extern int idSHM;
-list<pid_t> partidasActivas;
+map<unsigned int, datosPartida> partidasActivas;
 extern ServerSocket* sSocket;
 int idPartida = 0;
 puntajesPartida * resumenPartida;
@@ -93,6 +93,69 @@ void SIG_Handler(int inum) {
 	exit(1);
 }
 
+void inicilizarMapPartidasActivas() {
+	int puertoPartida = puertoServidorTorneo + 1;
+	datosPartida datosNuevaPartida;
+	datosNuevaPartida.pidPartida = 0;
+	datosNuevaPartida.libre = true;
+
+	pthread_mutex_lock(&mutex_partidasActivas);
+	for (int i = 0; i < MAX_PUERTOS_UTILIZABLES; ++i) {
+		partidasActivas[puertoPartida++] = datosNuevaPartida;
+	}
+	pthread_mutex_unlock(&mutex_partidasActivas);
+}
+
+/**
+ * Devuelve un puerto que no este siendo utilizado para crear la partida
+ */
+unsigned int encontrarPuertoLibreParaPartida() {
+	unsigned int puertoDePartidaLibre = 0;
+	bool encontroPuertoDisponible = false;
+
+	pthread_mutex_lock(&mutex_partidasActivas);
+	//limpiar lista de puertos fuera del maximo aceptado
+	if (partidasActivas.size() > MAX_PUERTOS_UTILIZABLES) {
+		map<unsigned int, datosPartida>::iterator it1;
+		it1 = partidasActivas.begin();
+		advance(it1, (MAX_PUERTOS_UTILIZABLES));
+		do {
+			if (it1->second.libre) {
+				partidasActivas.erase(it1++);
+			} else {
+				++it1;
+			}
+		} while (it1 != partidasActivas.end());
+
+	}
+
+	//busco en la lista algun puerto que no este siendo usado
+	for (map<unsigned int, datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
+		if (it->second.libre) {
+			puertoDePartidaLibre = it->first;
+			it->second.libre = false;
+			it->second.pidPartida = 0;
+			encontroPuertoDisponible = true;
+			break;
+		}
+	}
+
+	//si no encontro ninguno agrego uno mas
+	if (!encontroPuertoDisponible) {
+		unsigned int ultimoPuertoUtilizado = partidasActivas.rbegin()->first;
+		unsigned int nuevoPuerto = (ultimoPuertoUtilizado + 1);
+		datosPartida datosNuevaPartida;
+		datosNuevaPartida.pidPartida = 0;
+		datosNuevaPartida.libre = false;
+
+		partidasActivas[nuevoPuerto] = datosNuevaPartida;
+		puertoDePartidaLibre = nuevoPuerto;
+	}
+	pthread_mutex_unlock(&mutex_partidasActivas);
+
+	return puertoDePartidaLibre;
+}
+
 /**
  * Detecta cuando un Servidor Partida termina
  */
@@ -100,11 +163,13 @@ void SIG_CHLD(int inum) {
 	int childpid = wait(NULL);
 	cout << "Señal Handler SIGCHLD - PID:" << childpid << endl;
 
-	//borro la partida de la lista de activas
+	//habilito el puerto la lista de partidas activas
 	pthread_mutex_lock(&mutex_partidasActivas);
-	for (list<pid_t>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
-		if ((*it) == childpid) {
-			partidasActivas.erase(it);
+	for (map<unsigned int, datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
+		if (it->second.pidPartida == childpid) {
+			it->second.pidPartida = 0;
+			it->second.libre = true;
+			//partidasActivas.erase(it);
 			break;
 		}
 	}
@@ -329,13 +394,13 @@ void* lecturaDeResultados(void* data) {
 	}
 
 	/*//en este punto ya se que todas las partidas finalizaron y el tiempo de torneo tambien
-	if (!murioServidorDeLaPartida()) {
-		kill(pidServidorPartida, SIGINT);
-	}
+	 if (!murioServidorDeLaPartida()) {
+	 kill(pidServidorPartida, SIGINT);
+	 }
 
-	pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
-	todasLasPartidasFinalizadas = true;
-	pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);*/
+	 pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
+	 todasLasPartidasFinalizadas = true;
+	 pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);*/
 
 	pthread_exit(NULL);
 }
@@ -590,10 +655,10 @@ void* aceptarJugadores(void* data) {
 			cSocket->SendNoBloq(messageId.c_str(), messageId.length());
 
 			//Madarle puerto partida
-			string messagePuertoPartida(CD_PUERTO_PARTIDA);
+			/*string messagePuertoPartida(CD_PUERTO_PARTIDA);
 			sprintf(aux, "%d", puertoServidorPartida);
 			messagePuertoPartida.append(fillMessage(aux));
-			cSocket->SendNoBloq(messagePuertoPartida.c_str(), messagePuertoPartida.length());
+			cSocket->SendNoBloq(messagePuertoPartida.c_str(), messagePuertoPartida.length());*/
 
 			agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
 			cout << "Se agrega el jugador NRO:" << clientId << " NOMBRE: " << nombreJugador << endl;
@@ -695,7 +760,7 @@ void* establecerPartidas(void* data) {
 				}
 				nroPartida++;
 
-				puertoServidorPartida++;
+				int puertoServidorPartida = encontrarPuertoLibreParaPartida();
 
 				//Le mando a los jugadores el nro de Puerto en el que comenzara la partida
 				char auxPuertoNuevaPartida[LONGITUD_CONTENIDO];
@@ -741,6 +806,11 @@ void* establecerPartidas(void* data) {
 					cout << "Error al forkear" << endl;
 				} else {
 					//Soy el padre.
+
+					pthread_mutex_lock(&mutex_partidasActivas);
+					partidasActivas[puertoServidorPartida].pidPartida = pid;
+					pthread_mutex_unlock(&mutex_partidasActivas);
+
 					/*
 					 //inicializo el BLOQUE DE SHM
 					 puntajesPartida* resumenPartida = (struct puntajesPartida *) shmat(idShm, (char *) 0, 0);
@@ -814,15 +884,17 @@ void liberarRecursos() {
 	pthread_mutex_destroy(&mutex_todasLasPartidasFinalizadas);
 	pthread_mutex_destroy(&mutex_partidasActivas);
 	pthread_mutex_destroy(&mutex_listJugadores);
+	pthread_mutex_destroy(&mutex_seguirAceptandoJugadores);
+	pthread_mutex_destroy(&mutex_murioServidorPartida);
 
 	//mato las partidas que quedaron activas
-	pthread_mutex_lock(&mutex_partidasActivas);
-	for (list<pid_t>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
-		kill((*it), SIGINT);
+	/*pthread_mutex_lock(&mutex_partidasActivas);
+	for (map<unsigned int, datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
+		kill(pid, SIGINT);
 	}
-	pthread_mutex_unlock(&mutex_partidasActivas);
+	pthread_mutex_unlock(&mutex_partidasActivas);*/
 
-	//SDL
+//SDL
 	TTF_Quit();
 	SDL_Quit();
 }

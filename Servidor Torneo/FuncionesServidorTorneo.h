@@ -26,10 +26,10 @@ struct puntajesPartida {
 	bool partidaFinalizadaOK;
 };
 
-/*struct datosPartida {
-	int idShm;
+struct datosPartida {
 	pid_t pidPartida;
-};*/
+	bool libre;
+};
 
 void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* tiempoInmunidad, int* cantVidas);
 void SIG_Handler(int inum);
@@ -43,6 +43,7 @@ void liberarRecursos();
 void mostrarPantalla(const char*);
 bool seguirAceptandoNuevosJugadores();
 bool murioServidorDeLaPartida();
+void inicilizarMapPartidasActivas();
 
 //THREADS
 void* temporizadorTorneo(void* data);
