@@ -1,10 +1,13 @@
-CFLAGS= -g
-cliente: cliente_1.0.o CommunicationSocket.o
-	g++ -o cliente cliente_1.0.o CommunicationSocket.o -lSDL -lSDL_ttf -lpthread 
+ CFLAGS= -g
+
+cliente: cliente_1.0.o CommunicationSocket.o Helper.o
+	g++ -o cliente cliente_1.0.o CommunicationSocket.o Helper.o -lSDL -lSDL_ttf -lpthread 
 cliente_1.0.o: cliente_1.0.cpp Clases/CommunicationSocket.h Support/Constantes.h
 	g++ -c cliente_1.0.cpp -lSDL -lSDL_ttf -lpthread 
 CommunicationSocket.o: Clases/CommunicationSocket.cpp 
 	g++ -c Clases/CommunicationSocket.cpp  -lpthread 
+Helper.o:Support/Helper.cpp
+	g++ -c Support/Helper.cpp -lpthread
 
 .PHONY: clean
 clean:
