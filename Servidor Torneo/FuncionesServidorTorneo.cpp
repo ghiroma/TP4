@@ -139,12 +139,16 @@ unsigned int encontrarPuertoLibreParaPartida() {
  * Detecta cuando un Servidor Partida termina
  */
 void SIG_CHLD(int inum) {
+	signal(SIGCHLD, SIG_CHLD);
+
 	int childpid = wait(NULL);
 	cout << "Señal Handler SIGCHLD - PID:" << childpid << endl;
 
 	//TODO
 	//habilito el puerto la lista de partidas activas
 	pthread_mutex_lock(&mutex_partidasActivas);
+	cout<<"paso por el mutexlock partidasActivas"<<endl;
+
 	int idJugador1 = 0;
 	int idJugador2 = 0;
 	for (map<unsigned int, datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
@@ -163,6 +167,7 @@ void SIG_CHLD(int inum) {
 
 	//pongo a los jugadores en no JUNGADO
 	pthread_mutex_lock(&mutex_listJugadores);
+	cout<<"paso por el mutexlock listJugadores"<<endl;
 	if (listJugadores.count(idJugador1) == 1) {
 		listJugadores[idJugador1]->Jugando = false;
 	}
@@ -170,6 +175,8 @@ void SIG_CHLD(int inum) {
 		listJugadores[idJugador2]->Jugando = false;
 	}
 	pthread_mutex_unlock(&mutex_listJugadores);
+
+	cout<<"termino el sig_chld"<<endl;
 }
 
 /**
@@ -609,8 +616,6 @@ void* establecerPartidas(void* data) {
 		//recorro la lista de jugadores viendo a quien le puedo asignar un oponente y que comienze la partida
 		pthread_mutex_lock(&mutex_listJugadores);
 
-		quienJugoMenos();
-
 		//for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 		//idJugador = it->first;
 		//idOponente = it->second->obtenerOponente();
@@ -620,6 +625,7 @@ void* establecerPartidas(void* data) {
 		if (idJugador != -1) {
 			idOponente = listJugadores[idJugador]->obtenerOponente();
 		}
+		cout << "ALgoritmo encontrar match: (" << idJugador << " vs " << idOponente << ")" << endl;
 
 		//si no se encuentra jugando actualmente y se encontro un oponente lanzo el servidor de partida
 		if (idOponente > 0) {
@@ -717,17 +723,32 @@ bool hayPartidasActivas() {
 int quienJugoMenos() {
 	if (listJugadores.size() > 0) {
 		map<int, Jugador*>::iterator it = listJugadores.begin();
-		int idJugadorQueMenosJugo = it->second->Id;
-		int cantPartidasJugadas = it->second->CantPartidasJugadas;
-		it++;
+
+		int idJugadorQueMenosJugo = -1;
+		int cantPartidasJugadas = -1;
+
 		while (it != listJugadores.end()) {
-			if (it->second->CantPartidasJugadas < cantPartidasJugadas) {
+			if (it->second->Jugando == false) {
 				idJugadorQueMenosJugo = it->second->Id;
 				cantPartidasJugadas = it->second->CantPartidasJugadas;
+				it++;
+				break;
 			}
 			it++;
 		}
-		return idJugadorQueMenosJugo;
+
+		if (idJugadorQueMenosJugo != -1) {
+			while (it != listJugadores.end()) {
+				if (it->second != NULL && it->second->Jugando == false && it->second->CantPartidasJugadas < cantPartidasJugadas) {
+					idJugadorQueMenosJugo = it->second->Id;
+					cantPartidasJugadas = it->second->CantPartidasJugadas;
+				}
+				it++;
+			}
+			return idJugadorQueMenosJugo;
+		} else {
+			return -1;
+		}
 	} else {
 		return -1;
 	}
