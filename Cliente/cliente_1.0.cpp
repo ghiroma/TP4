@@ -607,14 +607,20 @@ int main(int argc, char *argv[]) {
 	sleep(3);
 
 	while (!showWindowRanking) {
-		sleep(1);
+		if(murioServidorDelTorneo()){
+			mostrarPantalla("servertorneodown");
+			sleep(6);
+			exit(1);
+		}else{
+			sleep(1);
+		}
 	}
 	mostrarRanking(ranking);
 
 	cout << "Ingrese un tecla para terminar: ";
 	getchar();
 
-	exit(1);
+	exit(0);
 }
 
 bool hayChoque() {
@@ -812,7 +818,7 @@ void* EscuchaServidor(void *arg) {
 				break;
 			}
 		} else if (readData == 0) {
-			cout<<"Se cayo la partida"<<endl;
+			//cout<<"Se cayo la partida"<<endl;
 			//reseteo el nombre del oponente para que espero que se lo envien
 			pthread_mutex_lock(&mutex_nombreOponente);
 			nombreOponente = "";
