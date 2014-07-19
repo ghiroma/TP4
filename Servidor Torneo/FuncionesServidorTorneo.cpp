@@ -87,12 +87,14 @@ void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* 
 /**
  * Manejador de señales
  */
-void SIG_Handler(int inum) {
+void SIG_INT(int inum) {
 	servidorTorneoSIGINT = true;
-	cout << "Señal Handler" << endl;
+	cout << "Torneo: Señal SIGINT" << endl;
 	exit(1);
 }
-
+void SIG_PIPE(int inum) {
+	cout << "Torneo: Señal SIGPIPE" << endl;
+}
 /*
  void inicilizarMapPartidasActivas() {
  int puertoPartida = puertoServidorTorneo + 1;
