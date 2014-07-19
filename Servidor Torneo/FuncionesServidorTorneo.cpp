@@ -356,6 +356,7 @@ void* lecturaDeResultados(void* data) {
 	resumenPartida = (struct puntajesPartida *) shmat(idSHM, (char *) 0, 0);
 
 	while (hayPartidasActivas() || !torneoFinalizado() || sem_ServidorTorneoSHM.getValue() != 0) {
+		//cout<<"Valor semaforo: "<<sem_ServidorTorneoSHM.getValue()<<endl;
 		if (sem_trywait(sem_ServidorTorneoSHM.getSem_t()) != -1) {
 			pthread_mutex_lock(&mutex_listJugadores);
 			//si el torneo termino ok Grabo los puntajes
@@ -433,7 +434,7 @@ void* lecturaDeResultados(void* data) {
 	 todasLasPartidasFinalizadas = true;
 	 pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);*/
 
-	//cout << "Termina thread lectura de resultados" << endl;
+	cout << "Termina thread lectura de resultados" << endl;
 	pthread_exit(NULL);
 }
 

@@ -337,6 +337,7 @@ sharedMemory_thread(void * arguments) {
 
 				//cout << "Menasje fin de partida enviado" << endl;
 
+				cout << "SRV PARTIDA: esperando semaforo partida" << endl;
 				semaforoPartida->P();
 				puntaje->idJugador1 = felix1->id;
 				puntaje->idJugador2 = felix2->id;
@@ -454,7 +455,7 @@ void casePerdidaVida(int jugador) {
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
 			//pthread_mutex_lock(&mutex_edificio);
-			felix2->mover(EDIFICIO_COLUMNAS - 1,0, edificio);
+			felix2->mover(EDIFICIO_COLUMNAS - 1, 0, edificio);
 			//pthread_mutex_unlock(&mutex_edificio);
 		} else if (perderVida == -1) {
 			string message1(CD_PERDIO);
@@ -559,6 +560,8 @@ void liberarRecursos() {
 		shmdt(puntaje);
 	if (torneoMuerto)
 		shmctl(shmId, IPC_RMID, 0);
+	delete (sSocket);
+	sSocket = NULL;
 	delete (cSocket1);
 	cSocket1 = NULL;
 	delete (cSocket2);
@@ -571,8 +574,8 @@ void liberarRecursos() {
 	semaforoPartida = NULL;
 	delete (semaforoTorneo);
 	semaforoTorneo = NULL;
-	delete (sSocket);
-	sSocket = NULL;
+	//delete (sSocket);
+	//sSocket = NULL;
 
 	//cout << "Recursos liberados" << endl;
 }

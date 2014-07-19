@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <netdb.h>
+#include <fcntl.h>
 
 #define MAX_PENDING_CONNECTIONS 20
 
@@ -56,6 +57,7 @@ CommunicationSocket* ServerSocket::Accept()
   int csSocket = accept(this->ID,(struct sockaddr*) &clientData, &clientDataLen);
   if(csSocket<=0)
 	  throw "Error en accept";
+  fcntl(csSocket,F_SETFD,FD_CLOEXEC);
   return new CommunicationSocket(csSocket,&clientData);
 }
 
