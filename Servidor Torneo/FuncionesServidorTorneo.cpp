@@ -340,12 +340,12 @@ void* temporizadorTorneo(void* data) {
 	//pthread_cancel(torneo->thAceptarJugadores);
 
 	//SOCKETS
-	cout<<"Elimino el socket Torneo para que no quede en LISTEN"<<endl;
+	cout << "Elimino el socket Torneo para que no quede en LISTEN" << endl;
 	if (sSocket != NULL) {
 		delete (sSocket);
 		sSocket = NULL;
 	}
-	cout<<"socket Torneo ELIMINADO"<<endl;
+	cout << "socket Torneo ELIMINADO" << endl;
 	pthread_exit(NULL);
 }
 
@@ -653,14 +653,14 @@ void* keepAliveJugadores(void*) {
 		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 			if (it->second->SocketAsociado != NULL) {
 				it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
-				readDataCode = it->second->SocketAsociado->ReceiveBloq(buffer, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
+				//readDataCode = it->second->SocketAsociado->ReceiveBloq(buffer, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
 			}
-			if (readDataCode == 0) {
-				//El jugador se desconecto
-				quitarJugador(it->first);
-			} else {
+			//if (readDataCode == 0) {
+			//El jugador se desconecto
+			//quitarJugador(it->first);
+			//} else {
 
-			}
+			//}
 		}
 		pthread_mutex_unlock(&mutex_listJugadores);
 
@@ -670,6 +670,25 @@ void* keepAliveJugadores(void*) {
 	pthread_exit(NULL);
 }
 
+void* receiver(void *) {
+	while (!partidasFinalizadas()) {
+		char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
+
+		pthread_mutex_lock(&mutex_listJugadores);
+		for (map<int, Jugador *>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
+			if (it->second != NULL && it->second->SocketAsociado != NULL) {
+				int readDataCode = it->second->SocketAsociado->ReceiveNoBloq(buffer, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
+				if (readDataCode == 0) {
+					quitarJugador(it->second->Id);
+					//delete (it->second->SocketAsociado);
+					//listJugadores.erase(it);
+				}
+			}
+		}
+		pthread_mutex_unlock(&mutex_listJugadores);
+		usleep(50000);
+	}
+}
 /**
  * THREAD -> Aceptar las conexiones de nuevos jugadores al torneo
  */
@@ -900,7 +919,7 @@ void mandarPuntajes() {
 		string message(CD_RANKING);
 		message.append(fillMessage(intToString(it->second->Ranking)));
 		it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
-		delete(it->second);
+		delete (it->second);
 	}
 	listJugadores.clear();
 	pthread_mutex_unlock(&mutex_listJugadores);
@@ -915,7 +934,7 @@ void liberarRecursos() {
 
 	pthread_mutex_lock(&mutex_listJugadores);
 	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
-		delete(it->second);
+		delete (it->second);
 	}
 	listJugadores.clear();
 	pthread_mutex_unlock(&mutex_listJugadores);

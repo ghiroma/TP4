@@ -325,7 +325,7 @@ sharedMemory_thread(void * arguments) {
 			}
 
 			//Perdieron ambos, asi que finalmente cierro.
-			if (!cliente1_jugando && !cliente2_jugando) {
+			if (!cliente1_jugando && !cliente2_jugando && (cliente1_conectado || cliente2_conectado)) {
 
 				//Termino la partida asi que envio mensaje a clientes de terminar.
 				string message(CD_FIN_PARTIDA);
@@ -346,6 +346,20 @@ sharedMemory_thread(void * arguments) {
 				puntaje->partidaFinalizadaOk = true;
 
 				cout << "SRV PARTIDA: Puntajes escritos" << endl;
+
+				stop = true;
+				sleep(1);
+				semaforoTorneo->V();
+			}
+			else if(!cliente1_conectado && !cliente2_conectado)
+			{
+				cout<<"SRV PARTIDA: clientes desconectados"<<endl;
+				semaforoPartida->P();
+				puntaje->idJugador1 = felix1->id;
+				puntaje->idJugador2 = felix2->id;
+				puntaje->partidaFinalizadaOk = false;
+				puntaje->puntajeJugador1 = 0;
+				puntaje->puntajeJugador2 = 0;
 
 				stop = true;
 				sleep(1);

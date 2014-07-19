@@ -56,6 +56,8 @@ int main(int argc, char * argv[]) {
 	thModoGrafico_data modoGraficoData;
 	pthread_t thLecturaDeResultados;
 	int resultThLecturaDeResultados;
+	pthread_t thReceiver;
+	int resultThLecturaReceiver;
 
 	signal(SIGINT, SIG_INT);
 	signal(SIGCHLD, SIG_CHLD);
@@ -136,6 +138,11 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
+	resultThLecturaReceiver = pthread_create(&thReceiver,NULL,receiver,(void *)NULL);
+	if(resultThLecturaReceiver){
+		cout<<"Error no se pudo crear el thread receiver"<<endl;
+		exit(1);
+	}
 
 	/////////////////// Preparacion de la parte Grafica /////////////////////
 	//Colores
