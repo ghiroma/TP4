@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <iostream>
 #include <netdb.h>
 
 #define MAX_PENDING_CONNECTIONS 20
@@ -69,6 +70,6 @@ char * ServerSocket::ShowHostName()
 
 ServerSocket::~ServerSocket ()
 {
-  // TODO Auto-generated destructor stub
+  shutdown(this->ID, 2);
   close(this->ID);
 }
