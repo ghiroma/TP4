@@ -121,7 +121,7 @@ bool esperarNombreOponente();
 		*felix_r32, *felix_r42, *felix_r52, *felix1, *felix2, *ralph_1, *ralph_2, *ralph_3, *ralph_4, *ralph_5, *ralph_6, *ralph, *roca1, *roca2, *roca, *pajaro_1, *pajaro_2, *pajaro, *texto, *puntos, *vidas, *torta;
 
 struct ventana ventanas_tramo1[3][5];
-/* ALMACENO FILA y COLUMNA -- pienso el edificio como una matriz */
+/* ALMACENO FILA y COLUMNA -- pienso el ed	ificio como una matriz */
 
 struct posicion felix1_posicion = { 0, 0 };
 struct posicion felix2_posicion = { 0, 0 };
