@@ -339,6 +339,13 @@ void* temporizadorTorneo(void* data) {
 	pthread_mutex_unlock(&mutex_seguirAceptandoJugadores);
 	//pthread_cancel(torneo->thAceptarJugadores);
 
+	//SOCKETS
+	cout<<"Elimino el socket Torneo para que no quede en LISTEN"<<endl;
+	if (sSocket != NULL) {
+		delete (sSocket);
+		sSocket = NULL;
+	}
+	cout<<"socket Torneo ELIMINADO"<<endl;
 	pthread_exit(NULL);
 }
 
