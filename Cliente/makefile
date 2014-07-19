@@ -8,4 +8,4 @@ CommunicationSocket.o: Clases/CommunicationSocket.cpp
 
 .PHONY: clean
 clean:
-	rm -f *.o
+	rm -f *.o cliente
