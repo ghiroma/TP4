@@ -28,7 +28,10 @@ CommunicationSocket::CommunicationSocket (unsigned short int port, char * ip)
 	if(gethostbyname(ip)==NULL)
 	{
 		struct hostent * ent = gethostbyname(ip);
-		memcpy(&caddress.sin_addr.s_addr,ent->h_addr_list[0],ent->h_length);
+		struct in_addr **addr_list = (struct in_addr **) ent->h_addr_list;
+		strcpy(ip,inet_ntoa(*addr_list[0]));
+		caddress.sin_addr.s_addr = inet_addr(ip);
+		//memcpy(&caddress.sin_addr.s_addr,ent->h_addr_list[0],ent->h_length);
 	}
 	else
 	{

@@ -1370,7 +1370,7 @@ void esperarSTART() {
 
 void vaciarColas() {
 	while (!cola_grafico.empty()) {
-		Helper::desencolar(&cola_grafico,&mutex_cola_grafico):
+		Helper::desencolar(&cola_grafico,&mutex_cola_grafico);
 	}
 	while (!cola_ralph.empty()) {
 		Helper::desencolar(&cola_ralph,&mutex_cola_ralph);
