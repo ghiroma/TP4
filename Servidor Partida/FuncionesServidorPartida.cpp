@@ -244,7 +244,7 @@ void *validator2_thread(void* arguments) {
 					break;
 				case CD_ID_JUGADOR_I: {
 					int id = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
-					cout<<"Servidor Partida: recibi id: "<<id<<endl;
+					//cout<<"Servidor Partida: recibi id: "<<id<<endl;
 					caseIdJugador(JUGADOR_2, id);
 					break;
 				}
@@ -281,7 +281,7 @@ void *validator1_thread(void * argument) {
 					break;
 				case CD_ID_JUGADOR_I: {
 					int id = atoi(message.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str());
-					cout<<"Servidor Partida: recibi id: "<<id<<endl;
+					//cout<<"Servidor Partida: recibi id: "<<id<<endl;
 					caseIdJugador(JUGADOR_1, id);
 					break;
 				}
@@ -335,7 +335,7 @@ sharedMemory_thread(void * arguments) {
 				if (cSocket2 != NULL)
 					cSocket2->SendBloq(message.c_str(), message.length());
 
-				cout << "Menasje fin de partida enviado" << endl;
+				//cout << "Menasje fin de partida enviado" << endl;
 
 				semaforoPartida->P();
 				puntaje->idJugador1 = felix1->id;
@@ -574,7 +574,7 @@ void liberarRecursos() {
 	delete (sSocket);
 	sSocket = NULL;
 
-	cout << "Recursos liberados" << endl;
+	//cout << "Recursos liberados" << endl;
 }
 
 string posicionInicial1() {
@@ -619,6 +619,6 @@ bool tramoFinalizado(Edificio * edificio) {
 				result += edificio->ventanas[fila][columna].ventanaRota;
 		}
 	}
-	cout<<"Faltan arreglar "<<result<<" ventanas"<<endl;
+	//cout<<"Faltan arreglar "<<result<<" ventanas"<<endl;
 	return result == 0;
 }

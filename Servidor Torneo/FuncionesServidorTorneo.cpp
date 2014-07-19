@@ -389,10 +389,10 @@ void* lecturaDeResultados(void* data) {
 
 			//pongo a los jugadores en no JUNGADO
 			if (listJugadores.count(resumenPartida->idJugador1) == 1) {
-				listJugadores[resumenPartida->idJugador1]->Jugando = false;
+				//listJugadores[resumenPartida->idJugador1]->Jugando = false;
 			}
 			if (listJugadores.count(resumenPartida->idJugador2) == 1) {
-				listJugadores[resumenPartida->idJugador2]->Jugando = false;
+				//listJugadores[resumenPartida->idJugador2]->Jugando = false;
 			}
 			pthread_mutex_unlock(&mutex_listJugadores);
 
