@@ -14,6 +14,7 @@
 #include <algorithm>
 #include "Clases/CommunicationSocket.h"
 #include "Support/Constantes.h"
+#include "Support/Helper.h"
 
 #define ANCHO_PANTALLA	640
 #define ALTO_PANTALLA 480
@@ -481,8 +482,7 @@ int main(int argc, char *argv[]) {
 				if (!cola_felix1.empty()) {
 					//cout << "Entro a la cola de felix movimiento" << endl;
 					felix1_inicial = false;
-					string msj = cola_felix1.front();
-					cola_felix1.pop();
+					string msj = Helper::desencolar(&cola_felix1,&mutex_cola_felix1);
 					felix1_posicion.columna = atoi(msj.substr(5, 1).c_str());
 					//cout << "Nueva posicion columna de felix1" << felix1_posicion.columna << endl;
 					felix1_posicion.fila = atoi(msj.substr(6, 1).c_str());
@@ -506,7 +506,7 @@ int main(int argc, char *argv[]) {
 
 					string message(CD_VENTANA_ARREGLADA);
 					message.append(fillMessage("0"));
-					cola_grafico.push(message);
+					Helper::encolar(&message,&cola_grafico,&mutex_cola_grafico);
 					ventana_reparada(&felix1_posicion);
 
 					felix1_reparar = 'N';
@@ -565,17 +565,11 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		if (hayChoque()) {
-			//felix1_posicion.fila = 0;
-			//felix1_posicion.columna = 0;
 
 			string message(CD_PERDIDA_VIDA);
 			message.append(fillMessage("0"));
-			cola_grafico.push(message);
+			Helper::encolar(&message,&cola_grafico,&mutex_cola_grafico);
 
-			/*if (felix1_vidas > 0) {
-			 felix1_vidas--;
-			 //felix1_inicial = true;
-			 }*/
 		}
 
 		if (ventanas_reparadas == 11) {
@@ -738,7 +732,7 @@ void* EscuchaServidor(void *arg) {
 				break;
 			case CD_PERDIDA_VIDA_I:
 				if (buffer[4] == '1') {
-					cola_felix1.push(aux_buffer);
+					Helper::encolar(&aux_buffer,&cola_felix1,&mutex_cola_felix1);
 					if (felix1_vidas > 0) {
 						felix1_vidas--;
 						felix1_reparar = 'N';
@@ -814,7 +808,7 @@ void* EscuchaServidor(void *arg) {
 				string message(CD_ACK);
 				message.append(fillMessage("0"));
 				//TODO Agregar mutex.
-				cola_grafico.push(message);
+				Helper::encolar(&message,&cola_grafico,&mutex_cola_grafico);
 				break;
 			}
 		} else if (readData == 0) {
@@ -842,12 +836,9 @@ void* EscuchaServidor(void *arg) {
 void * EnvioServidor(void * arg) {
 	int fd = *(int *) arg;
 	CommunicationSocket cSocket(fd);
-	//cout << "inicia th EnviaServidor" << endl;
 	while (true) {
 		if (!cola_grafico.empty()) {
-			string mensaje = cola_grafico.front();
-			cola_grafico.pop();
-			//cout << "Mensaje a enviar al servPartida: " << mensaje.c_str() << endl;
+			string mensaje = Helper::desencolar(&cola_grafico,&mutex_cola_grafico);
 			cSocket.SendBloq(mensaje.c_str(), mensaje.length());
 		}
 		usleep(1000);
@@ -960,7 +951,7 @@ void* EscuchaTeclas(void *arg) {
 					sprintf(aux, "%d", -1);
 					string message(CD_MOVIMIENTO_FELIX);
 					message.append(fillMessage(aux));
-					cola_grafico.push(message);
+					Helper::encolar(&message,&cola_grafico,&mutex_cola_grafico);
 				}
 			} else if ((evento.key.keysym.sym == SDLK_UP || evento.key.keysym.sym == key_arriba) && felix1_reparar != 'S') {
 				if ((felix1_posicion.fila + 1) < 3 && felix1_reparar != 'S' && felix1_vidas > 0) {
@@ -968,7 +959,7 @@ void* EscuchaTeclas(void *arg) {
 					sprintf(aux, "%d", 1);
 					string message(CD_MOVIMIENTO_FELIX);
 					message.append(fillMessage(aux));
-					cola_grafico.push(message);
+					Helper::encolar(&message,&cola_grafico,&mutex_cola_grafico);
 				}
 			} else if ((evento.key.keysym.sym == SDLK_RIGHT || evento.key.keysym.sym == key_derecha) && felix1_reparar != 'S') {
 				felix1 = felix_d1;
@@ -977,7 +968,7 @@ void* EscuchaTeclas(void *arg) {
 					char aux[5];
 					sprintf(aux, "%d", 100);
 					message.append(fillMessage(aux));
-					cola_grafico.push(message);
+					Helper::encolar(&message,&cola_grafico,&mutex_cola_grafico);
 				}
 			} else if ((evento.key.keysym.sym == SDLK_LEFT || evento.key.keysym.sym == key_izquierda) && felix1_reparar != 'S') {
 				felix1 = felix_i1;
@@ -986,12 +977,12 @@ void* EscuchaTeclas(void *arg) {
 					string message(CD_MOVIMIENTO_FELIX);
 					sprintf(aux, "%d", -100);
 					message.append(fillMessage(aux));
-					cola_grafico.push(message);
+					Helper::encolar(&message,&cola_grafico,&mutex_cola_grafico);
 				}
 			} else if ((evento.key.keysym.sym == SDLK_SPACE || evento.key.keysym.sym == key_accion) && felix1_vidas > 0 && felix1_reparar != 'S') {
 				string message(CD_VENTANA_ARREGLANDO);
 				message.append(fillMessage("0"));
-				cola_grafico.push(message);
+				Helper::encolar(&message,&cola_grafico,&mutex_cola_grafico);
 				felix1_reparar = 'S';
 			} else if (evento.key.keysym.sym == key_salir) {
 				exit(1);
@@ -1258,7 +1249,7 @@ bool inicializarNuevaPartida() {
 	//Mando mi ID de Jugador
 	string messageIDJugador(CD_ID_JUGADOR);
 	messageIDJugador.append(fillMessage(mi_id.c_str()));
-	cola_grafico.push(messageIDJugador);
+	Helper::encolar(&messageIDJugador,&cola_grafico,&mutex_cola_grafico);
 
 	cout << "Mande mi id" <<mi_id<< endl;
 
@@ -1276,7 +1267,7 @@ bool inicializarNuevaPartida() {
 	//Mando que estoy listo.
 	string messageListo(CD_JUGADOR_LISTO);
 	messageListo.append(fillMessage("0"));
-	cola_grafico.push(messageListo);
+	Helper::encolar(&messageListo,&cola_grafico,&mutex_cola_grafico);
 
 	cout << "Envie mensaje de listo" << endl;
 
@@ -1377,25 +1368,25 @@ void esperarSTART() {
 
 void vaciarColas() {
 	while (!cola_grafico.empty()) {
-		cola_grafico.pop();
+		Helper::desencolar(&cola_grafico,&mutex_cola_grafico):
 	}
 	while (!cola_ralph.empty()) {
-		cola_ralph.pop();
+		Helper::desencolar(&cola_ralph,&mutex_cola_ralph);
 	}
 	while (!cola_pajaro.empty()) {
-		cola_pajaro.pop();
+		Helper::desencolar(&cola_pajaro,&mutex_cola_pajaro);
 	}
 	while (!cola_torta.empty()) {
-		cola_torta.pop();
+		Helper::desencolar(&cola_torta,&mutex_cola_torta);
 	}
 	while (!cola_mensajes_enviar.empty()) {
-		cola_mensajes_enviar.pop();
+		Helper::desencolar(&cola_mensajes_enviar,&mutex_cola_mensajes_enviar);
 	}
 	while (!cola_felix1.empty()) {
-		cola_felix1.pop();
+		Helper::desencolar(&cola_felix1,&mutex_cola_felix1);
 	}
 	while (!cola_felix2.empty()) {
-		cola_felix2.pop();
+		Helper::desencolar(&cola_felix2,&mutex_cola_felix2);
 	}
 }
 
