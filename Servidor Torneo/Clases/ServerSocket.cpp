@@ -14,40 +14,16 @@
 
 #define MAX_PENDING_CONNECTIONS 20
 
-ServerSocket::ServerSocket (unsigned int port, char * ip)
-{
-  this->ID = socket(AF_INET,SOCK_CLOEXEC | SOCK_STREAM,0);
-  if(this->ID>=0)
-    {
-      struct sockaddr_in laddress;
-	laddress.sin_addr.s_addr = inet_addr(ip);
-      laddress.sin_port = htons(port);
-      laddress.sin_family = AF_INET;
-      if(bind(this->ID,(struct sockaddr*)&laddress,sizeof(sockaddr))==0)
-	{
-	  if((listen(this->ID,MAX_PENDING_CONNECTIONS))!=0)
-	    {
-	      close(this->ID);
-	      throw "Error en listen";
-	    }
-	}
-      else //Error en bind.
-	{
-	  close(this->ID);
-	  throw "Error en bind";
-	}
-    }
-  else //Error en socket
-    {
-      throw "Error en socket";
-    }
-}
-
 ServerSocket::ServerSocket (unsigned int port)
 {
   this->ID = socket(AF_INET,SOCK_CLOEXEC | SOCK_STREAM,0);
    if(this->ID>=0)
      {
+		struct linger linger = {0};
+		linger.l_onoff=1;
+		linger.l_linger = 0;
+		setsockopt(this->ID,SOL_SOCKET,SO_LINGER,(char *)&linger,sizeof(linger));
+
        struct sockaddr_in laddress;
        laddress.sin_addr.s_addr = INADDR_ANY;
        laddress.sin_port = htons(port);
