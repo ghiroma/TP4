@@ -427,9 +427,9 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("200"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
-			pthread_mutex_lock(&mutex_edificio);
+			//pthread_mutex_lock(&mutex_edificio);
 			felix1->mover(0, 0, edificio);
-			pthread_mutex_unlock(&mutex_edificio);
+			//pthread_mutex_unlock(&mutex_edificio);
 		} else if (perderVida == -1) {
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
@@ -437,10 +437,10 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("2"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
-			pthread_mutex_lock(&mutex_edificio);
+			//pthread_mutex_lock(&mutex_edificio);
 			edificio->ventanas[felix1->fila][felix1->columna].ocupado = false;
 			edificio->ventanas[0][0].ocupado = false;
-			pthread_mutex_unlock(&mutex_edificio);
+			//pthread_mutex_unlock(&mutex_edificio);
 			cliente1_jugando = false;
 		}
 	} else {
@@ -453,9 +453,9 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("140"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
-			pthread_mutex_lock(&mutex_edificio);
-			felix2->mover(0, EDIFICIO_COLUMNAS - 1, edificio);
-			pthread_mutex_unlock(&mutex_edificio);
+			//pthread_mutex_lock(&mutex_edificio);
+			felix2->mover(EDIFICIO_COLUMNAS - 1,0, edificio);
+			//pthread_mutex_unlock(&mutex_edificio);
 		} else if (perderVida == -1) {
 			string message1(CD_PERDIO);
 			string message2(CD_PERDIO);
@@ -463,10 +463,10 @@ void casePerdidaVida(int jugador) {
 			message2.append(Helper::fillMessage("1"));
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
-			pthread_mutex_lock(&mutex_edificio);
+			//pthread_mutex_lock(&mutex_edificio);
 			edificio->ventanas[felix2->fila][felix2->columna].ocupado = false;
 			edificio->ventanas[0][EDIFICIO_COLUMNAS - 1].ocupado = false;
-			pthread_mutex_unlock(&mutex_edificio);
+			//pthread_mutex_unlock(&mutex_edificio);
 			cliente2_jugando = false;
 		}
 	}
@@ -496,10 +496,11 @@ void caseVentanaArreglada(int jugador) {
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
 		}
-		if (tramoFinalizado(edificio)) {
-			cliente1_jugando = false;
-			cliente2_jugando = false;
-		}
+	}
+
+	if (tramoFinalizado(edificio)) {
+		cliente1_jugando = false;
+		cliente2_jugando = false;
 	}
 	pthread_mutex_unlock(&mutex_edificio);
 
@@ -618,5 +619,6 @@ bool tramoFinalizado(Edificio * edificio) {
 				result += edificio->ventanas[fila][columna].ventanaRota;
 		}
 	}
+	cout<<"Faltan arreglar "<<result<<" ventanas"<<endl;
 	return result == 0;
 }
