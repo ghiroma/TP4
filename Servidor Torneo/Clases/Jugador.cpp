@@ -115,4 +115,5 @@ int Jugador::obtenerOponente() {
 }
 
 Jugador::~Jugador() {
+	delete(this->SocketAsociado);
 }

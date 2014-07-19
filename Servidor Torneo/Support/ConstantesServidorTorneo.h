@@ -45,7 +45,7 @@ static const int MAX_JUGADORES_SOPORTADOS = 100;
 
 static const int PERMISOS_SHM = 0666;
 static const int CLAVE_MEMORIA_COMPARTIDA = 1322;
-static const int INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES = 5000000;
+static const int INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES = 8;
 
 static const int MAX_NRO_PUERTOS = 65535;
 static const int MIN_PUERTO_REGISTRADO = 1024;

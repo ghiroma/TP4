@@ -178,14 +178,14 @@ void SIG_CHLD(int inum) {
 
 	//habilito el puerto la lista de partidas activas
 	pthread_mutex_lock(&mutex_partidasActivas);
-	int idJugador1=0;
-	int idJugador2=0;
+	int idJugador1 = 0;
+	int idJugador2 = 0;
 	for (map<unsigned int, datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
 		if (it->second.pidPartida == childpid) {
-			idJugador1=it->second.idJugador1;
-			it->second.idJugador1=0;
-			idJugador2=it->second.idJugador2;
-			it->second.idJugador2=0;
+			idJugador1 = it->second.idJugador1;
+			it->second.idJugador1 = 0;
+			idJugador2 = it->second.idJugador2;
+			it->second.idJugador2 = 0;
 			it->second.pidPartida = 0;
 			it->second.libre = true;
 			//partidasActivas.erase(it);
@@ -328,7 +328,9 @@ void* temporizadorTorneo(void* data) {
 	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 		string message(CD_FIN_TORNEO);
 		message.append(fillMessage("1"));
-		it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
+		if (it->second != NULL && it->second->SocketAsociado != NULL) {
+			it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
+		}
 	}
 	pthread_mutex_unlock(&mutex_listJugadores);
 
@@ -641,9 +643,10 @@ void* keepAliveJugadores(void*) {
 		//Para cada jugador ver si me responden la señal de KEEPALIVE
 		pthread_mutex_lock(&mutex_listJugadores);
 		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
-			it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
-			readDataCode = it->second->SocketAsociado->ReceiveBloq(buffer, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
-
+			if (it->second->SocketAsociado != NULL) {
+				it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
+				readDataCode = it->second->SocketAsociado->ReceiveBloq(buffer, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
+			}
 			if (readDataCode == 0) {
 				//El jugador se desconecto
 				quitarJugador(it->first);
@@ -809,7 +812,7 @@ void* establecerPartidas(void* data) {
 				//cout << "le mando a ID: " << idOponente << " - el socket:" << auxPuertoNuevaPartida << endl;
 				listJugadores[idOponente]->SocketAsociado->SendBloq(message.c_str(), message.length());
 
-				cout<<"SERVER TORNEO: Utilizando socket "<<puertoServidorPartida<<endl;
+				cout << "SERVER TORNEO: Utilizando socket " << puertoServidorPartida << endl;
 
 				//Les mando el nombre de su oponente
 				char auxnombreOponente1[LONGITUD_CONTENIDO];
@@ -854,13 +857,13 @@ void* establecerPartidas(void* data) {
 
 				}
 			} else {
-				////cout << "J" << idJugador << " No se le encontraron oponentes" << endl;
+				//cout << "J" << idJugador << " No se le encontraron oponentes" << endl;
 			}
 		}
 		pthread_mutex_unlock(&mutex_listJugadores);
 		//cout << "unmutex establecerPartidas" << endl;
 
-		usleep(INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES);
+		sleep(INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES);
 	}
 
 	//cout << "Thread EstablecerPartidas va a hacer un Exit" << endl;
@@ -889,7 +892,9 @@ void mandarPuntajes() {
 		string message(CD_RANKING);
 		message.append(fillMessage(intToString(it->second->Ranking)));
 		it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
+		delete(it->second);
 	}
+	listJugadores.clear();
 	pthread_mutex_unlock(&mutex_listJugadores);
 }
 
@@ -897,12 +902,14 @@ void liberarRecursos() {
 	//SOCKETS
 	if (sSocket != NULL) {
 		delete (sSocket);
+		sSocket = NULL;
 	}
 
 	pthread_mutex_lock(&mutex_listJugadores);
 	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
-		delete (it->second->SocketAsociado);
+		delete(it->second);
 	}
+	listJugadores.clear();
 	pthread_mutex_unlock(&mutex_listJugadores);
 
 	//SHM
