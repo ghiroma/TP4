@@ -106,5 +106,4 @@ char * ServerSocket::ShowHostName() {
 ServerSocket::~ServerSocket() {
 	// TODO Auto-generated destructor stub
 	close(this->ID);
-	std::cout << "Destructor ssocket ejecutado" << std::endl;
 }
