@@ -105,5 +105,6 @@ char * ServerSocket::ShowHostName() {
 
 ServerSocket::~ServerSocket() {
 	// TODO Auto-generated destructor stub
+	shutdown(this->ID,2);
 	close(this->ID);
 }
