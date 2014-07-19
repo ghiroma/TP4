@@ -57,8 +57,9 @@ int main(int argc, char * argv[]) {
 	pthread_t thLecturaDeResultados;
 	int resultThLecturaDeResultados;
 
-	signal(SIGINT, SIG_Handler);
+	signal(SIGINT, SIG_INT);
 	signal(SIGCHLD, SIG_CHLD);
+	signal(SIGPIPE, SIG_PIPE);
 
 	//Obtener configuracion
 	getConfiguration(&puertoServidorTorneo, &ip, &duracionTorneo, &tiempoInmunidad, &cantVidas);
