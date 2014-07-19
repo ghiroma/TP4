@@ -1105,6 +1105,8 @@ char IngresaNombre() {
 			} else if (felix1_nombre.length() > 0) {
 				break;
 			}
+		}else if (evento.type == SDL_QUIT) {
+			exit(0);
 		}
 	}
 	return salir;

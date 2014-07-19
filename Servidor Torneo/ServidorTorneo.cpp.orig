@@ -116,12 +116,15 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
+<<<<<<< HEAD
+=======
 	resultThLecturaReceiver = pthread_create(&thReceiver,NULL,receiver,(void *)NULL);
 	if(resultThLecturaReceiver){
 		cout<<"Error no se pudo crear el thread receiver"<<endl;
 		exit(1);
 	}
 
+>>>>>>> a2a90dc3886b255d9d566f2acb75a893bf6ce4cb
 	/////////////////// Preparacion de la parte Grafica /////////////////////
 	//Colores
 	colorNegro.r = colorNegro.g = colorNegro.b = 0;

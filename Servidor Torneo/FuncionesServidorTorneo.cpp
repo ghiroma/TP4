@@ -33,10 +33,8 @@ pthread_mutex_t mutex_partidasActivas = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_seguirAceptandoJugadores = PTHREAD_MUTEX_INITIALIZER;
 //pthread_mutex_t mutex_murioServidorPartida = PTHREAD_MUTEX_INITIALIZER;
 
-//extern pthread_mutex_t mutex_listJugadores;
 		extern map<int,
 Jugador*> listJugadores;
-//extern unsigned int puertoServidorPartida;
 extern unsigned int puertoServidorTorneo;
 extern int cantVidas;
 extern int idSHM;
@@ -95,22 +93,6 @@ void SIG_INT(int inum) {
 void SIG_PIPE(int inum) {
 	cout << "Torneo: Señal SIGPIPE" << endl;
 }
-/*
- void inicilizarMapPartidasActivas() {
- int puertoPartida = puertoServidorTorneo + 1;
- datosPartida datosNuevaPartida;
- datosNuevaPartida.pidPartida = 0;
- datosNuevaPartida.libre = true;
-
- pthread_mutex_lock(&mutex_partidasActivas);
- //for (int i = 0; i < MAX_PUERTOS_UTILIZABLES; ++i) {
- //	partidasActivas[puertoPartida++] = datosNuevaPartida;
- //}
-
- partidasActivas[puertoPartida] = datosNuevaPartida;
- pthread_mutex_unlock(&mutex_partidasActivas);
- }
- */
 
 /**
  * Devuelve un puerto que no este siendo utilizado para crear la partida
@@ -121,22 +103,6 @@ unsigned int encontrarPuertoLibreParaPartida() {
 	unsigned int ultimoPuertoUtilizado;
 
 	pthread_mutex_lock(&mutex_partidasActivas);
-	/*
-	 //limpiar lista de puertos fuera del maximo aceptado
-	 if (partidasActivas.size() > MAX_PUERTOS_UTILIZABLES) {
-	 map<unsigned int, datosPartida>::iterator it1;
-	 it1 = partidasActivas.begin();
-	 advance(it1, (MAX_PUERTOS_UTILIZABLES));
-	 do {
-	 if (it1->second.libre) {
-	 partidasActivas.erase(it1++);
-	 } else {
-	 ++it1;
-	 }
-	 } while (it1 != partidasActivas.end());
-
-	 }*/
-
 	if (partidasActivas.size() > 0) {
 		//busco en la lista algun puerto que no este siendo usado
 		for (map<unsigned int, datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
@@ -176,6 +142,7 @@ void SIG_CHLD(int inum) {
 	int childpid = wait(NULL);
 	cout << "Señal Handler SIGCHLD - PID:" << childpid << endl;
 
+	//TODO
 	//habilito el puerto la lista de partidas activas
 	pthread_mutex_lock(&mutex_partidasActivas);
 	int idJugador1 = 0;
@@ -194,6 +161,7 @@ void SIG_CHLD(int inum) {
 	}
 	pthread_mutex_unlock(&mutex_partidasActivas);
 
+	//pongo a los jugadores en no JUNGADO
 	pthread_mutex_lock(&mutex_listJugadores);
 	if (listJugadores.count(idJugador1) == 1) {
 		listJugadores[idJugador1]->Jugando = false;
@@ -202,24 +170,6 @@ void SIG_CHLD(int inum) {
 		listJugadores[idJugador2]->Jugando = false;
 	}
 	pthread_mutex_unlock(&mutex_listJugadores);
-
-	/*//MUERTE DE LA PARTIDA
-	 int childpid = wait(NULL);
-
-	 if (cantPartidasFinalizadas != idPartida || (cantPartidasFinalizadas == 0 && idPartida == 0)) {
-	 pthread_mutex_lock(&mutex_murioServidorPartida);
-	 murioServidorPartida = true;
-	 pthread_mutex_unlock(&mutex_murioServidorPartida);
-
-	 mostrarPantalla("servermatchdown");
-	 sleep(5);
-	 exit(1);
-	 }
-	 //exit(1);
-
-	 if (servidorTorneoSIGINT == true) {
-	 exit(1);
-	 }*/
 }
 
 /**
@@ -284,17 +234,6 @@ bool partidasFinalizadas() {
 	return estado;
 }
 
-/**
- * Verificar si murio el servidor de partida
- */
-/*bool murioServidorDeLaPartida() {
- bool estado;
- pthread_mutex_lock(&mutex_murioServidorPartida);
- estado = murioServidorPartida;
- pthread_mutex_unlock(&mutex_murioServidorPartida);
- return estado;
- }*/
-
 /////////////////////////////// THREADS ////////////////////////////
 /**
  * THREAD -> Controla el tiempo que debe durar el torneo
@@ -315,14 +254,6 @@ void* temporizadorTorneo(void* data) {
 	timeIsUp = true;
 	pthread_mutex_unlock(&mutex_timeIsUp);
 
-	/*
-	 * no va porque da error en el cliente y este no sabe cuando muere mal el torneo
-	 * if (sSocket != NULL) {
-	 cout << "(torneo finalizo tiempo) Torneo -> cierro socket" << endl;
-	 delete (sSocket);
-	 sSocket = NULL;
-	 }*/
-
 	//el tiempo del Torneo llego a su fin, informar a cada cliente
 	pthread_mutex_lock(&mutex_listJugadores);
 	for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
@@ -337,7 +268,6 @@ void* temporizadorTorneo(void* data) {
 	pthread_mutex_lock(&mutex_seguirAceptandoJugadores);
 	seguirAceptandoJugadores = false;
 	pthread_mutex_unlock(&mutex_seguirAceptandoJugadores);
-	//pthread_cancel(torneo->thAceptarJugadores);
 
 	//SOCKETS
 	cout << "Elimino el socket Torneo para que no quede en LISTEN" << endl;
@@ -398,14 +328,6 @@ void* lecturaDeResultados(void* data) {
 					}
 				}
 			}
-
-			//pongo a los jugadores en no JUNGADO
-			if (listJugadores.count(resumenPartida->idJugador1) == 1) {
-				//listJugadores[resumenPartida->idJugador1]->Jugando = false;
-			}
-			if (listJugadores.count(resumenPartida->idJugador2) == 1) {
-				//listJugadores[resumenPartida->idJugador2]->Jugando = false;
-			}
 			pthread_mutex_unlock(&mutex_listJugadores);
 
 			///mensajes de prueba
@@ -415,26 +337,10 @@ void* lecturaDeResultados(void* data) {
 			cout << "partidaFinalizadaOK:" << resumenPartida->partidaFinalizadaOK << endl;
 			cout << "puntajeJugador1:" << resumenPartida->puntajeJugador1 << endl;
 			cout << "puntajeJugador2:" << resumenPartida->puntajeJugador2 << endl;
-			///////////////////////////////////////////////////////////////////////////////////
-			//cantPartidasFinalizadas++;
-			/*if (cantPartidasFinalizadas == idPartida && torneoFinalizado()) {
-			 break;
-			 }*/
 			sem_ServidorPartidaSHM.V();
 		}
 		usleep(50000);
 	}
-
-	/*//en este punto ya se que todas las partidas finalizaron y el tiempo de torneo tambien
-	 if (!murioServidorDeLaPartida()) {
-	 kill(pidServidorPartida, SIGINT);
-	 }
-
-	 pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
-	 todasLasPartidasFinalizadas = true;
-	 pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);*/
-
-	cout << "Termina thread lectura de resultados" << endl;
 	pthread_exit(NULL);
 }
 
@@ -551,47 +457,13 @@ void* modoGrafico(void* data) {
 	}
 
 	//esperar que todas las partidas finalicen
-	//while (!partidasFinalizadas()) {
-	//	sleep(5);
-	//}
-
-	//esperar que todas las partidas finalicen
-	//int cantPartidasActivas;
-
 	while (hayPartidasActivas()) {
-		sleep(2);
-		//cout<<"Modo grafico: hay partidas activas"<<endl;
+		sleep(3);
 	}
 
-	/*bool partidasFinalizadas = false;
-	 int cantPartidasFinalizadas = 0;
-	 while (!partidasFinalizadas) {
-	 pthread_mutex_lock(&mutex_partidasActivas);
-	 for(map<unsigned int, datosPartida>::iterator it=partidasActivas.begin();it!=partidasActivas.end();it++)
-	 {
-	 if(it->second.libre)
-	 {
-	 cantPartidasFinalizadas++;
-	 }
-	 }
-
-	 cout<<"Cantidad de partidas finalizadas: "<<cantPartidasFinalizadas<<endl;
-	 cout<<"Cantidad de partidas activas: "<<partidasActivas.size()<<endl;
-
-	 if(cantPartidasFinalizadas==partidasActivas.size())
-	 {
-	 partidasFinalizadas = true;
-	 }
-	 pthread_mutex_unlock(&mutex_partidasActivas);
-	 cantPartidasFinalizadas = 0;
-	 sleep(2);
-	 }*/
-
 	pthread_mutex_lock(&mutex_todasLasPartidasFinalizadas);
-	//cout << "mutex  modoGrafico todasLasPartidasFinalizadas" << endl;
 	todasLasPartidasFinalizadas = true;
 	pthread_mutex_unlock(&mutex_todasLasPartidasFinalizadas);
-	//cout << "unmutex modoGrafico todasLasPartidasFinalizadas" << endl;
 
 	//mostrar pantalla final
 	background = SDL_LoadBMP("Img/background.bmp");
@@ -646,7 +518,6 @@ void* keepAliveJugadores(void*) {
 	string content;
 	message.append(fillMessage(content));
 
-	//while (!partidasFinalizadas() && !murioServidorDeLaPartida()) {
 	while (!partidasFinalizadas()) {
 		//Para cada jugador ver si me responden la señal de KEEPALIVE
 		pthread_mutex_lock(&mutex_listJugadores);
@@ -693,16 +564,7 @@ void* receiver(void *) {
  * THREAD -> Aceptar las conexiones de nuevos jugadores al torneo
  */
 void* aceptarJugadores(void* data) {
-	//cout << "Thread aceptarJugadores - PID:" << getpid() << endl;
 	int clientId = 0;
-	/*//Crear Socket del Servidor
-	 try {
-	 sSocket = new ServerSocket(puertoServidorTorneo);
-	 } catch (...) {
-	 cout << "No se pudo conectar a la IP solicitada. Pruebe otra." << endl;
-	 exit(1);
-	 }*/
-
 	char nombreJugador[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
 	char aux[LONGITUD_CONTENIDO];
 
@@ -722,81 +584,16 @@ void* aceptarJugadores(void* data) {
 			messageId.append(fillMessage(aux));
 			cSocket->SendNoBloq(messageId.c_str(), messageId.length());
 
-			//Madarle puerto partida
-			/*string messagePuertoPartida(CD_PUERTO_PARTIDA);
-			 sprintf(aux, "%d", puertoServidorPartida);
-			 messagePuertoPartida.append(fillMessage(aux));
-			 cSocket->SendNoBloq(messagePuertoPartida.c_str(), messagePuertoPartida.length());*/
-
 			agregarJugador(new Jugador(clientId, nombreJugador, cSocket));
 			//cout << "Se agrega el jugador NRO:" << clientId << " NOMBRE: " << nombreJugador << endl;
 
 		} catch (...) {
-			//cout<<"Error en accept"<<endl;
 			break;
 		}
 	}
 
 	pthread_exit(NULL);
 }
-
-/**
- * THREAD -> Crea los servidores de partidas (un solo serv partida)
- */
-/*void* establecerPartidas(void* data) {
- int idJugador;
- int idOponente;
-
- while (!torneoFinalizado() && !murioServidorDeLaPartida()) {
- //recorro la lista de jugadores viendo a quien le puedo asignar un oponente y que comienze la partida
- pthread_mutex_lock(&mutex_listJugadores);
- for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
- idJugador = it->first;
- idOponente = it->second->obtenerOponente();
-
- //si no se encuentra jugando actualmente y se encontro un oponente ("crea" una nueva partida)
- if (idOponente >= 1) {
- idPartida++;
-
- //habilito el temporizador del torneo
- if (idPartida == 1) {
- //Se crea la primer partida y doy permiso a iniciar el temporizador
- sem_inicializarTemporizador.V();
- }
-
- //Le mando a los jugadores el ID de la partida
- char auxNroPartida[LONGITUD_CONTENIDO];
- sprintf(auxNroPartida, "%d", idPartida);
- string message(CD_ID_PARTIDA);
- message.append(fillMessage(auxNroPartida));
-
- listJugadores[idJugador]->SocketAsociado->SendBloq(message.c_str(), message.length());
- listJugadores[idOponente]->SocketAsociado->SendBloq(message.c_str(), message.length());
-
- //Les mando el nombre de su oponente
- char auxnombreOponente1[LONGITUD_CONTENIDO];
- sprintf(auxnombreOponente1, "%s", listJugadores[idOponente]->Nombre.c_str());
- string nombreOponente1(CD_NOMBRE);
- nombreOponente1.append(fillMessage(auxnombreOponente1));
-
- char auxnombreOponente2[LONGITUD_CONTENIDO];
- sprintf(auxnombreOponente2, "%s", listJugadores[idJugador]->Nombre.c_str());
- string nombreOponente2(CD_NOMBRE);
- nombreOponente2.append(fillMessage(auxnombreOponente2));
-
- listJugadores[idJugador]->SocketAsociado->SendBloq(nombreOponente1.c_str(), nombreOponente1.length());
- listJugadores[idOponente]->SocketAsociado->SendBloq(nombreOponente2.c_str(), nombreOponente2.length());
-
- } else {
- //No se encontraron oponentes disponibles
- }
- }
- pthread_mutex_unlock(&mutex_listJugadores);
- usleep(INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES);
- }
- //cout << "Thread EstablecerPartidas va a hacer un Exit" << endl;
- pthread_exit(NULL);
- }*/
 
 /**
  * THREAD -> Crea los servidores de partidas
@@ -808,85 +605,90 @@ void* establecerPartidas(void* data) {
 	int idOponente;
 	int nroPartida = 1;
 	string nombreSemaforo;
-	int i = 1;
 	while (!torneoFinalizado()) {
-		//cout << "pasada de busqueda nro: " << i++ << " PID:" << getpid() << endl;
-
 		//recorro la lista de jugadores viendo a quien le puedo asignar un oponente y que comienze la partida
 		pthread_mutex_lock(&mutex_listJugadores);
-		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
-			idJugador = it->first;
-			idOponente = it->second->obtenerOponente();
 
-			//si no se encuentra jugando actualmente y se encontro un oponente lanzo el servidor de partida
-			if (idOponente > 0) {
-				//habilito el temporizador del torneo
-				if (nroPartida == 1) {
-					//cout << "Se crea la primer partida y doy permiso a iniciar el temporizador" << endl;
-					sem_inicializarTemporizador.V();
-				}
-				nroPartida++;
+		quienJugoMenos();
 
-				int puertoServidorPartida = encontrarPuertoLibreParaPartida();
+		//for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
+		//idJugador = it->first;
+		//idOponente = it->second->obtenerOponente();
 
-				//Le mando a los jugadores el nro de Puerto en el que comenzara la partida
-				char auxPuertoNuevaPartida[LONGITUD_CONTENIDO];
-				sprintf(auxPuertoNuevaPartida, "%d", puertoServidorPartida);
-				string message(CD_PUERTO_PARTIDA);
-				message.append(fillMessage(auxPuertoNuevaPartida));
-				//cout << "le mando a ID: " << idJugador << " - el socket:" << auxPuertoNuevaPartida << endl;
-				listJugadores[idJugador]->SocketAsociado->SendBloq(message.c_str(), message.length());
-				//cout << "le mando a ID: " << idOponente << " - el socket:" << auxPuertoNuevaPartida << endl;
-				listJugadores[idOponente]->SocketAsociado->SendBloq(message.c_str(), message.length());
-
-				cout << "SERVER TORNEO: Utilizando socket " << puertoServidorPartida << endl;
-
-				//Les mando el nombre de su oponente
-				char auxnombreOponente1[LONGITUD_CONTENIDO];
-				sprintf(auxnombreOponente1, "%s", listJugadores[idOponente]->Nombre.c_str());
-				string nombreOponente1(CD_NOMBRE);
-				nombreOponente1.append(fillMessage(auxnombreOponente1));
-				char auxnombreOponente2[LONGITUD_CONTENIDO];
-				sprintf(auxnombreOponente2, "%s", listJugadores[idJugador]->Nombre.c_str());
-				string nombreOponente2(CD_NOMBRE);
-				nombreOponente2.append(fillMessage(auxnombreOponente2));
-				//cout << "le mando a ID: " << idJugador << " - el nombre oponente:" << nombreOponente1 << endl;
-				listJugadores[idJugador]->SocketAsociado->SendBloq(nombreOponente1.c_str(), nombreOponente1.length());
-				//cout << "le mando a ID: " << idOponente << " - el nombre oponente:" << nombreOponente2 << endl;
-				listJugadores[idOponente]->SocketAsociado->SendBloq(nombreOponente2.c_str(), nombreOponente2.length());
-				//cout << "Termino de mandar los nombres de oponentes" << endl;
-
-				if ((pid = fork()) == 0) {
-					//Proceso hijo
-					//cout << "Thread establecerPartidas FORK - PID:" << getpid() << " (" << idJugador << "vs" << idOponente << ") socket:" << auxPuertoNuevaPartida << endl;
-					char nombreEjecutable[100];
-					strcpy(nombreEjecutable, "ServidorPartida");
-					char auxPuertoServidorPartida[LONGITUD_CONTENIDO];
-					sprintf(auxPuertoServidorPartida, "%d", puertoServidorPartida);
-					char auxCantVidas[2];
-					sprintf(auxCantVidas, "%d", cantVidas);
-
-					char *argumentos[] = { nombreEjecutable, auxPuertoServidorPartida, auxCantVidas, NULL };
-					execv("../Servidor Partida/ServidorPartida", argumentos);
-					cout << "ERROR al ejecutar execv Nueva Partida" << endl;
-					exit(1);
-				} else if (pid < 0) {
-					//Hubo error
-					cout << "Error al forkear" << endl;
-				} else {
-					//Soy el padre.
-
-					pthread_mutex_lock(&mutex_partidasActivas);
-					partidasActivas[puertoServidorPartida].pidPartida = pid;
-					partidasActivas[puertoServidorPartida].idJugador1 = idJugador;
-					partidasActivas[puertoServidorPartida].idJugador2 = idOponente;
-					pthread_mutex_unlock(&mutex_partidasActivas);
-
-				}
-			} else {
-				//cout << "J" << idJugador << " No se le encontraron oponentes" << endl;
-			}
+		idJugador = quienJugoMenos();
+		idOponente = -1;
+		if (idJugador != -1) {
+			idOponente = listJugadores[idJugador]->obtenerOponente();
 		}
+
+		//si no se encuentra jugando actualmente y se encontro un oponente lanzo el servidor de partida
+		if (idOponente > 0) {
+			//habilito el temporizador del torneo
+			if (nroPartida == 1) {
+				//cout << "Se crea la primer partida y doy permiso a iniciar el temporizador" << endl;
+				sem_inicializarTemporizador.V();
+			}
+			nroPartida++;
+
+			int puertoServidorPartida = encontrarPuertoLibreParaPartida();
+
+			//Le mando a los jugadores el nro de Puerto en el que comenzara la partida
+			char auxPuertoNuevaPartida[LONGITUD_CONTENIDO];
+			sprintf(auxPuertoNuevaPartida, "%d", puertoServidorPartida);
+			string message(CD_PUERTO_PARTIDA);
+			message.append(fillMessage(auxPuertoNuevaPartida));
+			//cout << "le mando a ID: " << idJugador << " - el socket:" << auxPuertoNuevaPartida << endl;
+			listJugadores[idJugador]->SocketAsociado->SendBloq(message.c_str(), message.length());
+			//cout << "le mando a ID: " << idOponente << " - el socket:" << auxPuertoNuevaPartida << endl;
+			listJugadores[idOponente]->SocketAsociado->SendBloq(message.c_str(), message.length());
+
+			cout << "SERVER TORNEO: Utilizando socket " << puertoServidorPartida << endl;
+
+			//Les mando el nombre de su oponente
+			char auxnombreOponente1[LONGITUD_CONTENIDO];
+			sprintf(auxnombreOponente1, "%s", listJugadores[idOponente]->Nombre.c_str());
+			string nombreOponente1(CD_NOMBRE);
+			nombreOponente1.append(fillMessage(auxnombreOponente1));
+			char auxnombreOponente2[LONGITUD_CONTENIDO];
+			sprintf(auxnombreOponente2, "%s", listJugadores[idJugador]->Nombre.c_str());
+			string nombreOponente2(CD_NOMBRE);
+			nombreOponente2.append(fillMessage(auxnombreOponente2));
+			//cout << "le mando a ID: " << idJugador << " - el nombre oponente:" << nombreOponente1 << endl;
+			listJugadores[idJugador]->SocketAsociado->SendBloq(nombreOponente1.c_str(), nombreOponente1.length());
+			//cout << "le mando a ID: " << idOponente << " - el nombre oponente:" << nombreOponente2 << endl;
+			listJugadores[idOponente]->SocketAsociado->SendBloq(nombreOponente2.c_str(), nombreOponente2.length());
+			//cout << "Termino de mandar los nombres de oponentes" << endl;
+
+			if ((pid = fork()) == 0) {
+				//Proceso hijo
+				//cout << "Thread establecerPartidas FORK - PID:" << getpid() << " (" << idJugador << "vs" << idOponente << ") socket:" << auxPuertoNuevaPartida << endl;
+				cout << "(" << idJugador << " vs " << idOponente << ")" << endl;
+				char nombreEjecutable[100];
+				strcpy(nombreEjecutable, "ServidorPartida");
+				char auxPuertoServidorPartida[LONGITUD_CONTENIDO];
+				sprintf(auxPuertoServidorPartida, "%d", puertoServidorPartida);
+				char auxCantVidas[2];
+				sprintf(auxCantVidas, "%d", cantVidas);
+
+				char *argumentos[] = { nombreEjecutable, auxPuertoServidorPartida, auxCantVidas, NULL };
+				execv("../Servidor Partida/ServidorPartida", argumentos);
+				cout << "ERROR al ejecutar execv Nueva Partida" << endl;
+				exit(1);
+			} else if (pid < 0) {
+				//Hubo error
+				cout << "Error al forkear" << endl;
+			} else {
+				//Soy el padre.
+				pthread_mutex_lock(&mutex_partidasActivas);
+				partidasActivas[puertoServidorPartida].pidPartida = pid;
+				partidasActivas[puertoServidorPartida].idJugador1 = idJugador;
+				partidasActivas[puertoServidorPartida].idJugador2 = idOponente;
+				pthread_mutex_unlock(&mutex_partidasActivas);
+			}
+		} else {
+			//cout << "J" << idJugador << " No se le encontraron oponentes" << endl;
+		}
+		//}
 		pthread_mutex_unlock(&mutex_listJugadores);
 		//cout << "unmutex establecerPartidas" << endl;
 
@@ -910,6 +712,25 @@ bool hayPartidasActivas() {
 	pthread_mutex_unlock(&mutex_partidasActivas);
 
 	return quedanPartidasActivas;
+}
+
+int quienJugoMenos() {
+	if (listJugadores.size() > 0) {
+		map<int, Jugador*>::iterator it = listJugadores.begin();
+		int idJugadorQueMenosJugo = it->second->Id;
+		int cantPartidasJugadas = it->second->CantPartidasJugadas;
+		it++;
+		while (it != listJugadores.end()) {
+			if (it->second->CantPartidasJugadas < cantPartidasJugadas) {
+				idJugadorQueMenosJugo = it->second->Id;
+				cantPartidasJugadas = it->second->CantPartidasJugadas;
+			}
+			it++;
+		}
+		return idJugadorQueMenosJugo;
+	} else {
+		return -1;
+	}
 }
 
 void mandarPuntajes() {
@@ -955,16 +776,8 @@ void liberarRecursos() {
 	pthread_mutex_destroy(&mutex_partidasActivas);
 	pthread_mutex_destroy(&mutex_listJugadores);
 	pthread_mutex_destroy(&mutex_seguirAceptandoJugadores);
-	//pthread_mutex_destroy(&mutex_murioServidorPartida);
 
-	//mato las partidas que quedaron activas
-	/*pthread_mutex_lock(&mutex_partidasActivas);
-	 for (map<unsigned int, datosPartida>::iterator it = partidasActivas.begin(); it != partidasActivas.end(); it++) {
-	 kill(pid, SIGINT);
-	 }
-	 pthread_mutex_unlock(&mutex_partidasActivas);*/
-
-//SDL
+	//SDL
 	TTF_Quit();
 	SDL_Quit();
 }
