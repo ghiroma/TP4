@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <iostream>
 #include <netdb.h>
 #include <fcntl.h>
 
@@ -71,6 +72,6 @@ char * ServerSocket::ShowHostName()
 
 ServerSocket::~ServerSocket ()
 {
-  // TODO Auto-generated destructor stub
+  shutdown(this->ID, 2);
   close(this->ID);
 }
