@@ -85,6 +85,7 @@ unsigned short int CommunicationSocket::GetClientPort() {
 }
 
 CommunicationSocket::~CommunicationSocket() {
+	//shutdown(this->ID,2);
 	close(this->ID);
 }
 

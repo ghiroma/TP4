@@ -110,6 +110,9 @@ int main(int argc, char * argv[]) {
 		}
 	} while (cantClientes < 2);
 
+	delete(sSocket);
+	sSocket=NULL;
+
 	/*
 	 * Estoy a la espera de que los clientes me envien sus ids.
 	 */
