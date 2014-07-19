@@ -496,10 +496,11 @@ void caseVentanaArreglada(int jugador) {
 			Helper::encolar(&message1, &sender1_queue, &mutex_sender1);
 			Helper::encolar(&message2, &sender2_queue, &mutex_sender2);
 		}
-		if (tramoFinalizado(edificio)) {
-			cliente1_jugando = false;
-			cliente2_jugando = false;
-		}
+	}
+
+	if (tramoFinalizado(edificio)) {
+		cliente1_jugando = false;
+		cliente2_jugando = false;
 	}
 	pthread_mutex_unlock(&mutex_edificio);
 
