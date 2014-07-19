@@ -337,6 +337,13 @@ void* temporizadorTorneo(void* data) {
 	pthread_mutex_unlock(&mutex_seguirAceptandoJugadores);
 	//pthread_cancel(torneo->thAceptarJugadores);
 
+	//SOCKETS
+	cout<<"Elimino el socket Torneo para que no quede en LISTEN"<<endl;
+	if (sSocket != NULL) {
+		delete (sSocket);
+		sSocket = NULL;
+	}
+	cout<<"socket Torneo ELIMINADO"<<endl;
 	pthread_exit(NULL);
 }
 
@@ -858,7 +865,7 @@ void* establecerPartidas(void* data) {
 		pthread_mutex_unlock(&mutex_listJugadores);
 		//cout << "unmutex establecerPartidas" << endl;
 
-		usleep(INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES);
+		sleep(INTERVALO_ENTRE_BUSQUEDA_DE_OPONENTES);
 	}
 
 	//cout << "Thread EstablecerPartidas va a hacer un Exit" << endl;
@@ -895,6 +902,7 @@ void liberarRecursos() {
 	//SOCKETS
 	if (sSocket != NULL) {
 		delete (sSocket);
+		sSocket = NULL;
 	}
 
 	pthread_mutex_lock(&mutex_listJugadores);
