@@ -24,10 +24,8 @@ using namespace std;
 
 map<int, Jugador*> listJugadores;
 unsigned int puertoServidorTorneo;
-//unsigned int puertoServidorPartida;
 int cantVidas = 0;
 ServerSocket* sSocket;
-//int cantidadDePuertosAbiertos = 0;
 int idSHM;
 pid_t pidServidorPartida;
 SDL_Surface *screen, *background;
@@ -72,8 +70,6 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
-	//inicilizarMapPartidasActivas();
-
 	//Creo el bloque de memoria compartida
 	key_t key = ftok("/bin/ls", 666);
 	if (key == -1) {
@@ -102,25 +98,7 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
-	///Lanzar Servidor Partida
-	/*if ((pidServidorPartida = fork()) == 0) {
-		//Proceso hijo
-		char auxCantVidas[2];
-		sprintf(auxCantVidas, "%d", cantVidas);
-		char auxPuertoServidorPartida[LONGITUD_CONTENIDO];
-		sprintf(auxPuertoServidorPartida, "%d", puertoServidorPartida);
-		char nombreEjecutable[100];
-		strcpy(nombreEjecutable, "ServidorPartida");
-
-		char *argumentos[] = { nombreEjecutable, auxPuertoServidorPartida, auxCantVidas, NULL };
-		//execv("../Servidor Partida2/Debug/Servidor Partida2", argumentos);
-		execv("../Servidor Partida/ServidorPartida", argumentos);
-		cout << "ERROR al ejecutar execv Nueva Partida" << endl;
-		exit(1);
-	} else if (pidServidorPartida < 0) {
-		cout << "Error al forkear" << endl;
-		exit(1);
-	}*/
+	cout << "Host Name:" << sSocket->ShowHostName() << endl;
 
 	//Lanzar THREAD establecer partidas
 	resultThEstablecerPartidas = pthread_create(&thEstablecerPartidas, NULL, establecerPartidas, NULL);
@@ -135,7 +113,6 @@ int main(int argc, char * argv[]) {
 		cout << "Error no se pudo crear el thread keepAliveJugadores" << endl;
 		exit(1);
 	}
-
 
 	/////////////////// Preparacion de la parte Grafica /////////////////////
 	//Colores
@@ -162,7 +139,6 @@ int main(int argc, char * argv[]) {
 		printf("Error al iniciar SDL_TTF\n");
 		pthread_exit(NULL);
 	}
-	
 
 	//Defino las propiedades de la pantalla del juego
 	screen = SDL_SetVideoMode(ANCHO_PANTALLA_SERVIDOR, ALTO_PANTALLA_SERVIDOR, BPP_SERVIDOR, SDL_HWSURFACE);
@@ -217,9 +193,8 @@ int main(int argc, char * argv[]) {
 	pthread_join(thModoGrafico, NULL);
 
 	//mandar a cada cliente su puntaje y ranking
-	cout<<"Mandando rankings"<<endl;
+	cout << "Mandando rankings" << endl;
 	mandarPuntajes();
-
 
 	//Bloqueo en espera de que ingrese una tecla para cerrar la pantalla
 	cout << "Ingrese una tecla para finalizar: ";

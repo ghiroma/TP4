@@ -17,7 +17,6 @@ struct thModoGrafico_data {
 	int duracion;
 };
 
-
 struct puntajesPartida {
 	int idJugador1;
 	int idJugador2;
@@ -46,7 +45,7 @@ void liberarRecursos();
 void mostrarPantalla(const char*);
 bool seguirAceptandoNuevosJugadores();
 bool murioServidorDeLaPartida();
-//void inicilizarMapPartidasActivas();
+int quienJugoMenos();
 bool hayPartidasActivas();
 
 //THREADS
