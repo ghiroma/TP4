@@ -438,8 +438,8 @@ int main(int argc, char *argv[]) {
 		} else {
 			if (!cola_ralph.empty()) {
 				// Me llegan numeradas del 1 al 5. Le resto 1 porque yo las tengo del 0 al 4.
-				ralph_destino = atoi(cola_ralph.front().substr(6, 1).c_str());
-				cola_ralph.pop();
+				string ralph_message = Helper::desencolar(&cola_ralph,&mutex_cola_ralph);
+				ralph_destino = atoi(ralph_message.substr(6, 1).c_str());
 
 				if (ralph_destino > ralph_posicion.columna)
 					ralph_sentido = 'D';
@@ -484,9 +484,7 @@ int main(int argc, char *argv[]) {
 					felix1_inicial = false;
 					string msj = Helper::desencolar(&cola_felix1,&mutex_cola_felix1);
 					felix1_posicion.columna = atoi(msj.substr(5, 1).c_str());
-					//cout << "Nueva posicion columna de felix1" << felix1_posicion.columna << endl;
 					felix1_posicion.fila = atoi(msj.substr(6, 1).c_str());
-					//cout << "Nueva posicion fila de felix1: " << felix1_posicion.fila << endl;
 				}
 				Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
 			} else {
@@ -522,8 +520,7 @@ int main(int argc, char *argv[]) {
 		if (felix2_vidas > 0) {
 			if (felix2_reparar == 'N') {
 				if (!cola_felix2.empty()) {
-					string msj = cola_felix2.front();
-					cola_felix2.pop();
+					string msj = Helper::desencolar(&cola_felix2,&mutex_cola_felix2);
 					felix2_posicion.columna = atoi(msj.substr(5, 1).c_str());
 					felix2_posicion.fila = atoi(msj.substr(6, 1).c_str());
 				}
@@ -723,7 +720,7 @@ void* EscuchaServidor(void *arg) {
 				if (buffer[4] == '1') {
 					cola_felix1.push(aux_buffer);
 				} else if (buffer[4] == '2') {
-					cola_felix2.push(aux_buffer);
+					Helper::encolar(&aux_buffer,&cola_felix2,&mutex_cola_felix2);
 				}
 				break;
 			case CD_OPONENTE_DESCONECTADO_I:
@@ -738,7 +735,7 @@ void* EscuchaServidor(void *arg) {
 						felix1_reparar = 'N';
 					}
 				} else if (buffer[4] == '2') {
-					cola_felix2.push(aux_buffer);
+					Helper::encolar(&aux_buffer,&cola_felix2,&mutex_cola_felix2);
 					if (felix2_vidas > 0) {
 						felix2_vidas--;
 					}
