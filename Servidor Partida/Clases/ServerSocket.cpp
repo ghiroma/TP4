@@ -26,6 +26,11 @@ ServerSocket::ServerSocket(unsigned int port, bool blocking) {
 	int iSetOption = 1;
 	setsockopt(this->ID, SOL_SOCKET, SO_REUSEADDR, (char*) &iSetOption, sizeof(iSetOption));
 
+	struct linger linger = {0};
+	linger.l_onoff=1;
+	linger.l_linger = 0;
+	setsockopt(this->ID,SOL_SOCKET,SO_LINGER,(char *)&linger,sizeof(linger));
+
 	if (this->ID >= 0) {
 		struct sockaddr_in laddress;
 		laddress.sin_addr.s_addr = INADDR_ANY;
