@@ -55,6 +55,7 @@ void* keepAliveJugadores(void*);
 void* modoGrafico(void*);
 void* aceptarJugadores(void* data);
 void* establecerPartidas(void* data);
+void* receiver(void * data);
 
 //AUXILIARES
 string fillMessage(string message);

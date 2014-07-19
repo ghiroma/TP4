@@ -87,5 +87,6 @@ unsigned short int CommunicationSocket::GetClientPort() {
 CommunicationSocket::~CommunicationSocket() {
 	//shutdown(this->ID,2);
 	close(this->ID);
+	std::cout<<"SRV PARTIDA: destructor communication socket cerrado"<<std::endl;
 }
 

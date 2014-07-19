@@ -524,14 +524,14 @@ void* keepAliveJugadores(void*) {
 		for (map<int, Jugador*>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
 			if (it->second->SocketAsociado != NULL) {
 				it->second->SocketAsociado->SendNoBloq(message.c_str(), message.length());
-				readDataCode = it->second->SocketAsociado->ReceiveBloq(buffer, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
+				//readDataCode = it->second->SocketAsociado->ReceiveBloq(buffer, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
 			}
-			if (readDataCode == 0) {
-				//El jugador se desconecto
-				quitarJugador(it->first);
-			} else {
+			//if (readDataCode == 0) {
+			//El jugador se desconecto
+			//quitarJugador(it->first);
+			//} else {
 
-			}
+			//}
 		}
 		pthread_mutex_unlock(&mutex_listJugadores);
 
@@ -541,6 +541,25 @@ void* keepAliveJugadores(void*) {
 	pthread_exit(NULL);
 }
 
+void* receiver(void *) {
+	while (!partidasFinalizadas()) {
+		char buffer[LONGITUD_CODIGO + LONGITUD_CONTENIDO];
+
+		pthread_mutex_lock(&mutex_listJugadores);
+		for (map<int, Jugador *>::iterator it = listJugadores.begin(); it != listJugadores.end(); it++) {
+			if (it->second != NULL && it->second->SocketAsociado != NULL) {
+				int readDataCode = it->second->SocketAsociado->ReceiveNoBloq(buffer, (LONGITUD_CODIGO + LONGITUD_CONTENIDO));
+				if (readDataCode == 0) {
+					quitarJugador(it->second->Id);
+					//delete (it->second->SocketAsociado);
+					//listJugadores.erase(it);
+				}
+			}
+		}
+		pthread_mutex_unlock(&mutex_listJugadores);
+		usleep(50000);
+	}
+}
 /**
  * THREAD -> Aceptar las conexiones de nuevos jugadores al torneo
  */
