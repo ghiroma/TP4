@@ -1,7 +1,6 @@
-#include "Support/ConstantesServidorTorneo.h"
-#include "Clases/ServerSocket.h"
 #include "FuncionesServidorTorneo.h"
-#include "./Clases/Semaforo.h"
+#include "Support/ConstantesServidorTorneo.h"
+#include "Clases/Semaforo.h"
 #include <string.h>
 #include <iostream>
 #include <fstream>
@@ -12,8 +11,6 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <sstream>
-#include <SDL/SDL.h>
-#include <SDL/SDL_ttf.h>
 #include <signal.h>
 #include <wait.h>
 #include <sys/socket.h>
@@ -33,24 +30,24 @@ pthread_mutex_t mutex_partidasActivas = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_seguirAceptandoJugadores = PTHREAD_MUTEX_INITIALIZER;
 //pthread_mutex_t mutex_murioServidorPartida = PTHREAD_MUTEX_INITIALIZER;
 
-		extern map<int,
-Jugador*> listJugadores;
-extern unsigned int puertoServidorTorneo;
-extern int cantVidas;
-extern int idSHM;
+sigset_t blockmask;
+map<int,Jugador*> listJugadores;
+unsigned int puertoServidorTorneo;
+int cantVidas;
+int idSHM;
 map<unsigned int, datosPartida> partidasActivas;
-extern ServerSocket* sSocket;
+ServerSocket* sSocket;
 int idPartida = 0;
 puntajesPartida * resumenPartida;
 bool seguirAceptandoJugadores = true;
-//bool murioServidorPartida = false;
 bool servidorTorneoSIGINT = false;
 
-extern SDL_Surface *screen, *background;
+SDL_Surface *screen, *background;
 SDL_Surface *tiempo, *jugadores, *infoJugador_part1, *infoJugador_part2;
 SDL_Rect posDestino, posTiempo, posJugadores;
-extern SDL_Rect posBackground;
-extern TTF_Font *font;
+SDL_Rect posBackground;
+TTF_Font *font;
+SDL_Color colorNegro, colorBlanco;
 
 using namespace std;
 
@@ -139,6 +136,7 @@ unsigned int encontrarPuertoLibreParaPartida() {
  * Detecta cuando un Servidor Partida termina
  */
 void SIG_CHLD(int inum) {
+	sigprocmask(SIG_BLOCK,&blockmask,NULL);
 	signal(SIGCHLD, SIG_CHLD);
 
 	int childpid = wait(NULL);
@@ -177,6 +175,7 @@ void SIG_CHLD(int inum) {
 	pthread_mutex_unlock(&mutex_listJugadores);
 
 	cout<<"termino el sig_chld"<<endl;
+	sigprocmask(SIG_UNBLOCK,&blockmask,NULL);
 }
 
 /**
@@ -354,7 +353,6 @@ void* lecturaDeResultados(void* data) {
 /**
  * THREAD -> Modo Grafico
  */
-SDL_Color colorNegro, colorBlanco;
 int minutos;
 int segundos;
 char txtTiempo[10];

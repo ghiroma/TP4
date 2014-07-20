@@ -11,35 +11,19 @@
 #include <list>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <signal.h>
-#include <SDL/SDL.h>
-#include <SDL/SDL_ttf.h>
-#include <list>
-#include "Clases/Semaforo.h"
-#include "Clases/ServerSocket.h"
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
 using namespace std;
 
-map<int, Jugador*> listJugadores;
-unsigned int puertoServidorTorneo;
-int cantVidas = 0;
-ServerSocket* sSocket;
-int idSHM;
-pid_t pidServidorPartida;
-SDL_Surface *screen, *background;
-TTF_Font *font;
-SDL_Rect posBackground;
-extern SDL_Color colorNegro, colorBlanco;
-
 int main(int argc, char * argv[]) {
 	atexit(liberarRecursos);
 
+	sigemptyset(&blockmask);
+	sigaddset(&blockmask,SIGCHLD);
 	string ip = "";
 	int duracionTorneo = 0;
 	int tiempoInmunidad = 0;
-	//int clientId = 0;
 	pthread_t thTemporizadorTorneo;
 	int resultThTemporizador;
 	thTemporizador_data temporizacion;
