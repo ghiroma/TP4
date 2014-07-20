@@ -538,7 +538,7 @@ void PantallaIntermedia(char cod) {
 	}
 }
 
-char CambiaTramo() {
+bool CambiaTramo() {
 	pantalla_juego.x = 0;
 	pantalla_juego.y = 0;
 	pantalla_juego.w = ANCHO_PANTALLA;
@@ -553,10 +553,10 @@ char CambiaTramo() {
 
 	SDL_WaitEvent(&evento);
 
-	return 'S';
+	return true;
 }
 
-char CambiaNivel() {
+bool CambiaNivel() {
 	pantalla_juego.x = 0;
 	pantalla_juego.y = 0;
 	pantalla_juego.w = ANCHO_PANTALLA;
@@ -571,7 +571,7 @@ char CambiaNivel() {
 
 	SDL_WaitEvent(&evento);
 
-	return 'S';
+	return true;
 }
 
 bool IngresaNombre() {

@@ -72,6 +72,7 @@ static const int CD_ACK_I = 99;
 static const int CD_ID_PARTIDA_I = 60;
 static const int CD_EMPEZAR_PARTIDA_I=62;
 static const int CD_FIN_PARTIDA_I = 33;
+static const int CD_SUBIR_TRAMO_I = 34;
 static const int CD_CANTIDAD_VIDAS_I = 24;
 
 // Imagenes.
