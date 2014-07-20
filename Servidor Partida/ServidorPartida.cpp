@@ -11,8 +11,8 @@
 #include "Clases/Felix.h"
 #include "Clases/Edificio.h"
 #include "Support/Constantes.h"
-#include "FuncionesServidorPartida.h"
 #include "Support/Estructuras.h"
+#include "FuncionesServidorPartida.h"
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -24,9 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <poll.h>
-#include <sys/shm.h>
-#include <errno.h>
-
 using namespace std;
 
 int main(int argc, char * argv[]) {
