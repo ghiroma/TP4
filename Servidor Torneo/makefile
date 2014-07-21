@@ -1,7 +1,7 @@
 CC=g++
 CFLAGS = -I ./src/includes
 LFLAGS = -L ./src/libs 
-LIBS = -pthread -lSDL -lSDL_ttf -lpthread 
+LIBS = -pthread -lSDL -lSDL_ttf -lpthread -lX11
 
 all:FuncionesServidorTorneo.o ServidorTorneo.o Jugador.o CommunicationSocket.o ServerSocket.o Semaforo.o 
 	$(CC) $(LFLAGS) -o ServidorTorneo FuncionesServidorTorneo.o ServidorTorneo.o Jugador.o CommunicationSocket.o ServerSocket.o Semaforo.o $(LIBS)

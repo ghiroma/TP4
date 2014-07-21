@@ -13,11 +13,13 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <X11/Xlib.h>
 
 using namespace std;
 
 int main(int argc, char * argv[]) {
 	atexit(liberarRecursos);
+	XInitThreads();
 
 	string ip = "";
 	int duracionTorneo = 0;

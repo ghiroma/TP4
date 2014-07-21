@@ -15,6 +15,7 @@
 #include <wait.h>
 #include <sys/socket.h>
 #include <queue>
+#include <X11/Xlib.h>
 
 bool timeIsUp = false;
 bool comenzoConteo = false;
