@@ -64,7 +64,6 @@ extern unsigned short int nivel;
 
 extern bool felix1_reparar;
 extern bool felix2_reparar;
-extern bool felix1_inicial;
 
 extern struct posicion felix2_posicion;
 extern struct posicion felix1_posicion;
@@ -87,11 +86,13 @@ extern string felix2_nombre;
 
 extern short int roca_siguiente;
 
-extern pthread_t thEscuchaTorneo, thEscuchaTeclas, thEscuchaServidor, thEnvioServidor;
-extern int resultThEscuchaTorneo, resultThEscuchaTeclas, resultThEscuchaServidor, resultThEnvioServidor;
+extern pthread_t thEscuchaServidor, thEnvioServidor;
+extern int resultThEscuchaServidor, resultThEnvioServidor;
 
 extern bool salir;
 
+extern struct posicion felix1_inicial;
+extern struct posicion felix2_inicial;
 extern struct posicion torta_posicion;
 extern struct posicion ralph_posicion;
 

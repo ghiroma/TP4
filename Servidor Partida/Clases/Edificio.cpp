@@ -22,6 +22,19 @@ Edificio::Edificio(int filas, int columnas) {
 
 }
 
+void Edificio::CambiarTramo()
+{
+	this->nivel++;
+	for(int i = 0; i<this->filas;i++)
+	{
+		for(int c = 0; c<this->columnas;c++)
+		{
+			this->ventanas[i][c].ventanaRota = 1;
+			this->ventanas[i][c].ocupado = false;
+		}
+	}
+}
+
 Edificio::~Edificio() {
 	for (int i = 0; i < this->filas; i++) {
 		delete[] this->ventanas[i];

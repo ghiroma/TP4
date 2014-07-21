@@ -12,8 +12,12 @@ static const int EDIFICIO_FILAS_2 = 4;
 static const int EDIFICIO_FILAS_3 = 5;
 
 static const int INTERVALOS_KEEPALIVE = 5;
-static const int INTERVALOS_RALPH = 5;
-static const int INTERVALOS_PALOMA = 20;
+static const int INTERVALOS_RALPH_1 = 5;
+static const int INTERVALOS_RALPH_2 = 4;
+static const int INTERVALOS_RALPH_3 = 3;
+static const int INTERVALOS_PALOMA_1 = 20;
+static const int INTERVALOS_PALOMA_2 = 15;
+static const int INTERVALOS_PALOMA_3 = 10;
 static const int INTERVALOS_TORTA = 60;
 static const int INTERVALOS_PERSIANA = 35;
 static const int INTERVALOS_INVENCIBILIDAD = 4;
@@ -57,6 +61,7 @@ static const char* CD_JUGADOR_LISTO ="61";
 static const char* CD_EMPEZAR_PARTIDA = "62";
 static const char* CD_FIN_PARTIDA = "33";
 static const char* CD_CANTIDAD_VIDAS = "24";
+static const char* CD_SUBIR_TRAMO = "34";
 
 static const int CD_RANKING_I = 80;
 static const int CD_MOVIMIENTO_FELIX_I = 4;

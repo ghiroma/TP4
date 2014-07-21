@@ -514,6 +514,15 @@ void caseVentanaArreglada(int jugador) {
 	}
 
 	if (tramoFinalizado(edificio)) {
+/*		string message(CD_SUBIR_TRAMO);
+		message.append(Helper::fillMessage("0"));
+		Helper::encolar(&message,&sender1_queue,&mutex_sender1);
+		Helper::encolar(&message,&sender2_queue,&mutex_sender2);
+		edificio->CambiarTramo();
+		if(cliente1_jugando)
+			felix1->mover(0,0,edificio);
+		if(cliente2_jugando)
+			felix2->mover(EDIFICIO_COLUMNAS-1,0,edificio);*/
 		cliente1_jugando = false;
 		cliente2_jugando = false;
 	}
