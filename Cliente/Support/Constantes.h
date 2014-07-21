@@ -111,5 +111,7 @@ const char pajaro2_bmp[] = "Sprites/pajaro_2.bmp";
 const char roca1_bmp[] = "Sprites/roca1.bmp";
 const char roca2_bmp[] = "Sprites/roca2.bmp";
 const char torta_bmp[] = "Sprites/torta.bmp";
+const char startImage_bmp[] = "Sprites/Mensajes/start.bmp";
+const char rankingImage_bmp[] = "Sprites/Mensajes/ranking.bmp";
 
 #endif /* CONSTANTES_H_ */

@@ -47,6 +47,8 @@ pthread_mutex_t mutex_recibioPosicionInicial = PTHREAD_MUTEX_INITIALIZER;
 SDL_Surface *superficie,
 *backgroundImg, *pared_tramo1n1, *pared_tramo2n1, *pared_tramo3n1, *pared, *ventana_sana, *ventana_rota1, *ventana_rota2, *ventana_rota3, *ventana_rota4, *ventana, *puerta, *felix_d1, *felix_i1, *felix_r11, *felix_r21, *felix_r31, *felix_r41, *felix_r51, *felix_d2, *felix_i2, *felix_r12, *felix_r22,
 		*felix_r32, *felix_r42, *felix_r52, *felix1, *felix2, *ralph_1, *ralph_2, *ralph_3, *ralph_4, *ralph_5, *ralph_6, *ralph, *roca1, *roca2, *roca, *pajaro_1, *pajaro_2, *pajaro, *texto, *puntos, *vidas, *torta;
+SDL_Surface * startImage;
+SDL_Surface * rankingImage;
 
 struct ventana ventanas_tramo1[3][5];
 
@@ -83,8 +85,8 @@ short int felix2_puntos = 0;
 short int felix1_vidas = 0;
 short int felix2_vidas = 0;
 short int ventanas_reparadas = 10;
-struct posicion felix1_inicial={0,0};
-struct posicion felix2_inicial={0,0};
+struct posicion felix1_inicial = { 0, 0 };
+struct posicion felix2_inicial = { 0, 0 };
 SDL_Event evento;
 SDL_keysym keysym;
 
@@ -116,8 +118,6 @@ int partidasJugadas = 0;
 
 CommunicationSocket * socketTorneo;
 CommunicationSocket * socketPartida;
-
-
 
 bool hayChoque() {
 	if (felix1_posicion.fila != 99 && felix1_posicion.columna != 99 && ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x <= (pajaro_desplazamiento.x + 20) && (ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x + 20) >= pajaro_desplazamiento.x
@@ -293,7 +293,7 @@ void* EscuchaServidor(void *arg) {
 				pthread_mutex_unlock(&mutex_cantVidas);
 				break;
 			case CD_POSICION_INICIAL_I:
-				felix1_posicion.columna = felix1_inicial.columna =  atoi(aux_buffer.substr(5, 1).c_str());
+				felix1_posicion.columna = felix1_inicial.columna = atoi(aux_buffer.substr(5, 1).c_str());
 				felix1_posicion.fila = felix1_inicial.fila = atoi(aux_buffer.substr(6, 1).c_str());
 				if (felix1_posicion.columna == 0) {
 					felix2_posicion.columna = felix2_inicial.columna = EDIFICIO_COLUMNAS - 1;
@@ -551,10 +551,8 @@ bool CambiaTramo() {
 	SDL_FillRect(superficie, &pantalla_juego, SDL_MapRGB(superficie->format, 0, 0, 0));
 
 	tramo++;
-	for(int f=0;f<EDIFICIO_FILAS_1;f++)
-	{
-		for(int c=0;c<EDIFICIO_COLUMNAS;c++)
-		{
+	for (int f = 0; f < EDIFICIO_FILAS_1; f++) {
+		for (int c = 0; c < EDIFICIO_COLUMNAS; c++) {
 			ventanas_tramo1[f][c].tipo_ventana = 1;
 		}
 	}
@@ -605,7 +603,7 @@ bool IngresaNombre() {
 		if (evento.type == SDL_KEYDOWN) {
 			teclaIngresada = evento.key.keysym.sym;
 			if (teclaIngresada != SDLK_RETURN && teclaIngresada != SDLK_KP_ENTER) {
-				backgroundImg = SDL_LoadBMP("Sprites/Mensajes/start.bmp");
+				backgroundImg = startImage;
 				if (backgroundImg == NULL) {
 					printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
 					exit(1);
@@ -701,7 +699,7 @@ void mostrarRanking(const char* ranking) {
 	SDL_Rect posTextoRanking;
 	posTextoRanking.x = 315;
 	posTextoRanking.y = 340;
-	backgroundImg = SDL_LoadBMP("Sprites/Mensajes/ranking.bmp");
+	backgroundImg = rankingImage;
 	if (backgroundImg == NULL) {
 		printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
 		exit(1);
@@ -1018,6 +1016,12 @@ bool cargarImagenes() {
 	torta = SDL_LoadBMP(torta_bmp);
 	if (torta == NULL)
 		return false;
+	startImage = SDL_LoadBMP(startImage_bmp);
+	if (startImage == NULL)
+		return false;
+	rankingImage = SDL_LoadBMP(rankingImage_bmp);
+	if (rankingImage == NULL)
+		return false;
 
 	return true;
 }
@@ -1081,7 +1085,6 @@ bool mostrarRankings() {
 	return estado;
 }
 
-
 void inicializarVariablesDeLaPartida() {
 	//inicializacion de variables
 	felix1_posicion.fila = 0;
@@ -1122,5 +1125,4 @@ void inicializarVariablesDeLaPartida() {
 		rocas_desplazamiento[i].y = 0;
 	}
 }
-
 
