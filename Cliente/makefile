@@ -13,4 +13,4 @@ FuncionesCliente.o:FuncionesCliente.cpp
 
 .PHONY: clean
 clean:
-	rm -f *.o cliente
+	rm -f *.o Cliente
