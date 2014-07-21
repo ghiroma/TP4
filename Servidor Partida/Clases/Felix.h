@@ -24,7 +24,7 @@ public:
 
 	Felix(int cantVidas);
 	Felix(int cantVidas,int id);
-	bool mover(int fila, int columna, Edificio * edificio);
+	bool mover(int columna, int fila, Edificio * edificio);
 	bool reparar(Edificio * edificio);
 	int perderVida();
 	virtual ~Felix();

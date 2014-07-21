@@ -29,7 +29,14 @@ string Timer::ralph(int nivel) {
 	char aux[5];
 
 	if (nivel == 0) {
-		if (Helper::timeDifference(INTERVALOS_RALPH, this->startingTimeRalph)) {
+		if (Helper::timeDifference(INTERVALOS_RALPH_1, this->startingTimeRalph)) {
+			message.append(CD_MOVIMIENTO_RALPH);
+			sprintf(aux, "%d", this->randomRalphMovement());
+			message.append(Helper::fillMessage(aux));
+			this->startingTimeRalph = time(0);
+		}
+	} else if (nivel == 1) {
+		if (Helper::timeDifference(INTERVALOS_RALPH_2, this->startingTimeRalph)) {
 			message.append(CD_MOVIMIENTO_RALPH);
 			sprintf(aux, "%d", this->randomRalphMovement());
 			message.append(Helper::fillMessage(aux));
@@ -44,7 +51,14 @@ string Timer::paloma(int nivel) {
 	char aux[5];
 
 	if (nivel == 0) {
-		if (Helper::timeDifference(INTERVALOS_PALOMA, this->startingTimePaloma)) {
+		if (Helper::timeDifference(INTERVALOS_PALOMA_1, this->startingTimePaloma)) {
+			message.append(CD_PALOMA);
+			sprintf(aux, "%d", randomPaloma(nivel));
+			message.append(Helper::fillMessage(aux));
+			this->startingTimePaloma = time(0);
+		}
+	} else if (nivel == 1) {
+		if (Helper::timeDifference(INTERVALOS_PALOMA_2, this->startingTimePaloma)) {
 			message.append(CD_PALOMA);
 			sprintf(aux, "%d", randomPaloma(nivel));
 			message.append(Helper::fillMessage(aux));
@@ -114,11 +128,7 @@ char * Timer::randomPersiana() {
  }*/
 
 int Timer::randomPaloma(int nivel) {
-	if (nivel == 0)
-		return rand() % (EDIFICIO_FILAS_1);
-	else if (nivel == 1)
-		return rand() % (EDIFICIO_FILAS_2);
-	return 0;
+	return rand() % (EDIFICIO_FILAS_1);
 }
 
 int Timer::randomRalphMovement() {

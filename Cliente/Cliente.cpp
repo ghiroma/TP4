@@ -17,6 +17,9 @@ int main(int argc, char *argv[]) {
 	atexit(liberarRecursos);
 	signal(SIGINT, handler);
 
+	pthread_t thEscuchaTorneo, thEscuchaTeclas;
+	int resultThEscuchaTorneo, resultThEscuchaTeclas;
+
 	int readData = 0;
 
 	if (!cargarImagenes()) {
@@ -99,7 +102,7 @@ int main(int argc, char *argv[]) {
 
 	mi_id = buffer;
 	mi_id = mi_id.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str();
-	cout << "Mi id es: " << buffer << endl;
+	//cout << "Mi id es: " << buffer << endl;
 
 	//Thread para escuchar al servidor de Torneo.
 	resultThEscuchaTorneo = pthread_create(&thEscuchaTorneo, NULL, EscuchaTorneo, &socketTorneo->ID);
@@ -300,7 +303,6 @@ int main(int argc, char *argv[]) {
 					felix1 = felix_d1;
 				if (!cola_felix1.empty()) {
 					//cout << "Entro a la cola de felix movimiento" << endl;
-					felix1_inicial = false;
 					string msj = Helper::desencolar(&cola_felix1, &mutex_cola_felix1);
 					felix1_posicion.columna = atoi(msj.substr(5, 1).c_str());
 					felix1_posicion.fila = atoi(msj.substr(6, 1).c_str());

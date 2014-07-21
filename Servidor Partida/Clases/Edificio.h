@@ -20,6 +20,7 @@ public:
 
 	Edificio(int filas, int columnas, int nivel);
 	Edificio(int filas,int columnas);
+	void CambiarTramo();
 	virtual ~Edificio();
 };
 

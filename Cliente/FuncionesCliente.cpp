@@ -63,8 +63,8 @@ short int cant_rocas = 0;
 short int ralph_destino = 0;
 unsigned short int tramo = 1;
 unsigned short int nivel = 1;
-pthread_t thEscuchaTorneo, thEscuchaTeclas, thEscuchaServidor, thEnvioServidor;
-int resultThEscuchaTorneo, resultThEscuchaTeclas, resultThEscuchaServidor, resultThEnvioServidor;
+pthread_t thEscuchaServidor, thEnvioServidor;
+int resultThEscuchaServidor, resultThEnvioServidor;
 bool salir = false;
 bool ralph_moverse = false;
 bool pajaro_moverse = false;
@@ -82,8 +82,8 @@ short int felix2_puntos = 0;
 short int felix1_vidas = 0;
 short int felix2_vidas = 0;
 short int ventanas_reparadas = 10;
-bool felix2_inicial = true;
-bool felix1_inicial = true;
+struct posicion felix1_inicial={0,0};
+struct posicion felix2_inicial={0,0};
 SDL_Event evento;
 SDL_keysym keysym;
 
@@ -292,18 +292,20 @@ void* EscuchaServidor(void *arg) {
 				pthread_mutex_unlock(&mutex_cantVidas);
 				break;
 			case CD_POSICION_INICIAL_I:
-				felix1_posicion.columna = atoi(aux_buffer.substr(5, 1).c_str());
-				felix1_posicion.fila = atoi(aux_buffer.substr(6, 1).c_str());
-				//cout << "Posicion inicial de felix: columna " << felix1_posicion.columna << " fila " << felix1_posicion.fila << endl;
+				felix1_posicion.columna = felix1_inicial.columna =  atoi(aux_buffer.substr(5, 1).c_str());
+				felix1_posicion.fila = felix1_inicial.fila = atoi(aux_buffer.substr(6, 1).c_str());
 				if (felix1_posicion.columna == 0) {
-					felix2_posicion.columna = EDIFICIO_COLUMNAS - 1;
+					felix2_posicion.columna = felix2_inicial.columna = EDIFICIO_COLUMNAS - 1;
 				} else {
-					felix2_posicion.columna = 0;
+					felix2_posicion.columna = felix2_inicial.columna = 0;
 				}
-				felix2_posicion.fila = 0;
+				felix2_posicion.fila = felix2_inicial.fila = 0;
 				pthread_mutex_lock(&mutex_recibioPosicionInicial);
 				recibioPosicionInicial = true;
 				pthread_mutex_unlock(&mutex_recibioPosicionInicial);
+				break;
+			case CD_SUBIR_TRAMO_I:
+				CambiaTramo();
 				break;
 			case CD_ACK_I:
 				string message(CD_ACK);
@@ -544,6 +546,21 @@ bool CambiaTramo() {
 	pantalla_juego.w = ANCHO_PANTALLA;
 	pantalla_juego.h = ALTO_PANTALLA;
 	SDL_FillRect(superficie, &pantalla_juego, SDL_MapRGB(superficie->format, 0, 0, 0));
+
+	tramo++;
+	for(int f=0;f<EDIFICIO_FILAS_1;f++)
+	{
+		for(int c=0;c<EDIFICIO_COLUMNAS;c++)
+		{
+			ventanas_tramo1[f][c].tipo_ventana = 1;
+		}
+	}
+
+	felix1_posicion = felix1_inicial;
+	felix2_posicion = felix2_inicial;
+
+	felix1_reparar = false;
+	felix2_reparar = false;
 
 	pantalla_texto.x = 10;
 	pantalla_texto.y = 10;
@@ -1004,7 +1021,13 @@ bool cargarImagenes() {
 
 void liberarRecursos() {
 	//cout << "liberar recursos" << endl;
+
+	//SDL
+	TTF_Quit();
+	SDL_Quit();
+
 	//SOCKET
+
 	if (socketTorneo != NULL) {
 		delete (socketTorneo);
 	}
@@ -1020,9 +1043,6 @@ void liberarRecursos() {
 	pthread_mutex_destroy(&mutex_nombreOponente);
 	pthread_mutex_destroy(&mutex_murioServidorTorneo);
 
-	//SDL
-	TTF_Quit();
-	SDL_Quit();
 }
 
 bool nuevaPartidaSolicitada() {
@@ -1083,8 +1103,6 @@ void inicializarVariablesDeLaPartida() {
 	felix1_vidas = 0;
 	felix2_vidas = 0;
 	ventanas_reparadas = 10;
-	felix2_inicial = true;
-	felix1_inicial = true;
 
 	for (int i = 0; i < 20; i++) {
 		rocas_desplazamiento[i].x = 0;
