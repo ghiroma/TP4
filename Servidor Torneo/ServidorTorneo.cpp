@@ -19,8 +19,6 @@ using namespace std;
 int main(int argc, char * argv[]) {
 	atexit(liberarRecursos);
 
-	sigemptyset(&blockmask);
-	sigaddset(&blockmask,SIGCHLD);
 	string ip = "";
 	int duracionTorneo = 0;
 	int tiempoInmunidad = 0;

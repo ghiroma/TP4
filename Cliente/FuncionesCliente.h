@@ -155,6 +155,7 @@ bool esperarCantVidas();
 void esperarSTART();
 void esperarPosicionInicial();
 void inicializarVariablesDeLaPartida();
+bool mostrarRankings();
 
 
 #endif /* FUNCIONESCLIENTE_H_ */

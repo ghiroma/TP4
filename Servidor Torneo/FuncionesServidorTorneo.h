@@ -12,6 +12,7 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
 
+//FUNCIONES
 void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* tiempoInmunidad, int* cantVidas);
 void SIG_INT(int inum);
 void SIG_CHLD(int inum);
@@ -26,7 +27,9 @@ void mostrarPantalla(const char*);
 bool seguirAceptandoNuevosJugadores();
 bool murioServidorDeLaPartida();
 int quienJugoMenos();
+unsigned int encontrarPuertoLibreParaPartida();
 bool hayPartidasActivas();
+void actualizarPartidasActivas();
 
 //THREADS
 void* temporizadorTorneo(void* data);
@@ -50,6 +53,5 @@ extern SDL_Surface *screen, *background;
 extern SDL_Rect posBackground;
 extern TTF_Font *font;
 extern SDL_Color colorNegro, colorBlanco;
-extern sigset_t blockmask;
 
 #endif /* FUNCIONESSERVIDORTORNEO_H_ */
