@@ -416,7 +416,7 @@ int main(int argc, char *argv[]) {
 	mostrarPantalla("gameover");
 	sleep(3);
 
-	while (!showWindowRanking) {
+	while (!mostrarRankings()) {
 		if (murioServidorDelTorneo()) {
 			mostrarPantalla("servertorneodown");
 			sleep(6);

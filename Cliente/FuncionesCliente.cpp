@@ -31,6 +31,7 @@ pthread_mutex_t mutex_solicitudDeNuevaParitda = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_partidaFinalizada = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_murioServidorTorneo = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cantVidas = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_showWindowRanking = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_mutex_t mutex_cola_grafico = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cola_ralph = PTHREAD_MUTEX_INITIALIZER;
@@ -380,7 +381,9 @@ void* EscuchaTorneo(void *arg) {
 				cout << "Recibo ranking" << endl;
 				ranking = aux_buffer.substr(LONGITUD_CODIGO + LONGITUD_CONTENIDO - 2, 2).c_str();
 				salir = true;
+				pthread_mutex_lock(&mutex_showWindowRanking);
 				showWindowRanking = true;
+				pthread_mutex_unlock(&mutex_showWindowRanking);
 				//salgo del thread porque este el ultimo mensaje que me interesa
 				pthread_exit(NULL);
 				break;
@@ -1019,6 +1022,7 @@ void liberarRecursos() {
 	pthread_mutex_destroy(&mutex_torneoFinalizado);
 	pthread_mutex_destroy(&mutex_nombreOponente);
 	pthread_mutex_destroy(&mutex_murioServidorTorneo);
+	pthread_mutex_destroy(&mutex_showWindowRanking);
 
 	//SDL
 	TTF_Quit();
@@ -1048,6 +1052,15 @@ bool murioServidorDelTorneo() {
 	pthread_mutex_unlock(&mutex_murioServidorTorneo);
 	return estado;
 }
+
+bool mostrarRankings() {
+	bool estado;
+	pthread_mutex_lock(&mutex_showWindowRanking);
+	estado = showWindowRanking;
+	pthread_mutex_unlock(&mutex_showWindowRanking);
+	return estado;
+}
+
 
 void inicializarVariablesDeLaPartida() {
 	//inicializacion de variables
