@@ -68,9 +68,6 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
-	//Marco la memoria para eliminarse dps de que nadie la este usando.
-	shmctl(IPC_RMID,idSHM,NULL);
-
 	//inicializo el BLOQUE DE SHM
 	puntajesPartida* resumenPartida = (struct puntajesPartida *) shmat(idSHM, (char *) 0, 0);
 	resumenPartida->idJugador1 = -1;
@@ -78,6 +75,9 @@ int main(int argc, char * argv[]) {
 	resumenPartida->puntajeJugador1 = 0;
 	resumenPartida->puntajeJugador2 = 0;
 	resumenPartida->partidaFinalizadaOK = false;
+
+	//Marco la memoria para eliminarse dps de que nadie la este usando.
+	//shmctl(idSHM,IPC_RMID,NULL);
 
 	//Crear Socket del Servidor
 	try {
