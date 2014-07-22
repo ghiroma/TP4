@@ -21,7 +21,6 @@ bool timeIsUp = false;
 bool comenzoConteo = false;
 bool todasLasPartidasFinalizadas = false;
 int cantPartidasFinalizadas = 0;
-Semaforo sem_inicializarTemporizador((char*) "/sem_inicializarTemporizador", 0);
 Semaforo sem_ServidorTorneoSHM((char*) "/ServidorTorneoSHM", 0);
 Semaforo sem_ServidorPartidaSHM((char*) "/ServidorPartidaSHM", 1);
 pthread_mutex_t mutex_listJugadores = PTHREAD_MUTEX_INITIALIZER;
@@ -31,6 +30,7 @@ pthread_mutex_t mutex_todasLasPartidasFinalizadas = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_partidasActivas = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_seguirAceptandoJugadores = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_colaSIGCHLDcapturados = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_inicializarTemporizador = PTHREAD_MUTEX_INITIALIZER;
 
 map<int,
 Jugador*> listJugadores;
@@ -116,7 +116,7 @@ void* temporizadorTorneo(void* data) {
 	struct thTemporizador_data *torneo;
 	torneo = (struct thTemporizador_data *) data;
 
-	sem_inicializarTemporizador.P();
+	pthread_mutex_lock(&mutex_inicializarTemporizador);
 
 	pthread_mutex_lock(&mutex_comenzoConteo);
 	comenzoConteo = true;
@@ -488,7 +488,7 @@ void* establecerPartidas(void* data) {
 			//habilito el temporizador del torneo
 			if (nroPartida == 1) {
 				//"Se crea la primer partida y doy permiso a iniciar el temporizador"
-				sem_inicializarTemporizador.V();
+				pthread_mutex_unlock(&mutex_inicializarTemporizador);
 			}
 			nroPartida++;
 
@@ -788,7 +788,6 @@ void liberarRecursos() {
 	shmctl(idSHM, IPC_RMID, (struct shmid_ds *) NULL);
 
 	//Semaphores
-	sem_inicializarTemporizador.close();
 	sem_ServidorPartidaSHM.close();
 	sem_ServidorTorneoSHM.close();
 
@@ -799,6 +798,7 @@ void liberarRecursos() {
 	pthread_mutex_destroy(&mutex_partidasActivas);
 	pthread_mutex_destroy(&mutex_listJugadores);
 	pthread_mutex_destroy(&mutex_seguirAceptandoJugadores);
+	pthread_mutex_destroy(&mutex_inicializarTemporizador);
 }
 
 void mostrarPantalla(const char* nombrPantalla) {

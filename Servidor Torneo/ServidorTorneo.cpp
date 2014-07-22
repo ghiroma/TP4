@@ -85,6 +85,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	cout << "Host Name:" << sSocket->ShowHostName() << endl;
+	pthread_mutex_lock(&mutex_inicializarTemporizador);
 
 	//Lanzar THREAD establecer partidas
 	resultThEstablecerPartidas = pthread_create(&thEstablecerPartidas, NULL, establecerPartidas, NULL);

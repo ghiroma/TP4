@@ -45,6 +45,7 @@ void* receiver(void * data);
 string fillMessage(string message);
 string intToString(int number);
 
+extern pthread_mutex_t mutex_inicializarTemporizador;
 extern map<int, Jugador*> listJugadores;
 extern unsigned int puertoServidorTorneo;
 extern int cantVidas;
