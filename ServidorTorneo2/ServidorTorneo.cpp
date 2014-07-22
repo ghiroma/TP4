@@ -136,6 +136,7 @@ int main(int argc, char * argv[]) {
 
 	/////////////////// Preparacion de la parte Grafica /////////////////////
 	//Colores
+	SDL_Color colorNegro, colorBlanco;
 	colorNegro.r = colorNegro.g = colorNegro.b = 0;
 	colorBlanco.r = colorBlanco.g = colorBlanco.b = 255;
 
@@ -171,7 +172,7 @@ int main(int argc, char * argv[]) {
 	SDL_WM_SetCaption("Ralph Tournament SERVIDOR", NULL);
 
 	//Cargo la fuente
-	font = TTF_OpenFont("./Img/DejaVuSans.ttf", 24);
+	TTF_Font *font = TTF_OpenFont("./Img/DejaVuSans.ttf", 24);
 	if (font == NULL) {
 		printf("Error abriendo la fuente ttf: %s\n", SDL_GetError());
 		pthread_exit(NULL);
@@ -184,11 +185,8 @@ int main(int argc, char * argv[]) {
 	char txtInfoJugador[MAX_LENGT_TXT_INFO_JUGADOR];
 	int cantPlayersConectados;
 	multimap<float, int> rankings;
-	SDL_Surface *tablaDeRanking;
-
-	SDL_Surface *tiempo, *jugadores, *infoJugador_part1, *infoJugador_part2;
-	SDL_Rect  posDestino, posTiempo, posJugadores;
-
+	SDL_Surface *tablaDeRanking, *tiempo, *jugadores, *infoJugador_part1, *infoJugador_part2;
+	SDL_Rect posDestino, posTiempo, posJugadores;
 
 	minutos = duracionTorneo;
 	segundos = 0;

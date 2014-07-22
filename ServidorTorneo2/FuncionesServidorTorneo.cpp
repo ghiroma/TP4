@@ -47,8 +47,6 @@ queue<pid_t> colaPartidasCapturadasEnSIGCHLD;
 
 SDL_Surface *screen, *background;
 SDL_Rect posBackground;
-TTF_Font *font;
-SDL_Color colorNegro, colorBlanco;
 
 using namespace std;
 
