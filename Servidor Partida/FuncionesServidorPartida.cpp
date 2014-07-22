@@ -36,6 +36,7 @@ key_t shmId;
 int cantVidas;
 int filaPreviaPersiana = 0;
 int columnaPreviaPersiana = 0;
+int shm=0;
 
 bool stop = false;
 bool cliente1_conectado = true;
@@ -304,7 +305,7 @@ void *validator1_thread(void * argument) {
 void*
 sharedMemory_thread(void * arguments) {
 	try {
-		int shm = shmget(shmId, sizeof(struct puntajes), PERMISOS_SHM);
+		shm = shmget(shmId, sizeof(struct puntajes), PERMISOS_SHM);
 		if (shm < 0) {
 			throw "Error al obtener memoria compartida";
 		}
@@ -580,18 +581,15 @@ void liberarRecursos() {
 	if (puntaje != NULL)
 	{
 		shmdt(puntaje);
-		cout<<"SHM Dettached"<<endl;
 	}
 	if (torneoMuerto) {
-		shmctl(shmId, IPC_RMID, NULL);
-		cout << "Borre memoria compartida" << endl;
+		shmctl(shm, IPC_RMID, NULL);
 		const char * semName =semaforoPartida->getName();
 		delete(semaforoPartida);
 		sem_unlink(semName);
 		semName = semaforoTorneo->getName();
 		delete(semaforoTorneo);
 		sem_unlink(semName);
-		cout<<"unlinkee semaforos"<<endl;
 	} else {
 		delete (semaforoPartida);
 		semaforoPartida = NULL;
