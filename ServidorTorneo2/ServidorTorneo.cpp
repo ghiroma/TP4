@@ -32,9 +32,6 @@ int main(int argc, char * argv[]) {
 	int resultThAceptarJugadores;
 	pthread_t thkeepAliveJugadores;
 	int resultThkeepAliveJugadores;
-	pthread_t thModoGrafico;
-	int resultThModoGrafico;
-	thModoGrafico_data modoGraficoData;
 	pthread_t thLecturaDeResultados;
 	int resultThLecturaDeResultados;
 	pthread_t thReceiver;
