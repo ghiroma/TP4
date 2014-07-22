@@ -28,6 +28,8 @@ const int BPP = 8;
 const int PARED_X = 90;
 const int PARED_Y = 110;
 
+static const int CANT_OPCIONES_MENU = 2;
+
 //CD viene de codigo mensaje.
 static const char* CD_MOVIMIENTO_RALPH = "00";
 static const char* CD_PALOMA = "01";

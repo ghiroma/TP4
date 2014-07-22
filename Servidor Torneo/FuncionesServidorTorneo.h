@@ -15,6 +15,7 @@
 //FUNCIONES
 void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* tiempoInmunidad, int* cantVidas);
 void SIG_INT(int inum);
+void SIG_TERM(int inum);
 void SIG_CHLD(int inum);
 void SIG_PIPE(int inum);
 void agregarJugador(Jugador* nuevoJugador);
@@ -44,7 +45,7 @@ void* receiver(void * data);
 string fillMessage(string message);
 string intToString(int number);
 
-extern map<int,Jugador*> listJugadores;
+extern map<int, Jugador*> listJugadores;
 extern unsigned int puertoServidorTorneo;
 extern int cantVidas;
 extern int idSHM;

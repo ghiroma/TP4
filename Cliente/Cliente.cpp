@@ -46,61 +46,57 @@ int main(int argc, char *argv[]) {
 	posBackground.x = 0;
 	posBackground.y = 0;
 
-
 	bool seleccionoOpcionMenu = false;
 	int opcionMenuSeleccionada = 1;
 	SDL_Event evento1;
-	//SDL_keysym keysym;
 	mostrarPantalla("menuOpcionPlay");
 	int teclaIngresada;
-	int cantOpcionesMenu = 2; /////// hacer Constante
 	while (!seleccionoOpcionMenu) {
 		SDL_WaitEvent(&evento1);
-		switch(evento1.type){
-			case SDL_KEYDOWN:
-				teclaIngresada = evento1.key.keysym.sym;
-				switch(teclaIngresada){
-					case SDLK_DOWN:
-						if(opcionMenuSeleccionada < cantOpcionesMenu){
-							opcionMenuSeleccionada++;
-						}
-						break;
-					case SDLK_UP:
-						if(opcionMenuSeleccionada > 1){
-							opcionMenuSeleccionada--;
-						}
-						break;
-					case SDLK_RETURN:
-						seleccionoOpcionMenu = true;
-						break;
-					case SDLK_KP_ENTER:
-						seleccionoOpcionMenu = true;
-						break;	
+		switch (evento1.type) {
+		case SDL_KEYDOWN:
+			teclaIngresada = evento1.key.keysym.sym;
+			switch (teclaIngresada) {
+			case SDLK_DOWN:
+				if (opcionMenuSeleccionada < CANT_OPCIONES_MENU) {
+					opcionMenuSeleccionada++;
 				}
 				break;
-			case SDL_QUIT:
-				exit(0);	
+			case SDLK_UP:
+				if (opcionMenuSeleccionada > 1) {
+					opcionMenuSeleccionada--;
+				}
+				break;
+			case SDLK_RETURN:
+				seleccionoOpcionMenu = true;
+				break;
+			case SDLK_KP_ENTER:
+				seleccionoOpcionMenu = true;
+				break;
+			}
+			break;
+		case SDL_QUIT:
+			exit(0);
 		}
 
 		//actualizar sobre que opcion del menu esta posicionado
-		switch(opcionMenuSeleccionada){
-			case 1:
-				mostrarPantalla("menuOpcionPlay");
-				break;
-			case 2:
-				mostrarPantalla("menuOpcionExit");
-				break;
-		}
-	}		
-
-	switch(opcionMenuSeleccionada){
+		switch (opcionMenuSeleccionada) {
 		case 1:
+			mostrarPantalla("menuOpcionPlay");
 			break;
 		case 2:
-			exit(0);
-			break; 
-	}	
+			mostrarPantalla("menuOpcionExit");
+			break;
+		}
+	}
 
+	switch (opcionMenuSeleccionada) {
+	case 1:
+		break;
+	case 2:
+		exit(0);
+		break;
+	}
 
 	mostrarPantalla("start"); //ingresar nombre
 
@@ -161,7 +157,6 @@ int main(int argc, char *argv[]) {
 
 	mi_id = buffer;
 	mi_id = mi_id.substr(LONGITUD_CODIGO, LONGITUD_CONTENIDO).c_str();
-	//cout << "Mi id es: " << buffer << endl;
 
 	//Thread para escuchar al servidor de Torneo.
 	resultThEscuchaTorneo = pthread_create(&thEscuchaTorneo, NULL, EscuchaTorneo, &socketTorneo->ID);
@@ -182,7 +177,6 @@ int main(int argc, char *argv[]) {
 	inicializarNuevaPartida();
 
 	while (salir == false && !murioServidorDelTorneo()) {
-		//while (salir == 'N') {
 		if (nuevaPartidaSolicitada() && torneoFinalizo()) {
 			cout << "Entro por nuevapartidasolicitada && torneofinalizo" << endl;
 			break;
@@ -349,7 +343,6 @@ int main(int argc, char *argv[]) {
 			if (!cola_pajaro.empty()) {
 				short int pajaro_fila = atoi(cola_pajaro.front().substr(6, 1).c_str());
 				cola_pajaro.pop();
-				//cout << "Fila comienzo: " << pajaro_fila << endl;
 				pajaro_desplazamiento.x = 10;
 				pajaro_desplazamiento.y = ventanas_tramo1[pajaro_fila][0].y;
 				pajaro_moverse = true;
@@ -361,14 +354,12 @@ int main(int argc, char *argv[]) {
 				if (felix1 == NULL)
 					felix1 = felix_d1;
 				if (!cola_felix1.empty()) {
-					//cout << "Entro a la cola de felix movimiento" << endl;
 					string msj = Helper::desencolar(&cola_felix1, &mutex_cola_felix1);
 					felix1_posicion.columna = atoi(msj.substr(5, 1).c_str());
 					felix1_posicion.fila = atoi(msj.substr(6, 1).c_str());
 				}
 				Dibujar(ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].x, ventanas_tramo1[felix1_posicion.fila][felix1_posicion.columna].y, felix1, superficie);
 			} else {
-				//cout << "inicia repara ventana" << endl;
 				if (felix1 == felix_d1 || felix1 == felix_i1)
 					felix1 = felix_r11;
 				else if (felix1 == felix_r11)
@@ -460,7 +451,7 @@ int main(int argc, char *argv[]) {
 				PantallaIntermedia('1');
 				tramo++;
 			}
-			salir =false;
+			salir = false;
 		} else {
 			SDL_Flip(superficie);
 			SDL_Delay(300);
