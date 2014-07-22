@@ -1,5 +1,6 @@
 #include <SDL/SDL_ttf.h>
 #include <SDL/SDL.h>
+#include <X11/Xlib.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fstream>
@@ -16,6 +17,7 @@ using namespace std;
 int main(int argc, char *argv[]) {
 	atexit(liberarRecursos);
 	signal(SIGINT, handler);
+	XInitThreads();
 
 	pthread_t thEscuchaTorneo, thEscuchaTeclas;
 	int resultThEscuchaTorneo, resultThEscuchaTeclas;
@@ -43,7 +45,64 @@ int main(int argc, char *argv[]) {
 	//Pantalla de inicio.
 	posBackground.x = 0;
 	posBackground.y = 0;
-	mostrarPantalla("start");
+
+
+	bool seleccionoOpcionMenu = false;
+	int opcionMenuSeleccionada = 1;
+	SDL_Event evento1;
+	//SDL_keysym keysym;
+	mostrarPantalla("menuOpcionPlay");
+	int teclaIngresada;
+	int cantOpcionesMenu = 2; /////// hacer Constante
+	while (!seleccionoOpcionMenu) {
+		SDL_WaitEvent(&evento1);
+		switch(evento1.type){
+			case SDL_KEYDOWN:
+				teclaIngresada = evento1.key.keysym.sym;
+				switch(teclaIngresada){
+					case SDLK_DOWN:
+						if(opcionMenuSeleccionada < cantOpcionesMenu){
+							opcionMenuSeleccionada++;
+						}
+						break;
+					case SDLK_UP:
+						if(opcionMenuSeleccionada > 1){
+							opcionMenuSeleccionada--;
+						}
+						break;
+					case SDLK_RETURN:
+						seleccionoOpcionMenu = true;
+						break;
+					case SDLK_KP_ENTER:
+						seleccionoOpcionMenu = true;
+						break;	
+				}
+				break;
+			case SDL_QUIT:
+				exit(0);	
+		}
+
+		//actualizar sobre que opcion del menu esta posicionado
+		switch(opcionMenuSeleccionada){
+			case 1:
+				mostrarPantalla("menuOpcionPlay");
+				break;
+			case 2:
+				mostrarPantalla("menuOpcionExit");
+				break;
+		}
+	}		
+
+	switch(opcionMenuSeleccionada){
+		case 1:
+			break;
+		case 2:
+			exit(0);
+			break; 
+	}	
+
+
+	mostrarPantalla("start"); //ingresar nombre
 
 	//Empieza a cargar el nombre
 	IngresaNombre();

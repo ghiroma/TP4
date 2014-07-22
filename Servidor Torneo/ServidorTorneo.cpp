@@ -1,5 +1,4 @@
 #include "Support/ConstantesServidorTorneo.h"
-#include "../Servidor Partida/FuncionesServidorPartida.h"
 #include "Clases/CommunicationSocket.h"
 #include "Clases/Jugador.h"
 #include "FuncionesServidorTorneo.h"

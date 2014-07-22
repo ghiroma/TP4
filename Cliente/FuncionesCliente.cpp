@@ -603,7 +603,8 @@ bool IngresaNombre() {
 		if (evento.type == SDL_KEYDOWN) {
 			teclaIngresada = evento.key.keysym.sym;
 			if (teclaIngresada != SDLK_RETURN && teclaIngresada != SDLK_KP_ENTER) {
-				backgroundImg = startImage;
+				//backgroundImg = startImage;
+				backgroundImg = SDL_LoadBMP(startImage_bmp);
 				if (backgroundImg == NULL) {
 					printf("Error en SDL_LoadBMP= %s\n", SDL_GetError());
 					exit(1);
@@ -1016,9 +1017,9 @@ bool cargarImagenes() {
 	torta = SDL_LoadBMP(torta_bmp);
 	if (torta == NULL)
 		return false;
-	startImage = SDL_LoadBMP(startImage_bmp);
-	if (startImage == NULL)
-		return false;
+	//startImage = SDL_LoadBMP(startImage_bmp);
+	//if (startImage == NULL)
+	//	return false;
 	rankingImage = SDL_LoadBMP(rankingImage_bmp);
 	if (rankingImage == NULL)
 		return false;

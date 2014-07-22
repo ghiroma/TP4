@@ -1,7 +1,7 @@
  CFLAGS= -g
 
 Cliente: Cliente.o CommunicationSocket.o Helper.o FuncionesCliente.o
-	g++ -o Cliente Cliente.o CommunicationSocket.o Helper.o FuncionesCliente.o -lSDL -lSDL_ttf -lpthread 
+	g++ -o Cliente Cliente.o CommunicationSocket.o Helper.o FuncionesCliente.o -lSDL -lSDL_ttf -lpthread -lX11
 Cliente.o: Cliente.cpp Clases/CommunicationSocket.h Support/Constantes.h
 	g++ -c Cliente.cpp -lSDL -lSDL_ttf -lpthread 
 CommunicationSocket.o: Clases/CommunicationSocket.cpp 

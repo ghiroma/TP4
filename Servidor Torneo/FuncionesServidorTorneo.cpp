@@ -43,7 +43,7 @@ ServerSocket* sSocket;
 int idPartida = 0;
 puntajesPartida * resumenPartida;
 bool seguirAceptandoJugadores = true;
-bool servidorTorneoSIGINT = false;
+//bool servidorTorneoSIGINT = false;
 int childpid;
 queue<pid_t> colaPartidasCapturadasEnSIGCHLD;
 
@@ -88,13 +88,13 @@ void getConfiguration(unsigned int* port, string* ip, int* duracionTorneo, int* 
  * Manejador de señales
  */
 void SIG_INT(int inum) {
-	servidorTorneoSIGINT = true;
+//	servidorTorneoSIGINT = true;
 	cout << "Torneo: Señal SIGINT" << endl;
 	exit(1);
 }
 
 void SIG_PIPE(int inum) {
-	cout << "Torneo: Señal SIGPIPE" << endl;
+	//cout << "Torneo: Señal SIGPIPE" << endl;
 }
 
 void SIG_CHLD(int inum) {
@@ -226,7 +226,7 @@ char txtPlayers[10];
 char txtInfoJugador[MAX_LENGT_TXT_INFO_JUGADOR];
 int cantPlayersConectados;
 multimap<float, int> rankings;
-
+SDL_Surface *tablaDeRanking;
 void* modoGrafico(void* data) {
 	struct thModoGrafico_data *torneo;
 	torneo = (struct thModoGrafico_data *) data;
@@ -251,11 +251,12 @@ void* modoGrafico(void* data) {
 	posBackground.y = 0;
 	SDL_BlitSurface(background, NULL, screen, &posBackground);
 	SDL_Flip(screen);
-
+	
+	tablaDeRanking = SDL_LoadBMP("Img/background.bmp");
 	bool actualizarTiempo = false;
 	while (true) {
-		background = SDL_LoadBMP("Img/background.bmp");
-
+		SDL_BlitSurface(tablaDeRanking, NULL, background, &posBackground);
+		
 		//actualizar tiempo
 		pthread_mutex_lock(&mutex_comenzoConteo);
 		actualizarTiempo = comenzoConteo;
@@ -793,6 +794,11 @@ void mandarPuntajes() {
 }
 
 void liberarRecursos() {
+
+	//SDL
+	TTF_Quit();
+	SDL_Quit();
+
 	//SOCKETS
 	if (sSocket != NULL) {
 		delete (sSocket);
@@ -822,10 +828,6 @@ void liberarRecursos() {
 	pthread_mutex_destroy(&mutex_partidasActivas);
 	pthread_mutex_destroy(&mutex_listJugadores);
 	pthread_mutex_destroy(&mutex_seguirAceptandoJugadores);
-
-	//SDL
-	TTF_Quit();
-	SDL_Quit();
 }
 
 void mostrarPantalla(const char* nombrPantalla) {
