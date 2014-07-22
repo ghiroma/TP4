@@ -350,10 +350,8 @@ sharedMemory_thread(void * arguments) {
 				stop = true;
 				sleep(1);
 				semaforoTorneo->V();
-			}
-			else if(!cliente1_conectado && !cliente2_conectado)
-			{
-				cout<<"SRV PARTIDA: clientes desconectados"<<endl;
+			} else if (!cliente1_conectado && !cliente2_conectado) {
+				cout << "SRV PARTIDA: clientes desconectados" << endl;
 				semaforoPartida->P();
 				puntaje->idJugador1 = felix1->id;
 				puntaje->idJugador2 = felix2->id;
@@ -514,15 +512,15 @@ void caseVentanaArreglada(int jugador) {
 	}
 
 	if (tramoFinalizado(edificio)) {
-/*		string message(CD_SUBIR_TRAMO);
-		message.append(Helper::fillMessage("0"));
-		Helper::encolar(&message,&sender1_queue,&mutex_sender1);
-		Helper::encolar(&message,&sender2_queue,&mutex_sender2);
-		edificio->CambiarTramo();
-		if(cliente1_jugando)
-			felix1->mover(0,0,edificio);
-		if(cliente2_jugando)
-			felix2->mover(EDIFICIO_COLUMNAS-1,0,edificio);*/
+		/*		string message(CD_SUBIR_TRAMO);
+		 message.append(Helper::fillMessage("0"));
+		 Helper::encolar(&message,&sender1_queue,&mutex_sender1);
+		 Helper::encolar(&message,&sender2_queue,&mutex_sender2);
+		 edificio->CambiarTramo();
+		 if(cliente1_jugando)
+		 felix1->mover(0,0,edificio);
+		 if(cliente2_jugando)
+		 felix2->mover(EDIFICIO_COLUMNAS-1,0,edificio);*/
 		cliente1_jugando = false;
 		cliente2_jugando = false;
 	}
@@ -580,9 +578,26 @@ void SIGINT_Handler(int inum) {
 
 void liberarRecursos() {
 	if (puntaje != NULL)
+	{
 		shmdt(puntaje);
-	if (torneoMuerto)
-		shmctl(shmId, IPC_RMID, 0);
+		cout<<"SHM Dettached"<<endl;
+	}
+	if (torneoMuerto) {
+		shmctl(shmId, IPC_RMID, NULL);
+		cout << "Borre memoria compartida" << endl;
+		const char * semName =semaforoPartida->getName();
+		delete(semaforoPartida);
+		sem_unlink(semName);
+		semName = semaforoTorneo->getName();
+		delete(semaforoTorneo);
+		sem_unlink(semName);
+		cout<<"unlinkee semaforos"<<endl;
+	} else {
+		delete (semaforoPartida);
+		semaforoPartida = NULL;
+		delete (semaforoTorneo);
+		semaforoTorneo = NULL;
+	}
 	delete (sSocket);
 	sSocket = NULL;
 	delete (cSocket1);
@@ -593,12 +608,6 @@ void liberarRecursos() {
 	felix1 = NULL;
 	delete (felix2);
 	felix2 = NULL;
-	delete (semaforoPartida);
-	semaforoPartida = NULL;
-	delete (semaforoTorneo);
-	semaforoTorneo = NULL;
-	//delete (sSocket);
-	//sSocket = NULL;
 
 	//cout << "Recursos liberados" << endl;
 }
